@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/nav.css" />
     <link rel="stylesheet" href="../css/admin.css" />
-    <script src="../js/auth.js" defer></script>
+    <script src="../js/script.js" defer></script>
   </head>
 
   <body>
@@ -71,36 +71,19 @@
 
         <section class="filter-bar">
           <div class="form-group">
-            <label for="student-filter"> Student </label>
+            <label for="observation-search">Search observations</label>
 
-            <select id="student-filter">
-              <option>All Students</option>
-
-              <option>Juan Dela Cruz</option>
-
-              <option>Maria Santos</option>
-
-              <option>Pedro Garcia</option>
-            </select>
+            <div class="search-input-wrap">
+              <img src="../images/search.svg" alt="" class="search-icon" />
+              <input
+                type="search"
+                id="observation-search"
+                placeholder="Search by student, plot, condition, or keyword"
+                autocomplete="off"
+              />
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="status-filter"> Condition </label>
-
-            <select id="status-filter">
-              <option>All Conditions</option>
-
-              <option>Healthy</option>
-
-              <option>Growing</option>
-
-              <option>Needs Attention</option>
-
-              <option>Diseased</option>
-            </select>
-          </div>
-
-          <button class="btn btn-primary" type="button">Filter</button>
         </section>
 
         <section class="card">
@@ -123,7 +106,7 @@
               </thead>
 
               <tbody>
-                <tr>
+                <tr class="observation-row">
                   <td>Aug. 28, 2026</td>
 
                   <td>Juan Dela Cruz</td>
@@ -141,7 +124,7 @@
                   </td>
                 </tr>
 
-                <tr>
+                <tr class="observation-row">
                   <td>Aug. 27, 2026</td>
 
                   <td>Maria Santos</td>
@@ -159,7 +142,7 @@
                   </td>
                 </tr>
 
-                <tr>
+                <tr class="observation-row">
                   <td>Aug. 26, 2026</td>
 
                   <td>Ana Reyes</td>
@@ -177,7 +160,7 @@
                   </td>
                 </tr>
 
-                <tr>
+                <tr class="observation-row">
                   <td>Aug. 25, 2026</td>
 
                   <td>Pedro Garcia</td>
@@ -200,5 +183,12 @@
         </section>
       </div>
     </main>
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <strong>GardenTrack</strong>
+        <span>School Garden Management Website</span>
+      </div>
+      <span class="footer-copy">&copy; 2026</span>
+    </footer>
   </body>
 </html>

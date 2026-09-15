@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/nav.css" />
     <link rel="stylesheet" href="../css/student.css" />
-    <script src="../js/auth.js" defer></script>
+    <script src="../js/script.js" defer></script>
   </head>
 
   <body>
@@ -86,7 +86,14 @@
 
             <p>The tomato plant has developed several new leaves and looks healthy.</p>
 
-            <a href="observations.html" class="btn btn-secondary log-view-button">View</a>
+            <button type="button" class="btn btn-secondary log-view-button" aria-expanded="false">
+              View
+            </button>
+            <div class="log-details" hidden>
+              <p><strong>Plot:</strong> A-12</p>
+              <p><strong>Plant:</strong> Tomato</p>
+              <p><strong>Notes:</strong> The tomato plant has developed several new leaves and looks healthy.</p>
+            </div>
           </div>
 
           <div class="log-entry">
@@ -101,7 +108,14 @@
 
             <p>The plant received adequate sunlight and continues to grow well.</p>
 
-            <a href="observations.html" class="btn btn-secondary log-view-button">View</a>
+            <button type="button" class="btn btn-secondary log-view-button" aria-expanded="false">
+              View
+            </button>
+            <div class="log-details" hidden>
+              <p><strong>Plot:</strong> A-12</p>
+              <p><strong>Plant:</strong> Tomato</p>
+              <p><strong>Notes:</strong> The plant received adequate sunlight and continues to grow well.</p>
+            </div>
           </div>
 
           <div class="log-entry">
@@ -116,10 +130,24 @@
 
             <p>Several leaves appeared wilted, so the plant was watered afterward.</p>
 
-            <a href="observations.html" class="btn btn-secondary log-view-button">View</a>
+            <button type="button" class="btn btn-secondary log-view-button" aria-expanded="false">
+              View
+            </button>
+            <div class="log-details" hidden>
+              <p><strong>Plot:</strong> A-12</p>
+              <p><strong>Plant:</strong> Tomato</p>
+              <p><strong>Notes:</strong> Several leaves appeared wilted, so the plant was watered afterward.</p>
+            </div>
           </div>
         </section>
       </div>
     </main>
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <strong>GardenTrack</strong>
+        <span>School Garden Management Website</span>
+      </div>
+      <span class="footer-copy">&copy; 2026</span>
+    </footer>
   </body>
 </html>

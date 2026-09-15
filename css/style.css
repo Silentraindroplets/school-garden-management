@@ -112,6 +112,59 @@ button {
   margin: auto;
 }
 
+.site-footer {
+  min-height: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0px;
+  padding: 0px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0px;
+}
+
+.footer-brand strong {
+  color: var(--primary);
+  font-size: 13px;
+}
+
+.footer-brand span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.footer-copy {
+  padding-left: 18px;
+  border-left: 1px solid var(--border);
+}
+
+.login-page .site-footer {
+  width: calc(100% + 40px);
+  border-radius: 0;
+  border-top-color: rgba(255, 255, 255, 0.16);
+  background: rgba(8, 22, 12, 0.78);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.login-page .site-footer strong,
+.login-page .footer-brand span {
+  color: var(--white);
+}
+
+.login-page .footer-copy {
+  border-left-color: rgba(255, 255, 255, 0.25);
+}
+
 /* Buttons */
 
 .btn {
@@ -342,6 +395,20 @@ tr:hover td {
 }
 
 @media (max-width: 600px) {
+  .site-footer {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .footer-brand {
+    align-items: center;
+  }
+
+  .footer-copy {
+    padding-left: 0;
+    border-left: 0;
+  }
+
   .stats-grid {
     grid-template-columns: 1fr;
   }

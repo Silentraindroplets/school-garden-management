@@ -10,8 +10,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/nav.css" />
     <link rel="stylesheet" href="../css/admin.css" />
-    <script src="../js/auth.js" defer></script>
-    <script src="../js/manage_plots.js" defer></script>
+    <script src="../js/script.js" defer></script>
   </head>
 
   <body>
@@ -73,7 +72,7 @@
             <h2>Garden Plot List</h2>
 
             <button class="btn btn-primary" type="button" data-open-assign-plot>
-              Assign Garden Plot
+              + Assign Garden Plot
             </button>
           </div>
 
@@ -95,57 +94,87 @@
 
               <tbody>
                 <tr>
-                  <td>A-12</td>
+                  <td>A-01</td>
 
-                  <td>Section A</td>
+                  <td>School Garden</td>
 
-                  <td>Student User</td>
+                  <td>Felix Cagampang</td>
 
                   <td>
-                    <span class="badge badge-success"> Assigned </span>
+                    <span class="badge badge-danger"> Assigned </span>
                   </td>
 
                   <td>
-                    <button class="btn btn-secondary">View</button>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td>A-13</td>
-
-                  <td>Section A</td>
-
-                  <td>—</td>
-
-                  <td>
-                    <span class="badge badge-info"> Available </span>
-                  </td>
-
-                  <td>
-                    <button class="btn btn-primary">Assign</button>
+                    <div class="table-actions">
+                      <button class="icon-action" type="button" aria-label="View plot A-01" title="View">
+                        <img src="../images/view.svg" alt="" />
+                      </button>
+                      <button class="icon-action" type="button" aria-label="Edit plot A-01" title="Edit">
+                        <img src="../images/edit.svg" alt="" />
+                      </button>
+                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-01" title="Delete">
+                        <img src="../images/delete.svg" alt="" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
 
                 <tr>
-                  <td>A-14</td>
+                  <td>A-02</td>
 
-                  <td>Section A</td>
+                  <td>School Garden</td>
 
                   <td>Maria Santos</td>
 
                   <td>
-                    <span class="badge badge-success"> Assigned </span>
+                    <span class="badge badge-danger"> Assigned </span>
                   </td>
 
                   <td>
-                    <button class="btn btn-secondary">View</button>
+                    <div class="table-actions">
+                      <button class="icon-action" type="button" aria-label="View plot A-02" title="View">
+                        <img src="../images/view.svg" alt="" />
+                      </button>
+                      <button class="icon-action" type="button" aria-label="Edit plot A-02" title="Edit">
+                        <img src="../images/edit.svg" alt="" />
+                      </button>
+                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-02" title="Delete">
+                        <img src="../images/delete.svg" alt="" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
 
                 <tr>
-                  <td>B-06</td>
+                  <td>A-03</td>
 
-                  <td>Section B</td>
+                  <td>School Garden</td>
+
+                  <td>Ana Reyes</td>
+
+                  <td>
+                    <span class="badge badge-danger"> Assigned </span>
+                  </td>
+
+                  <td>
+                    <div class="table-actions">
+                      <button class="icon-action" type="button" aria-label="View plot A-03" title="View">
+                        <img src="../images/view.svg" alt="" />
+                      </button>
+                      <button class="icon-action" type="button" aria-label="Edit plot A-03" title="Edit">
+                        <img src="../images/edit.svg" alt="" />
+                      </button>
+                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-03" title="Delete">
+                        <img src="../images/delete.svg" alt="" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>A-04</td>
+
+                  <td>School Garden</td>
 
                   <td>—</td>
 
@@ -154,7 +183,17 @@
                   </td>
 
                   <td>
-                    <button class="btn btn-primary">Assign</button>
+                    <div class="table-actions">
+                      <button class="icon-action" type="button" aria-label="View plot A-04" title="View">
+                        <img src="../images/view.svg" alt="" />
+                      </button>
+                      <button class="icon-action" type="button" aria-label="Edit plot A-04" title="Edit">
+                        <img src="../images/edit.svg" alt="" />
+                      </button>
+                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-04" title="Delete">
+                        <img src="../images/delete.svg" alt="" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -163,6 +202,14 @@
         </section>
       </div>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <strong>GardenTrack</strong>
+        <span>School Garden Management Website</span>
+      </div>
+      <span class="footer-copy">&copy; 2026</span>
+    </footer>
 
     <div class="modal-overlay" data-assign-plot-modal hidden>
       <section
