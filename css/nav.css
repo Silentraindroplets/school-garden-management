@@ -173,6 +173,9 @@
 
 .main-content {
   padding: 35px 0 50px;
+  flex: 1;             
+  width: 100%;
+
 }
 
 /* Responsive */
