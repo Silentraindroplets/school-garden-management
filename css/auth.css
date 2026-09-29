@@ -179,7 +179,7 @@
   justify-content: center;
   margin-bottom: 26px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.12);
+  background: transparent;
   overflow: hidden;
 }
 

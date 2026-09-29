@@ -112,7 +112,7 @@
 }
 
 .user-menu details {
-  position: relative;
+  position: static;
 }
 
 .user-menu summary {
