@@ -695,6 +695,59 @@
   width: min(100%, 560px);
 }
 
+.student-account-modal {
+  width: min(100%, 460px);
+}
+
+.student-profile-details {
+  margin: 0;
+}
+
+.student-profile-details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-profile-details > div:last-child {
+  border-bottom: 0;
+}
+
+.student-profile-details dt {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.student-profile-details dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.student-settings-intro {
+  margin: -8px 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.student-account-modal .form-group {
+  margin-bottom: 16px;
+}
+
+.student-password-message:empty {
+  display: none;
+}
+
+.student-password-message {
+  margin: 0 0 14px;
+}
+
 .log-modal-card .modal-header {
   align-items: flex-start;
   margin-bottom: 22px;

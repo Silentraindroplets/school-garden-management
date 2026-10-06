@@ -160,6 +160,167 @@ function updateUserDisplay() {
   });
 }
 
+function setupStudentAccountOverlays() {
+  const profileLink = document.querySelector('[data-open-student-profile]');
+  const settingsLink = document.querySelector('[data-open-student-settings]');
+  if (!profileLink || !settingsLink) return;
+  const accountMenuTrigger = profileLink.closest('.user-menu')?.querySelector('.user-avatar');
+  if (!accountMenuTrigger) return;
+
+  const profileOverlay = document.createElement('div');
+  profileOverlay.className = 'modal-overlay student-account-overlay';
+  profileOverlay.hidden = true;
+  profileOverlay.innerHTML = `
+    <section class="modal-card student-account-modal" role="dialog" aria-modal="true" aria-labelledby="student-profile-title">
+      <div class="modal-header">
+        <h2 id="student-profile-title">Student Profile</h2>
+        <button class="modal-close" type="button" aria-label="Close profile" data-close-student-profile>&times;</button>
+      </div>
+      <dl class="student-profile-details">
+        <div><dt>Full name</dt><dd data-profile-name></dd></div>
+        <div><dt>Username</dt><dd data-profile-username></dd></div>
+        <div><dt>Account type</dt><dd>Student</dd></div>
+      </dl>
+    </section>
+  `;
+
+  const settingsOverlay = document.createElement('div');
+  settingsOverlay.className = 'modal-overlay student-account-overlay';
+  settingsOverlay.hidden = true;
+  settingsOverlay.innerHTML = `
+    <section class="modal-card student-account-modal" role="dialog" aria-modal="true" aria-labelledby="student-settings-title">
+      <div class="modal-header">
+        <h2 id="student-settings-title">Account Settings</h2>
+        <button class="modal-close" type="button" aria-label="Close account settings" data-close-student-settings>&times;</button>
+      </div>
+      <p class="student-settings-intro">Change your account password.</p>
+      <form data-student-password-form>
+        <div class="form-group">
+          <label for="student-current-password">Current password</label>
+          <input id="student-current-password" name="current-password" type="password" autocomplete="current-password" required />
+        </div>
+        <div class="form-group">
+          <label for="student-new-password">New password</label>
+          <input id="student-new-password" name="new-password" type="password" autocomplete="new-password" minlength="6" required />
+        </div>
+        <div class="form-group">
+          <label for="student-confirm-password">Confirm new password</label>
+          <input id="student-confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="6" required />
+        </div>
+        <p class="form-message student-password-message" data-student-password-message role="status" aria-live="polite"></p>
+        <button class="btn btn-primary" type="submit">Update Password</button>
+      </form>
+    </section>
+  `;
+
+  document.body.append(profileOverlay, settingsOverlay);
+
+  const closeOverlay = (overlay, returnFocus) => {
+    overlay.hidden = true;
+    document.body.classList.remove('modal-open');
+    returnFocus.focus();
+  };
+
+  const openOverlay = (overlay, focusTarget) => {
+    const accountMenu = profileLink.closest('.user-dropdown');
+    accountMenu?.closest('details')?.removeAttribute('open');
+    overlay.hidden = false;
+    document.body.classList.add('modal-open');
+    focusTarget.focus();
+  };
+
+  profileLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    const username = localStorage.getItem(currentUserStorageKey);
+    const account = getAccounts().find(
+      (item) => item.username === username && item.role === 'Student'
+    );
+    if (!account) return;
+
+    profileOverlay.querySelector('[data-profile-name]').textContent = account.fullName;
+    profileOverlay.querySelector('[data-profile-username]').textContent = account.username;
+    openOverlay(profileOverlay, profileOverlay.querySelector('[data-close-student-profile]'));
+  });
+
+  settingsLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    const form = settingsOverlay.querySelector('[data-student-password-form]');
+    form.reset();
+    setMessage(settingsOverlay.querySelector('[data-student-password-message]'), '');
+    openOverlay(settingsOverlay, settingsOverlay.querySelector('#student-current-password'));
+  });
+
+  profileOverlay.querySelector('[data-close-student-profile]').addEventListener('click', () => {
+    closeOverlay(profileOverlay, accountMenuTrigger);
+  });
+  settingsOverlay.querySelector('[data-close-student-settings]').addEventListener('click', () => {
+    closeOverlay(settingsOverlay, accountMenuTrigger);
+  });
+
+  [profileOverlay, settingsOverlay].forEach((overlay) => {
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        closeOverlay(overlay, accountMenuTrigger);
+      }
+    });
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (!profileOverlay.hidden) closeOverlay(profileOverlay, accountMenuTrigger);
+    if (!settingsOverlay.hidden) closeOverlay(settingsOverlay, accountMenuTrigger);
+  });
+
+  settingsOverlay.querySelector('[data-student-password-form]').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = settingsOverlay.querySelector('[data-student-password-message]');
+    const currentPassword = form.elements['current-password'].value.trim();
+    const newPassword = form.elements['new-password'].value.trim();
+    const confirmPassword = form.elements['confirm-password'].value.trim();
+    const username = localStorage.getItem(currentUserStorageKey);
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setMessage(message, 'Complete all password fields.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setMessage(message, 'Your new password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setMessage(message, 'The new password and confirmation do not match.');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setMessage(message, 'Choose a new password that is different from your current password.');
+      return;
+    }
+
+    try {
+      const accounts = JSON.parse(localStorage.getItem(accountsStorageKey) || '[]');
+      if (!Array.isArray(accounts)) {
+        throw new Error('Stored accounts are not in a valid format.');
+      }
+      const account = accounts.find(
+        (item) => item.username === username && item.role === 'Student'
+      );
+      if (!account || account.password !== currentPassword) {
+        setMessage(message, 'Your current password is incorrect.');
+        return;
+      }
+
+      account.password = newPassword;
+      localStorage.setItem(accountsStorageKey, JSON.stringify(accounts));
+      form.reset();
+      setMessage(message, 'Password updated successfully.', true);
+    } catch (error) {
+      console.error('Could not update the student password.', error);
+      setMessage(message, 'Unable to save the new password. Please try again.');
+    }
+  });
+}
+
 function setupStudentNotifications() {
   const panel = document.querySelector('[data-student-notifications]');
   const list = panel?.querySelector('[data-notification-list]');
@@ -887,4 +1048,5 @@ setupObservationLog();
 setupObservationSearch();
 setupReportExport();
 setupStudentNotifications();
+setupStudentAccountOverlays();
 updateUserDisplay();
