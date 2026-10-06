@@ -237,15 +237,55 @@ function setupPlotAssignment() {
 }
 
 function setupObservationLog() {
-  document.querySelectorAll('.log-view-button').forEach((button) => {
-    button.addEventListener('click', () => {
-      const details = button.nextElementSibling;
-      const isExpanded = button.getAttribute('aria-expanded') === 'true';
+  const modal   = document.querySelector('[data-log-modal]');
+  if (!modal) return;
 
-      details.hidden = isExpanded;
-      button.setAttribute('aria-expanded', String(!isExpanded));
-      button.textContent = isExpanded ? 'View' : 'Hide details';
-    });
+  const closeBtn = modal.querySelector('[data-log-close]');
+  const fields = {
+    date:      modal.querySelector('[data-log-modal-date]'),
+    title:     modal.querySelector('[data-log-modal-title]'),
+    plot:      modal.querySelector('[data-log-modal-plot]'),
+    plant:     modal.querySelector('[data-log-modal-plant]'),
+    height:    modal.querySelector('[data-log-modal-height]'),
+    weather:   modal.querySelector('[data-log-modal-weather]'),
+    soil:      modal.querySelector('[data-log-modal-soil]'),
+    condition: modal.querySelector('[data-log-modal-condition]'),
+    notes:     modal.querySelector('[data-log-modal-notes]'),
+  };
+
+  const open = (data) => {
+    fields.date.textContent      = data.date;
+    fields.title.textContent     = data.title;
+    fields.plot.textContent      = data.plot;
+    fields.plant.textContent     = data.plant;
+    fields.height.textContent    = data.height;
+    fields.weather.textContent   = data.weather;
+    fields.soil.textContent      = data.soil;
+    fields.condition.textContent = data.condition;
+    fields.notes.textContent     = data.notes;
+
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    closeBtn.focus();
+  };
+
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+  };
+
+  document.querySelectorAll('[data-log-open]').forEach((button) => {
+    button.addEventListener('click', () => open(button.dataset));
+  });
+
+  closeBtn.addEventListener('click', close);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) close();
   });
 }
 
@@ -253,15 +293,144 @@ function setupObservationSearch() {
   const searchInput = document.getElementById('observation-search');
   if (!searchInput) return;
 
-  const rows = [...document.querySelectorAll('.observation-row')];
+  const rows      = [...document.querySelectorAll('.observation-row')];
+  const emptyState = document.querySelector('[data-observation-empty]');
+  const table      = searchInput.closest('.card')?.querySelector('table');
+
   searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
 
     rows.forEach((row) => {
-      row.hidden = !row.textContent.toLowerCase().includes(searchTerm);
+      const matches = row.textContent.toLowerCase().includes(searchTerm);
+      row.hidden = !matches;
+      if (matches) visibleCount++;
     });
+
+    // Show/hide the "no results" state
+    if (emptyState) {
+      emptyState.hidden = visibleCount > 0;
+    }
+
+    // Hide the table header row when no results are visible
+    if (table) {
+      table.hidden = visibleCount === 0;
+    }
   });
 }
+
+function markActiveSidebarLink() {
+  const current = location.pathname.split('/').pop();
+  document.querySelectorAll('.admin-sidebar a').forEach((link) => {
+    const href = link.getAttribute('href');
+    if (href && href === current) link.classList.add('active');
+  });
+}
+markActiveSidebarLink();
+
+function setupCustomSelects() {
+  document.querySelectorAll('[data-custom-select]').forEach((select) => {
+    const trigger = select.querySelector('.custom-select-trigger');
+    const label   = select.querySelector('.custom-select-label');
+    const icon    = select.querySelector('.custom-select-icon');
+    const hidden  = select.querySelector('input[type="hidden"]');
+    const options = select.querySelectorAll('.custom-select-options li');
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = select.hasAttribute('data-open');
+
+      // Close any other open custom selects first
+      document
+        .querySelectorAll('[data-custom-select][data-open]')
+        .forEach((s) => {
+          s.removeAttribute('data-open');
+          s.querySelector('.custom-select-trigger')
+            ?.setAttribute('aria-expanded', 'false');
+        });
+
+      if (!isOpen) {
+        select.setAttribute('data-open', '');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    options.forEach((opt) => {
+      opt.addEventListener('click', () => {
+        const value   = opt.dataset.value;
+        const iconSrc = opt.querySelector('img')?.getAttribute('src') ?? '';
+
+        label.textContent = opt.textContent.trim();
+        icon.src = iconSrc;
+        hidden.value = value;
+
+        options.forEach((o) => o.classList.remove('is-selected'));
+        opt.classList.add('is-selected');
+
+        select.removeAttribute('data-open');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.focus();
+      });
+    });
+
+    select.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        select.removeAttribute('data-open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document
+      .querySelectorAll('[data-custom-select][data-open]')
+      .forEach((s) => {
+        s.removeAttribute('data-open');
+        s.querySelector('.custom-select-trigger')
+          ?.setAttribute('aria-expanded', 'false');
+      });
+  });
+}
+
+function setupTableSearch({ inputId, rowSelector, emptyStateSelector, cardSelector }) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+
+  const rows       = [...document.querySelectorAll(rowSelector)];
+  const emptyState = document.querySelector(emptyStateSelector);
+  const card       = cardSelector ? document.querySelector(cardSelector) : null;
+  const table      = card?.querySelector('table') ?? null;
+
+  input.addEventListener('input', () => {
+    const term = input.value.trim().toLowerCase();
+    let visible = 0;
+
+    rows.forEach((row) => {
+      const match = row.textContent.toLowerCase().includes(term);
+      row.hidden = !match;
+      if (match) visible++;
+    });
+
+    if (emptyState) emptyState.hidden = visible > 0;
+    if (table)      table.hidden      = visible === 0;
+  });
+}
+
+setupTableSearch({
+  inputId: 'student-search',
+  rowSelector: '.student-row',
+  emptyStateSelector: '[data-student-empty]',
+  cardSelector: 'main .card',
+});
+
+setupTableSearch({
+  inputId: 'plot-search',
+  rowSelector: '.plot-row',
+  emptyStateSelector: '[data-plot-empty]',
+  cardSelector: 'main .card',
+});
+
+setupCustomSelects();
 
 ensureDemoAccounts();
 setupAuthentication();

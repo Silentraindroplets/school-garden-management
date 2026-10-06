@@ -13,53 +13,63 @@
     <script src="../js/script.js" defer></script>
   </head>
 
-  <body>
-    <header class="navbar">
-      <div class="navbar-inner">
-        <a href="admin_dashboard.html" class="logo">
-          <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
-          GardenTrack
-        </a>
+  <body calss="admin">
+    <header class="admin-topbar">
+  <button class="admin-sidebar-toggle" type="button" aria-label="Toggle sidebar">☰</button>
 
-        <ul class="nav-links">
-          <li>
-            <a href="admin_dashboard.html"> Dashboard </a>
-          </li>
+  <a href="admin_dashboard.html" class="logo">
+    <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
+    GardenTrack
+  </a>
 
-          <li>
-            <a href="manage_plots.html" class="active"> Manage Plots </a>
-          </li>
+  <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+    <a href="admin_dashboard.html">Admin</a>
+    <span class="sep">/</span>
+    <span class="current">Dashboard</span>   <!-- change per page -->
+  </nav>
 
-          <li>
-            <a href="manage_students.html"> Students </a>
-          </li>
 
-          <li>
-            <a href="student_observations.html"> Observations </a>
-          </li>
+  <div class="user-menu">
+    <details>
+      <summary class="user-avatar" aria-label="Open user menu" data-username-initial>A</summary>
+      <nav class="user-dropdown" aria-label="User menu">
+        <a href="#profile">Profile</a>
+        <a href="#account-settings">Account Settings</a>
+        <a href="../index.html">Logout</a>
+      </nav>
+    </details>
+    <div class="user-info">
+      <strong data-username>Administrator</strong>
+      <span>Admin</span>
+    </div>
+  </div>
+</header>
 
-        </ul>
+<aside class="admin-sidebar">
+  <div class="admin-sidebar-section">Main</div>
+  <a href="admin_dashboard.html">      
+    <img src="../images/dashboard.svg" alt="" />
+    Dashboard
+  </a>
 
-        <div class="user-menu">
-          <details>
-            <summary class="user-avatar" aria-label="Open user menu" data-username-initial>A</summary>
-            <nav class="user-dropdown" aria-label="User menu">
-              <a href="#profile">Profile</a>
-              <a href="#account-settings">Account Settings</a>
-              <a href="../index.html">Logout</a>
-            </nav>
-          </details>
+  <div class="admin-sidebar-section">Management</div>
+  <a href="manage_plots.html" class="active">
+    <img src="../images/garden-plot.svg" alt="" />
+    Manage Plots
+  </a>
+  <a href="manage_students.html">
+    <img src="../images/students.svg" alt="" />
+    Students
+  </a>
+  <a href="student_observations.html">
+    <img src="../images/observations.svg" alt="" />
+    Observations
+  </a>
 
-          <div class="user-info">
-            <strong data-username>Administrator</strong>
+ 
+</aside>
 
-            <span>Admin</span>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <main class="main-content">
+    <main class="admin-main">
       <div class="container">
         <div class="page-header">
           <h1>Manage Garden Plots</h1>
@@ -203,13 +213,6 @@
       </div>
     </main>
 
-    <footer class="site-footer">
-      <div class="footer-brand">
-        <strong>GardenTrack</strong>
-        <span>School Garden Management Website</span>
-      </div>
-      <span class="footer-copy">&copy; 2026</span>
-    </footer>
 
     <div class="modal-overlay" data-assign-plot-modal hidden>
       <section

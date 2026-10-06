@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-      <title>Student Observations | GardenTrack</title>
+    <title>Student Observations | GardenTrack</title>
 
     <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
     <link rel="stylesheet" href="../css/style.css" />
@@ -13,55 +13,73 @@
     <script src="../js/script.js" defer></script>
   </head>
 
-  <body>
-    <header class="navbar">
-      <div class="navbar-inner">
-        <a href="admin_dashboard.html" class="logo">
-          <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
-          GardenTrack
-        </a>
+  <body class="admin">
+    <header class="admin-topbar">
+      <button
+        class="admin-sidebar-toggle"
+        type="button"
+        aria-label="Toggle sidebar"
+      >
+        ☰
+      </button>
 
-        <ul class="nav-links">
-          <li>
-            <a href="admin_dashboard.html"> Dashboard </a>
-          </li>
+      <a href="admin_dashboard.html" class="logo">
+        <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
+        GardenTrack
+      </a>
 
-          <li>
-            <a href="manage_plots.html"> Manage Plots </a>
-          </li>
+      <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+        <a href="admin_dashboard.html">Admin</a>
+        <span class="sep">/</span>
+        <span class="current">Observations</span>
+      </nav>
 
-          <li>
-            <a href="manage_students.html"> Students </a>
-          </li>
-
-          <li>
-            <a href="student_observations.html" class="active">
-              Observations
-            </a>
-          </li>
-
-        </ul>
-
-        <div class="user-menu">
-          <details>
-            <summary class="user-avatar" aria-label="Open user menu" data-username-initial>A</summary>
-            <nav class="user-dropdown" aria-label="User menu">
-              <a href="#profile">Profile</a>
-              <a href="#account-settings">Account Settings</a>
-              <a href="../index.html">Logout</a>
-            </nav>
-          </details>
-
-          <div class="user-info">
-            <strong data-username>Administrator</strong>
-
-            <span>Admin</span>
-          </div>
+      <div class="user-menu">
+        <details>
+          <summary
+            class="user-avatar"
+            aria-label="Open user menu"
+            data-username-initial
+          >
+            A
+          </summary>
+          <nav class="user-dropdown" aria-label="User menu">
+            <a href="#profile">Profile</a>
+            <a href="#account-settings">Account Settings</a>
+            <a href="../index.html">Logout</a>
+          </nav>
+        </details>
+        <div class="user-info">
+          <strong data-username>Administrator</strong>
+          <span>Admin</span>
         </div>
       </div>
     </header>
 
-    <main class="main-content">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-section">Main</div>
+      <a href="admin_dashboard.html">
+        <img src="../images/dashboard.svg" alt="" />
+        Dashboard
+      </a>
+
+      <div class="admin-sidebar-section">Management</div>
+      <a href="manage_plots.html">
+        <img src="../images/garden-plot.svg" alt="" />
+        Manage Plots
+      </a>
+      <a href="manage_students.html">
+        <img src="../images/students.svg" alt="" />
+        Students
+      </a>
+      <a href="student_observations.html" class="active">
+        <!-- change active per page -->
+        <img src="../images/observations.svg" alt="" />
+        Observations
+      </a>
+    </aside>
+
+    <main class="admin-main">
       <div class="container">
         <div class="page-header">
           <h1>Student Plot Observations</h1>
@@ -83,7 +101,6 @@
               />
             </div>
           </div>
-
         </section>
 
         <section class="card">
@@ -120,7 +137,9 @@
                   <td>Tomato plants are growing well.</td>
 
                   <td>
-                    <button class="btn btn-secondary" type="button">View</button>
+                    <button class="btn btn-secondary" type="button">
+                      View
+                    </button>
                   </td>
                 </tr>
 
@@ -138,7 +157,9 @@
                   <td>Several leaves are turning yellow.</td>
 
                   <td>
-                    <button class="btn btn-secondary" type="button">View</button>
+                    <button class="btn btn-secondary" type="button">
+                      View
+                    </button>
                   </td>
                 </tr>
 
@@ -156,7 +177,9 @@
                   <td>Plants have developed new leaves.</td>
 
                   <td>
-                    <button class="btn btn-secondary" type="button">View</button>
+                    <button class="btn btn-secondary" type="button">
+                      View
+                    </button>
                   </td>
                 </tr>
 
@@ -174,21 +197,20 @@
                   <td>Some plants were damaged after heavy rain.</td>
 
                   <td>
-                    <button class="btn btn-secondary" type="button">View</button>
+                    <button class="btn btn-secondary" type="button">
+                      View
+                    </button>
                   </td>
                 </tr>
               </tbody>
             </table>
+            <div class="table-empty-state" data-observation-empty hidden>
+              <p class="table-empty-title">No matching observations</p>
+              <p class="table-empty-subtitle">Try a different search term.</p>
+            </div>
           </div>
         </section>
       </div>
     </main>
-    <footer class="site-footer">
-      <div class="footer-brand">
-        <strong>GardenTrack</strong>
-        <span>School Garden Management Website</span>
-      </div>
-      <span class="footer-copy">&copy; 2026</span>
-    </footer>
   </body>
 </html>

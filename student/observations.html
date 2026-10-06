@@ -17,7 +17,11 @@
     <header class="navbar">
       <div class="navbar-inner">
         <a href="student_dashboard.html" class="logo">
-          <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
+          <img
+            src="../images/logo.svg"
+            alt="GardenTrack Logo"
+            class="logo-img"
+          />
           GardenTrack
         </a>
 
@@ -38,13 +42,17 @@
             <a href="observation_log.html"> Logs </a>
           </li>
 
-          <li>
-          </li>
+          <li></li>
         </ul>
 
         <div class="user-menu">
           <details>
-            <summary class="user-avatar" aria-label="Open user menu" data-username-initial>S</summary>
+            <summary
+              class="user-avatar"
+              aria-label="Open user menu"
+            >
+              <img src="../images/students.svg" alt="" />
+            </summary>
             <nav class="user-dropdown" aria-label="User menu">
               <a href="#profile">Profile</a>
               <a href="#account-settings">Account Settings</a>
@@ -76,7 +84,6 @@
                 Submit your observation for Plot A-01 · Tomato
               </p>
             </div>
-
           </div>
 
           <form class="observation-form">
@@ -101,42 +108,143 @@
             </div>
 
             <div class="form-group">
-              <label for="weather-condition">Weather Condition</label>
+              <label for="weather-trigger">Weather Condition</label>
 
-              <select id="weather-condition">
-                <option>Sunny</option>
-                <option>Partly cloudy</option>
-                <option>Cloudy</option>
-                <option>Rainy</option>
-                <option>Windy</option>
-              </select>
-            </div>
+              <div class="custom-select" data-custom-select>
+                <button
+                  type="button"
+                  class="custom-select-trigger"
+                  id="weather-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <img
+                    src="../images/sunny.svg"
+                    alt=""
+                    class="custom-select-icon"
+                  />
+                  <span class="custom-select-label">Sunny</span>
+                  <span class="custom-select-arrow" aria-hidden="true">▾</span>
+                </button>
 
-            <div class="observation-form-grid">
-              <div class="form-group">
-                <label for="soil-condition">Soil Condition</label>
+                <ul class="custom-select-options" role="listbox">
+                  <li role="option" data-value="sunny" class="is-selected">
+                    <img src="../images/sunny.svg" alt="" /> Sunny
+                  </li>
+                  <li role="option" data-value="partly-cloudy">
+                    <img src="../images/partly-cloudy.svg" alt="" /> Partly
+                    cloudy
+                  </li>
+                  <li role="option" data-value="cloudy">
+                    <img src="../images/cloudy.svg" alt="" /> Cloudy
+                  </li>
+                  <li role="option" data-value="rainy">
+                    <img src="../images/rainy.svg" alt="" /> Rainy
+                  </li>
+                  <li role="option" data-value="windy">
+                    <img src="../images/windy.svg" alt="" /> Windy
+                  </li>
+                </ul>
 
-                <select id="soil-condition">
-                  <option>Moist</option>
-                  <option>Dry</option>
-                  <option>Wet</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="plant-condition">Plant Condition</label>
-
-                <select id="plant-condition">
-                  <option>Healthy</option>
-                  <option>Growing</option>
-                  <option>Needs Attention</option>
-                  <option>Diseased</option>
-                  <option>Damaged</option>
-                </select>
+                <input
+                  type="hidden"
+                  id="weather-condition"
+                  name="weather-condition"
+                  value="sunny"
+                />
               </div>
             </div>
 
             <div class="form-group">
+              <label for="soil-trigger">Soil Condition</label>
+
+              <div class="custom-select" data-custom-select>
+                <button
+                  type="button"
+                  class="custom-select-trigger"
+                  id="soil-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <img
+                    src="../images/moist.svg"
+                    alt=""
+                    class="custom-select-icon"
+                  />
+                  <span class="custom-select-label">Moist</span>
+                  <span class="custom-select-arrow" aria-hidden="true">▾</span>
+                </button>
+
+                <ul class="custom-select-options" role="listbox">
+                  <li role="option" data-value="moist" class="is-selected">
+                    <img src="../images/moist.svg" alt="" /> Moist
+                  </li>
+                  <li role="option" data-value="dry">
+                    <img src="../images/dry.svg" alt="" /> Dry
+                  </li>
+                  <li role="option" data-value="wet">
+                    <img src="../images/wet.svg" alt="" /> Wet
+                  </li>
+                </ul>
+
+                <input
+                  type="hidden"
+                  id="soil-condition"
+                  name="soil-condition"
+                  value="moist"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="plant-trigger">Plant Condition</label>
+
+              <div class="custom-select" data-custom-select>
+                <button
+                  type="button"
+                  class="custom-select-trigger"
+                  id="plant-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <img
+                    src="../images/healthy.svg"
+                    alt=""
+                    class="custom-select-icon"
+                  />
+                  <span class="custom-select-label">Healthy</span>
+                  <span class="custom-select-arrow" aria-hidden="true">▾</span>
+                </button>
+
+                <ul class="custom-select-options" role="listbox">
+                  <li role="option" data-value="healthy" class="is-selected">
+                    <img src="../images/healthy.svg" alt="" /> Healthy
+                  </li>
+                  <li role="option" data-value="growing">
+                    <img src="../images/growing.svg" alt="" /> Growing
+                  </li>
+                  <li role="option" data-value="needs-attention">
+                    <img src="../images/needs-attention.svg" alt="" /> Needs
+                    Attention
+                  </li>
+                  <li role="option" data-value="diseased">
+                    <img src="../images/diseased.svg" alt="" /> Diseased
+                  </li>
+                  <li role="option" data-value="damaged">
+                    <img src="../images/damaged.svg" alt="" /> Damaged
+                  </li>
+                </ul>
+
+                <input
+                  type="hidden"
+                  id="plant-condition"
+                  name="plant-condition"
+                  value="healthy"
+                />
+              </div>
+            </div>
+
+            <div class="form-group full-width">
               <label for="observation">Observation Notes</label>
 
               <textarea
@@ -145,7 +253,7 @@
               ></textarea>
             </div>
 
-            <div class="form-group">
+            <div class="form-group full-width">
               <label for="observation-photo">Photo Upload</label>
 
               <label class="photo-upload" for="observation-photo">
@@ -165,7 +273,6 @@
             </button>
           </form>
         </section>
-
       </div>
     </main>
     <footer class="site-footer">

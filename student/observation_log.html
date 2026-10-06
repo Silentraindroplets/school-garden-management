@@ -17,7 +17,11 @@
     <header class="navbar">
       <div class="navbar-inner">
         <a href="student_dashboard.html" class="logo">
-          <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
+          <img
+            src="../images/logo.svg"
+            alt="GardenTrack Logo"
+            class="logo-img"
+          />
           GardenTrack
         </a>
 
@@ -38,13 +42,17 @@
             <a href="observation_log.html" class="active"> Logs </a>
           </li>
 
-          <li>
-          </li>
+          <li></li>
         </ul>
 
         <div class="user-menu">
           <details>
-            <summary class="user-avatar" aria-label="Open user menu" data-username-initial>S</summary>
+            <summary
+              class="user-avatar"
+              aria-label="Open user menu"
+            >
+              <img src="../images/students.svg" alt="" />
+            </summary>
             <nav class="user-dropdown" aria-label="User menu">
               <a href="#profile">Profile</a>
               <a href="#account-settings">Account Settings</a>
@@ -65,83 +73,189 @@
       <div class="container">
         <div class="page-header">
           <h1>Logs</h1>
-
           <p>Preview your previous observation logs from your garden plot.</p>
         </div>
 
-        <section>
+        <section class="log-list">
           <h2>Previous Logs</h2>
 
-          <br />
+          <article class="log-entry">
+            <div class="log-entry-header">
+              <div>
+                <div class="log-date">August 28, 2026</div>
+                <h3>Healthy tomato growth</h3>
+              </div>
+              <span class="badge badge-success">Healthy</span>
+            </div>
 
-          <div class="log-entry">
-            <div class="log-date">August 28, 2026</div>
+            <ul class="log-meta">
+              <li><span class="log-meta-label">Height</span> 39 cm</li>
+              <li><span class="log-meta-label">Weather</span> Sunny</li>
+              <li><span class="log-meta-label">Soil</span> Moist</li>
+            </ul>
 
-            <h3>Healthy tomato growth</h3>
-
-            <p>
-              Plant height: 39 cm · Weather: Sunny · Soil: Moist · Condition:
-              Healthy
+            <p class="log-summary">
+              The tomato plant has developed several new leaves and looks
+              healthy.
             </p>
 
-            <p>The tomato plant has developed several new leaves and looks healthy.</p>
-
-            <button type="button" class="btn btn-secondary log-view-button" aria-expanded="false">
-              View
-            </button>
-            <div class="log-details" hidden>
-              <p><strong>Plot:</strong> A-12</p>
-              <p><strong>Plant:</strong> Tomato</p>
-              <p><strong>Notes:</strong> The tomato plant has developed several new leaves and looks healthy.</p>
+            <div class="log-actions">
+              <button
+                type="button"
+                class="btn btn-secondary log-view-button"
+                data-log-open
+                data-date="August 28, 2026"
+                data-title="Healthy tomato growth"
+                data-plot="A-12"
+                data-plant="Tomato"
+                data-height="39 cm"
+                data-weather="Sunny"
+                data-soil="Moist"
+                data-condition="Healthy"
+                data-notes="The tomato plant has developed several new leaves and looks healthy."
+              >
+                View details
+              </button>
             </div>
-          </div>
+          </article>
 
-          <div class="log-entry">
-            <div class="log-date">August 24, 2026</div>
+          <article class="log-entry">
+            <div class="log-entry-header">
+              <div>
+                <div class="log-date">August 24, 2026</div>
+                <h3>Strong sunlight throughout the day</h3>
+              </div>
+              <span class="badge badge-success">Healthy</span>
+            </div>
 
-            <h3>Strong sunlight throughout the day</h3>
+            <ul class="log-meta">
+              <li><span class="log-meta-label">Height</span> 36 cm</li>
+              <li><span class="log-meta-label">Weather</span> Partly cloudy</li>
+              <li><span class="log-meta-label">Soil</span> Moist</li>
+            </ul>
 
-            <p>
-              Plant height: 36 cm · Weather: Partly cloudy · Soil: Moist ·
-              Condition: Healthy
+            <p class="log-summary">
+              The plant received adequate sunlight and continues to grow well.
             </p>
 
-            <p>The plant received adequate sunlight and continues to grow well.</p>
-
-            <button type="button" class="btn btn-secondary log-view-button" aria-expanded="false">
-              View
-            </button>
-            <div class="log-details" hidden>
-              <p><strong>Plot:</strong> A-12</p>
-              <p><strong>Plant:</strong> Tomato</p>
-              <p><strong>Notes:</strong> The plant received adequate sunlight and continues to grow well.</p>
+            <div class="log-actions">
+              <button
+                type="button"
+                class="btn btn-secondary log-view-button"
+                data-log-open
+                data-date="August 24, 2026"
+                data-title="Strong sunlight throughout the day"
+                data-plot="A-12"
+                data-plant="Tomato"
+                data-height="36 cm"
+                data-weather="Partly cloudy"
+                data-soil="Moist"
+                data-condition="Healthy"
+                data-notes="The plant received adequate sunlight and continues to grow well."
+              >
+                View details
+              </button>
             </div>
-          </div>
+          </article>
 
-          <div class="log-entry">
-            <div class="log-date">August 20, 2026</div>
+          <article class="log-entry">
+            <div class="log-entry-header">
+              <div>
+                <div class="log-date">August 20, 2026</div>
+                <h3>Leaves needed attention</h3>
+              </div>
+              <span class="badge badge-warning">Needs Attention</span>
+            </div>
 
-            <h3>Leaves needed attention</h3>
+            <ul class="log-meta">
+              <li><span class="log-meta-label">Height</span> 32 cm</li>
+              <li><span class="log-meta-label">Weather</span> Sunny</li>
+              <li><span class="log-meta-label">Soil</span> Dry</li>
+            </ul>
 
-            <p>
-              Plant height: 32 cm · Weather: Sunny · Soil: Dry · Condition:
-              Needs Attention
+            <p class="log-summary">
+              Several leaves appeared wilted, so the plant was watered
+              afterward.
             </p>
 
-            <p>Several leaves appeared wilted, so the plant was watered afterward.</p>
-
-            <button type="button" class="btn btn-secondary log-view-button" aria-expanded="false">
-              View
-            </button>
-            <div class="log-details" hidden>
-              <p><strong>Plot:</strong> A-12</p>
-              <p><strong>Plant:</strong> Tomato</p>
-              <p><strong>Notes:</strong> Several leaves appeared wilted, so the plant was watered afterward.</p>
+            <div class="log-actions">
+              <button
+                type="button"
+                class="btn btn-secondary log-view-button"
+                data-log-open
+                data-date="August 20, 2026"
+                data-title="Leaves needed attention"
+                data-plot="A-12"
+                data-plant="Tomato"
+                data-height="32 cm"
+                data-weather="Sunny"
+                data-soil="Dry"
+                data-condition="Needs Attention"
+                data-notes="Several leaves appeared wilted, so the plant was watered afterward."
+              >
+                View details
+              </button>
             </div>
-          </div>
+          </article>
         </section>
       </div>
     </main>
+
+    <div class="modal-overlay" data-log-modal hidden>
+      <section
+        class="modal-card log-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="log-modal-title"
+      >
+        <div class="modal-header">
+          <div>
+            <span class="log-date" data-log-modal-date>—</span>
+            <h2 id="log-modal-title" data-log-modal-title>—</h2>
+          </div>
+          <button
+            class="modal-close"
+            type="button"
+            aria-label="Close dialog"
+            data-log-close
+          >
+            &times;
+          </button>
+        </div>
+
+        <dl class="log-modal-grid">
+          <div>
+            <dt>Plot</dt>
+            <dd data-log-modal-plot>—</dd>
+          </div>
+          <div>
+            <dt>Plant</dt>
+            <dd data-log-modal-plant>—</dd>
+          </div>
+          <div>
+            <dt>Height</dt>
+            <dd data-log-modal-height>—</dd>
+          </div>
+          <div>
+            <dt>Weather</dt>
+            <dd data-log-modal-weather>—</dd>
+          </div>
+          <div>
+            <dt>Soil</dt>
+            <dd data-log-modal-soil>—</dd>
+          </div>
+          <div>
+            <dt>Condition</dt>
+            <dd data-log-modal-condition>—</dd>
+          </div>
+        </dl>
+
+        <div class="log-modal-notes">
+          <span class="note-label">Observation Notes</span>
+          <p data-log-modal-notes>—</p>
+        </div>
+      </section>
+    </div>
     <footer class="site-footer">
       <div class="footer-brand">
         <strong>GardenTrack</strong>
