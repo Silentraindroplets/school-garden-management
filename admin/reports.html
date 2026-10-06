@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Reports | GardenTrack</title>
+
+    <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/nav.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
+    <script src="../js/script.js" defer></script>
+  </head>
+
+  <body class="admin">
+    <header class="admin-topbar">
+      <button class="admin-sidebar-toggle" type="button" aria-label="Toggle sidebar">
+        ☰
+      </button>
+
+      <a href="admin_dashboard.html" class="logo">
+        <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
+        GardenTrack
+      </a>
+
+      <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+        <a href="admin_dashboard.html">Admin</a>
+        <span class="sep">/</span>
+        <span class="current">Reports</span>
+      </nav>
+
+      <div class="user-menu">
+        <details>
+          <summary class="user-avatar" aria-label="Open user menu">A</summary>
+          <nav class="user-dropdown" aria-label="User menu">
+            <a href="#profile">Profile</a>
+            <a href="#account-settings">Account Settings</a>
+            <a href="../index.html">Logout</a>
+          </nav>
+        </details>
+        <div class="user-info">
+          <strong>Administrator</strong>
+          <span>Admin</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-section">Main</div>
+      <a href="admin_dashboard.html">
+        <img src="../images/dashboard.svg" alt="" />
+        Dashboard
+      </a>
+
+      <div class="admin-sidebar-section">Management</div>
+      <a href="manage_plots.html">
+        <img src="../images/garden-plot.svg" alt="" />
+        Manage Plots
+      </a>
+      <a href="manage_students.html">
+        <img src="../images/students.svg" alt="" />
+        Students
+      </a>
+      <a href="student_observations.html">
+        <img src="../images/observations.svg" alt="" />
+        Observations
+      </a>
+      <a href="reports.html" class="active">
+        <img src="../images/report.svg" alt="" />
+        Reports
+      </a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="container">
+        <div class="page-header">
+          <h1>Reports</h1>
+          <p>Review and export student garden observations by date range.</p>
+        </div>
+
+        <section class="card report-controls" aria-labelledby="report-options-title">
+          <div class="admin-card-header">
+            <h2 id="report-options-title">Export observation report</h2>
+          </div>
+
+          <div class="report-filter-grid">
+            <div class="form-group">
+              <label for="report-period">Report period</label>
+              <select id="report-period">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="report-date" data-report-date-label>Date</label>
+              <input id="report-date" type="date" value="2026-08-28" />
+            </div>
+            <div class="report-export-action">
+              <button class="btn btn-primary" type="button" data-export-report>
+                Export Excel
+              </button>
+            </div>
+          </div>
+
+          <p class="report-period-summary" data-report-summary role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="card report-preview" aria-labelledby="report-preview-title">
+          <div class="admin-card-header">
+            <div>
+              <h2 id="report-preview-title">Report preview</h2>
+              <p data-report-count></p>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="report-table" data-report-table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Student</th>
+                  <th>Plot</th>
+                  <th>Condition</th>
+                  <th>Observation</th>
+                </tr>
+              </thead>
+              <tbody data-report-rows>
+                <tr data-report-row data-date="2026-08-28">
+                  <td>Aug. 28, 2026</td>
+                  <td>Juan Dela Cruz</td>
+                  <td>A-12</td>
+                  <td>Healthy</td>
+                  <td>Tomato plants are growing well.</td>
+                </tr>
+                <tr data-report-row data-date="2026-08-27">
+                  <td>Aug. 27, 2026</td>
+                  <td>Maria Santos</td>
+                  <td>A-14</td>
+                  <td>Needs Attention</td>
+                  <td>Several leaves are turning yellow.</td>
+                </tr>
+                <tr data-report-row data-date="2026-08-26">
+                  <td>Aug. 26, 2026</td>
+                  <td>Ana Reyes</td>
+                  <td>B-02</td>
+                  <td>Healthy</td>
+                  <td>Plants have developed new leaves.</td>
+                </tr>
+                <tr data-report-row data-date="2026-08-25">
+                  <td>Aug. 25, 2026</td>
+                  <td>Pedro Garcia</td>
+                  <td>B-06</td>
+                  <td>Damaged</td>
+                  <td>Some plants were damaged after heavy rain.</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-empty-state" data-report-empty role="status" aria-live="polite" hidden>
+              <p class="table-empty-title">No observations in this period</p>
+              <p class="table-empty-subtitle">Choose another date or reporting period.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

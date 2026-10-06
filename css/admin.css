@@ -526,6 +526,63 @@ body.modal-open {
   gap: 18px;
 }
 
+.report-controls {
+  margin-bottom: 20px;
+}
+
+.report-controls .admin-card-header {
+  margin-bottom: 14px;
+}
+
+.report-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.report-filter-grid .form-group {
+  min-width: 0;
+  margin: 0;
+}
+
+.report-filter-grid input,
+.report-filter-grid select {
+  box-sizing: border-box;
+  min-height: 42px;
+}
+
+.report-export-action {
+  padding-bottom: 18px;
+}
+
+.report-export-action .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.report-period-summary {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.report-preview .admin-card-header {
+  margin-bottom: 14px;
+}
+
+.report-preview .admin-card-header p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.table-container table.report-table th:last-child,
+.table-container table.report-table td:last-child {
+  width: auto;
+  text-align: left;
+}
+
 .report-card {
   background: var(--white);
   padding: 22px;
@@ -615,6 +672,15 @@ body.modal-open {
 
   .report-grid {
     grid-template-columns: 1fr;
+  }
+
+  .report-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .report-export-action {
+    padding-bottom: 0;
   }
 }
 
