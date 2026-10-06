@@ -69,136 +69,137 @@
   </aside>
 
   <main class="admin-main">
-    <div class="page-header">
-      <h1>Manage Students</h1>
-      <p>View and manage registered student information.</p>
+    <div class="container">
+      <div class="page-header">
+        <h1>Manage Students</h1>
+        <p>View and manage registered student information.</p>
+      </div>
+
+      <section class="filter-bar">
+        <div class="form-group">
+          <label for="student-search">Search students</label>
+          <div class="search-input-wrap">
+            <img src="../images/search.svg" alt="" class="search-icon" />
+            <input
+              type="search"
+              id="student-search"
+              placeholder="Search by name, ID, plot, or status"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Student List</h2>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Grade &amp; Section</th>
+                <th>Garden Plot</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr class="student-row">
+                <td>STU-001</td>
+                <td>Felix Cagampang</td>
+                <td>Grade 9</td>
+                <td>A-01</td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="icon-action" type="button" aria-label="View student Felix Cagampang" title="View">
+                      <img src="../images/view.svg" alt="" />
+                    </button>
+                    <button class="icon-action" type="button" aria-label="Edit student Felix Cagampang" title="Edit">
+                      <img src="../images/edit.svg" alt="" />
+                    </button>
+                    <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Felix Cagampang" title="Delete">
+                      <img src="../images/delete.svg" alt="" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="student-row">
+                <td>STU-002</td>
+                <td>Maria Santos</td>
+                <td>Grade 9</td>
+                <td>A-02</td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="icon-action" type="button" aria-label="View student Maria Santos" title="View">
+                      <img src="../images/view.svg" alt="" />
+                    </button>
+                    <button class="icon-action" type="button" aria-label="Edit student Maria Santos" title="Edit">
+                      <img src="../images/edit.svg" alt="" />
+                    </button>
+                    <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Maria Santos" title="Delete">
+                      <img src="../images/delete.svg" alt="" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="student-row">
+                <td>STU-003</td>
+                <td>Pedro Garcia</td>
+                <td>Grade 9</td>
+                <td>—</td>
+                <td><span class="badge badge-warning">Unassigned</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="icon-action" type="button" aria-label="View student Pedro Garcia" title="View">
+                      <img src="../images/view.svg" alt="" />
+                    </button>
+                    <button class="icon-action" type="button" aria-label="Edit student Pedro Garcia" title="Edit">
+                      <img src="../images/edit.svg" alt="" />
+                    </button>
+                    <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Pedro Garcia" title="Delete">
+                      <img src="../images/delete.svg" alt="" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="student-row">
+                <td>STU-004</td>
+                <td>Ana Reyes</td>
+                <td>Grade 9</td>
+                <td>A-03</td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="icon-action" type="button" aria-label="View student Ana Reyes" title="View">
+                      <img src="../images/view.svg" alt="" />
+                    </button>
+                    <button class="icon-action" type="button" aria-label="Edit student Ana Reyes" title="Edit">
+                      <img src="../images/edit.svg" alt="" />
+                    </button>
+                    <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Ana Reyes" title="Delete">
+                      <img src="../images/delete.svg" alt="" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="table-empty-state" data-student-empty hidden>
+            <p class="table-empty-title">No matching students</p>
+            <p class="table-empty-subtitle">Try a different search term.</p>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <section class="filter-bar">
-      <div class="form-group">
-        <label for="student-search">Search students</label>
-        <div class="search-input-wrap">
-          <img src="../images/search.svg" alt="" class="search-icon" />
-          <input
-            type="search"
-            id="student-search"
-            placeholder="Search by name, ID, plot, or status"
-            autocomplete="off"
-          />
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Student List</h2>
-      <br />
-
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Grade &amp; Section</th>
-              <th>Garden Plot</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr class="student-row">
-              <td>STU-001</td>
-              <td>Felix Cagampang</td>
-              <td>Grade 9</td>
-              <td>A-01</td>
-              <td><span class="badge badge-success">Active</span></td>
-              <td>
-                <div class="table-actions">
-                  <button class="icon-action" type="button" aria-label="View student Felix Cagampang" title="View">
-                    <img src="../images/view.svg" alt="" />
-                  </button>
-                  <button class="icon-action" type="button" aria-label="Edit student Felix Cagampang" title="Edit">
-                    <img src="../images/edit.svg" alt="" />
-                  </button>
-                  <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Felix Cagampang" title="Delete">
-                    <img src="../images/delete.svg" alt="" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <tr class="student-row">
-              <td>STU-002</td>
-              <td>Maria Santos</td>
-              <td>Grade 9</td>
-              <td>A-02</td>
-              <td><span class="badge badge-success">Active</span></td>
-              <td>
-                <div class="table-actions">
-                  <button class="icon-action" type="button" aria-label="View student Maria Santos" title="View">
-                    <img src="../images/view.svg" alt="" />
-                  </button>
-                  <button class="icon-action" type="button" aria-label="Edit student Maria Santos" title="Edit">
-                    <img src="../images/edit.svg" alt="" />
-                  </button>
-                  <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Maria Santos" title="Delete">
-                    <img src="../images/delete.svg" alt="" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <tr class="student-row">
-              <td>STU-003</td>
-              <td>Pedro Garcia</td>
-              <td>Grade 9</td>
-              <td>—</td>
-              <td><span class="badge badge-warning">Unassigned</span></td>
-              <td>
-                <div class="table-actions">
-                  <button class="icon-action" type="button" aria-label="View student Pedro Garcia" title="View">
-                    <img src="../images/view.svg" alt="" />
-                  </button>
-                  <button class="icon-action" type="button" aria-label="Edit student Pedro Garcia" title="Edit">
-                    <img src="../images/edit.svg" alt="" />
-                  </button>
-                  <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Pedro Garcia" title="Delete">
-                    <img src="../images/delete.svg" alt="" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <tr class="student-row">
-              <td>STU-004</td>
-              <td>Ana Reyes</td>
-              <td>Grade 9</td>
-              <td>A-03</td>
-              <td><span class="badge badge-success">Active</span></td>
-              <td>
-                <div class="table-actions">
-                  <button class="icon-action" type="button" aria-label="View student Ana Reyes" title="View">
-                    <img src="../images/view.svg" alt="" />
-                  </button>
-                  <button class="icon-action" type="button" aria-label="Edit student Ana Reyes" title="Edit">
-                    <img src="../images/edit.svg" alt="" />
-                  </button>
-                  <button class="icon-action icon-action-danger" type="button" aria-label="Delete student Ana Reyes" title="Delete">
-                    <img src="../images/delete.svg" alt="" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="table-empty-state" data-student-empty hidden>
-          <p class="table-empty-title">No matching students</p>
-          <p class="table-empty-subtitle">Try a different search term.</p>
-        </div>
-      </div>
-    </section>
   </main>
 
 </body>

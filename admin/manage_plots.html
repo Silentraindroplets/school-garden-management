@@ -13,7 +13,7 @@
     <script src="../js/script.js" defer></script>
   </head>
 
-  <body calss="admin">
+  <body class="admin">
     <header class="admin-topbar">
   <button class="admin-sidebar-toggle" type="button" aria-label="Toggle sidebar">☰</button>
 
@@ -77,6 +77,21 @@
           <p>Assign and manage student garden plots.</p>
         </div>
 
+        <section class="filter-bar">
+          <div class="form-group">
+            <label for="plot-search">Search garden plots</label>
+            <div class="search-input-wrap">
+              <img src="../images/search.svg" alt="" class="search-icon" />
+              <input
+                type="search"
+                id="plot-search"
+                placeholder="Search by plot ID, location, student, or status"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </section>
+
         <section class="card">
           <div class="admin-card-header">
             <h2>Garden Plot List</h2>
@@ -103,7 +118,7 @@
               </thead>
 
               <tbody>
-                <tr>
+                <tr class="plot-row">
                   <td>A-01</td>
 
                   <td>School Garden</td>
@@ -129,7 +144,7 @@
                   </td>
                 </tr>
 
-                <tr>
+                <tr class="plot-row">
                   <td>A-02</td>
 
                   <td>School Garden</td>
@@ -155,7 +170,7 @@
                   </td>
                 </tr>
 
-                <tr>
+                <tr class="plot-row">
                   <td>A-03</td>
 
                   <td>School Garden</td>
@@ -181,7 +196,7 @@
                   </td>
                 </tr>
 
-                <tr>
+                <tr class="plot-row">
                   <td>A-04</td>
 
                   <td>School Garden</td>
@@ -208,6 +223,10 @@
                 </tr>
               </tbody>
             </table>
+            <div class="table-empty-state" data-plot-empty hidden>
+              <p class="table-empty-title">No matching garden plots</p>
+              <p class="table-empty-subtitle">Try a different search term.</p>
+            </div>
           </div>
         </section>
       </div>

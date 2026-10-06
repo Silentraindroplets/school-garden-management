@@ -307,6 +307,11 @@ body.admin {
 /* Stat cards — flatter admin style */
 /* Stat cards in admin panel — cleaner hover + focus */
 .admin-main .stat-card {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 156px;
   box-shadow: none;
   border: 1px solid var(--border);
   background: #fff;
@@ -344,6 +349,7 @@ body.admin {
 }
 
 .admin-main .stat-card p {
+  margin-top: auto;
   font-size: 12.5px;
   text-transform: uppercase;
   letter-spacing: 0.04em;

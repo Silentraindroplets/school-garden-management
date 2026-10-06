@@ -289,36 +289,6 @@ function setupObservationLog() {
   });
 }
 
-function setupObservationSearch() {
-  const searchInput = document.getElementById('observation-search');
-  if (!searchInput) return;
-
-  const rows      = [...document.querySelectorAll('.observation-row')];
-  const emptyState = document.querySelector('[data-observation-empty]');
-  const table      = searchInput.closest('.card')?.querySelector('table');
-
-  searchInput.addEventListener('input', () => {
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    let visibleCount = 0;
-
-    rows.forEach((row) => {
-      const matches = row.textContent.toLowerCase().includes(searchTerm);
-      row.hidden = !matches;
-      if (matches) visibleCount++;
-    });
-
-    // Show/hide the "no results" state
-    if (emptyState) {
-      emptyState.hidden = visibleCount > 0;
-    }
-
-    // Hide the table header row when no results are visible
-    if (table) {
-      table.hidden = visibleCount === 0;
-    }
-  });
-}
-
 function markActiveSidebarLink() {
   const current = location.pathname.split('/').pop();
   document.querySelectorAll('.admin-sidebar a').forEach((link) => {
@@ -430,6 +400,13 @@ setupTableSearch({
   cardSelector: 'main .card',
 });
 
+setupTableSearch({
+  inputId: 'observation-search',
+  rowSelector: '.observation-row',
+  emptyStateSelector: '[data-observation-empty]',
+  cardSelector: 'main .card',
+});
+
 setupCustomSelects();
 
 ensureDemoAccounts();
@@ -437,5 +414,4 @@ setupAuthentication();
 setupDashboard();
 setupPlotAssignment();
 setupObservationLog();
-setupObservationSearch();
 updateUserDisplay();
