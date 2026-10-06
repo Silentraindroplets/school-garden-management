@@ -103,6 +103,11 @@ body.admin {
   font-size: 15px;
 }
 
+.admin-topbar .user-avatar img {
+  width: 22px;
+  height: 22px;
+}
+
 .admin-topbar .user-info strong {
   font-size: 14px;
   font-weight: 600;

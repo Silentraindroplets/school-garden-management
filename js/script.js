@@ -38,7 +38,14 @@ function ensureDemoAccounts() {
   const accounts = getAccounts();
   const usernames = new Set(accounts.map((account) => account.username.toLowerCase()));
   const missingAccounts = demoAccounts.filter(
-    (account) => !usernames.has(account.username.toLowerCase())
+    (account) => (
+      !usernames.has(account.username.toLowerCase())
+      && !accounts.some(
+        (existingAccount) =>
+          existingAccount.role === account.role
+          && existingAccount.redirect === account.redirect
+      )
+    )
   );
 
   if (missingAccounts.length) {
