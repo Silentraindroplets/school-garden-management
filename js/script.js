@@ -1,5 +1,6 @@
 const accountsStorageKey = 'gardenTrackerAccounts';
 const currentUserStorageKey = 'gardenTrackerCurrentUser';
+const notificationsStorageKey = 'gardenTrackerNotifications';
 const demoAccounts = [
   {
     username: 'student',
@@ -58,6 +59,23 @@ function saveAccount(account) {
   return true;
 }
 
+function addStudentNotification(username, title, message) {
+  const notifications = JSON.parse(localStorage.getItem(notificationsStorageKey) || '[]');
+  if (!Array.isArray(notifications)) {
+    throw new Error('Stored notifications are not in a valid format.');
+  }
+
+  notifications.unshift({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    username,
+    title,
+    message,
+    createdAt: new Date().toISOString(),
+    read: false,
+  });
+  localStorage.setItem(notificationsStorageKey, JSON.stringify(notifications));
+}
+
 function validateCredentials(username, password) {
   const normalizedUser = username.trim();
   const normalizedPass = password.trim();
@@ -95,9 +113,29 @@ function registerAccount({ username, fullName, password, confirmPassword, role, 
     return;
   }
 
-  if (!saveAccount({ username, fullName, password, role, redirect })) {
+  const account = {
+    username: username.trim(),
+    fullName: fullName.trim(),
+    password,
+    role,
+    redirect,
+  };
+
+  if (!saveAccount(account)) {
     setMessage(messageElement, 'That username is already taken.');
     return;
+  }
+
+  if (role === 'Student') {
+    try {
+      addStudentNotification(
+        account.username,
+        'Welcome to GardenTrack',
+        'Your student account is ready. Visit My Plot to review your garden details.'
+      );
+    } catch (error) {
+      console.error('Could not create the student welcome notification.', error);
+    }
   }
 
   setMessage(messageElement, `${role} account created successfully. Redirecting to login...`, true);
@@ -119,6 +157,125 @@ function updateUserDisplay() {
 
   document.querySelectorAll('[data-username-initial]').forEach((element) => {
     element.textContent = username.charAt(0).toUpperCase();
+  });
+}
+
+function setupStudentNotifications() {
+  const panel = document.querySelector('[data-student-notifications]');
+  const list = panel?.querySelector('[data-notification-list]');
+  const count = panel?.querySelector('[data-notification-count]');
+  const empty = panel?.querySelector('[data-notification-empty]');
+  const status = panel?.querySelector('[data-notification-status]');
+  const markAllButton = panel?.querySelector('[data-notification-mark-all]');
+  if (!panel || !list || !count || !empty || !status || !markAllButton) return;
+
+  const account = getAccounts().find(
+    (item) => item.username === localStorage.getItem(currentUserStorageKey)
+  );
+  const username = account?.role === 'Student' ? account.username : null;
+  let notifications = [];
+
+  const render = () => {
+    const unreadCount = notifications.filter((notification) => !notification.read).length;
+    count.textContent = unreadCount > 0 ? String(unreadCount) : '';
+    count.hidden = unreadCount === 0;
+    count.setAttribute('aria-label', `${unreadCount} unread notifications`);
+    markAllButton.disabled = unreadCount === 0;
+    empty.hidden = notifications.length > 0;
+    list.replaceChildren();
+
+    notifications.forEach((notification) => {
+      const item = document.createElement('li');
+      item.className = notification.read
+        ? 'student-notification'
+        : 'student-notification is-unread';
+
+      const button = document.createElement('button');
+      button.className = 'student-notification-content';
+      button.type = 'button';
+      button.dataset.notificationId = notification.id;
+      button.setAttribute(
+        'aria-label',
+        `${notification.read ? '' : 'Unread: '}${notification.title}. ${notification.message}`
+      );
+
+      const title = document.createElement('strong');
+      title.textContent = notification.title;
+      const message = document.createElement('span');
+      message.textContent = notification.message;
+      const date = document.createElement('time');
+      const createdAt = new Date(notification.createdAt);
+      if (!Number.isNaN(createdAt.getTime())) {
+        date.dateTime = createdAt.toISOString();
+        date.textContent = new Intl.DateTimeFormat(undefined, {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(createdAt);
+      }
+
+      button.append(title, message, date);
+      item.append(button);
+      list.append(item);
+    });
+  };
+
+  const updateStoredNotifications = (update) => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(notificationsStorageKey) || '[]');
+      if (!Array.isArray(stored)) {
+        throw new Error('Stored notifications are not in a valid format.');
+      }
+
+      const updated = update(stored);
+      localStorage.setItem(notificationsStorageKey, JSON.stringify(updated));
+      notifications = username
+        ? updated.filter((notification) => notification.username === username)
+        : [];
+      status.textContent = '';
+      render();
+    } catch (error) {
+      console.error('Could not update student notifications.', error);
+      status.textContent = 'Notifications could not be updated. Please try again.';
+    }
+  };
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(notificationsStorageKey) || '[]');
+    if (!Array.isArray(stored)) {
+      throw new Error('Stored notifications are not in a valid format.');
+    }
+    notifications = username
+      ? stored.filter((notification) => notification.username === username)
+      : [];
+    render();
+  } catch (error) {
+    console.error('Could not load student notifications.', error);
+    status.textContent = 'Notifications could not be loaded.';
+  }
+
+  panel.addEventListener('click', (event) => {
+    if (!username) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const notificationButton = target.closest('[data-notification-id]');
+    if (notificationButton) {
+      const notificationId = notificationButton.dataset.notificationId;
+      updateStoredNotifications((stored) => stored.map((notification) => (
+        notification.username === username && notification.id === notificationId
+          ? { ...notification, read: true }
+          : notification
+      )));
+      return;
+    }
+
+    if (target.closest('[data-notification-mark-all]')) {
+      updateStoredNotifications((stored) => stored.map((notification) => (
+        notification.username === username
+          ? { ...notification, read: true }
+          : notification
+      )));
+    }
   });
 }
 
@@ -729,4 +886,5 @@ setupStudentModal();
 setupObservationLog();
 setupObservationSearch();
 setupReportExport();
+setupStudentNotifications();
 updateUserDisplay();

@@ -813,6 +813,165 @@ body.modal-open {
   background: var(--secondary);      /* brown hover, like before */
 }
 
+.student-notifications {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.student-notifications > summary {
+  list-style: none;
+}
+
+.student-notifications > summary::-webkit-details-marker {
+  display: none;
+}
+
+.student-notifications-trigger {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.student-notifications-trigger img {
+  width: 19px;
+  height: 19px;
+  display: block;
+}
+
+.student-notifications-trigger:hover,
+.student-notifications[open] .student-notifications-trigger,
+.student-notifications-trigger:focus-visible {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.notification-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border: 2px solid var(--white);
+  border-radius: 12px;
+  background: var(--danger);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.notification-count[hidden] {
+  display: none;
+}
+
+.student-notifications-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 20;
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(430px, calc(100vh - 100px));
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  box-shadow: 0 10px 28px rgba(31, 42, 34, 0.16);
+}
+
+.student-notifications-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-notifications-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.student-notifications-heading button {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.student-notifications-heading button:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.student-notification-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 0 0;
+  list-style: none;
+}
+
+.student-notification-content {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+  padding: 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: #f7f8f5;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.student-notification.is-unread .student-notification-content {
+  border-color: var(--primary-light);
+  background: #f1f6ef;
+}
+
+.student-notification-content strong {
+  font-size: 13px;
+}
+
+.student-notification-content span,
+.student-notification-content time {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.student-notification-content time {
+  font-size: 11px;
+}
+
+.notification-empty,
+.notification-status {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.notification-status:empty {
+  display: none;
+}
+
 @media (max-width: 600px) {
   .log-entry-header {
     flex-direction: column;

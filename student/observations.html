@@ -46,6 +46,22 @@
         </ul>
 
         <div class="user-menu">
+          <details class="student-notifications" data-student-notifications>
+            <summary class="student-notifications-trigger" aria-label="Notifications">
+              <img src="../images/notification.svg" alt="" />
+              <span class="notification-count" data-notification-count hidden></span>
+            </summary>
+            <section class="student-notifications-panel" aria-label="Student notifications">
+              <div class="student-notifications-heading">
+                <h2>Notifications</h2>
+                <button type="button" data-notification-mark-all>Mark all as read</button>
+              </div>
+              <p class="notification-status" data-notification-status role="status" aria-live="polite"></p>
+              <ul class="student-notification-list" data-notification-list></ul>
+              <p class="notification-empty" data-notification-empty hidden>You’re all caught up.</p>
+            </section>
+          </details>
+
           <details>
             <summary
               class="user-avatar"
