@@ -235,10 +235,12 @@ function setupStudentAccountOverlays() {
     const account = getAccounts().find(
       (item) => item.username === username && item.role === 'Student'
     );
-    if (!account) return;
-
-    profileOverlay.querySelector('[data-profile-name]').textContent = account.fullName;
-    profileOverlay.querySelector('[data-profile-username]').textContent = account.username;
+    const displayName = account?.fullName
+      || document.querySelector('[data-username]')?.textContent.trim()
+      || 'Student';
+    profileOverlay.querySelector('[data-profile-name]').textContent = displayName;
+    profileOverlay.querySelector('[data-profile-username]').textContent =
+      account?.username || username || 'Not signed in';
     openOverlay(profileOverlay, profileOverlay.querySelector('[data-close-student-profile]'));
   });
 
