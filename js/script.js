@@ -323,6 +323,192 @@ function setupStudentAccountOverlays() {
   });
 }
 
+function setupAdminAccountOverlays() {
+  const profileLink = document.querySelector('[data-open-admin-profile]');
+  const settingsLink = document.querySelector('[data-open-admin-settings]');
+  if (!profileLink || !settingsLink) return;
+
+  const accountMenuTrigger = profileLink.closest('.user-menu')?.querySelector('.user-avatar');
+  if (!accountMenuTrigger) return;
+
+  const profileOverlay = document.createElement('div');
+  profileOverlay.className = 'modal-overlay admin-account-overlay';
+  profileOverlay.hidden = true;
+  profileOverlay.innerHTML = `
+    <section class="modal-card admin-account-modal" role="dialog" aria-modal="true" aria-labelledby="admin-profile-title">
+      <div class="modal-header">
+        <h2 id="admin-profile-title">Admin Profile</h2>
+        <button class="modal-close" type="button" aria-label="Close profile" data-close-admin-profile>&times;</button>
+      </div>
+      <dl class="admin-profile-details">
+        <div><dt>Name</dt><dd data-admin-profile-name></dd></div>
+        <div><dt>Username</dt><dd data-admin-profile-username></dd></div>
+        <div><dt>Account type</dt><dd>Admin</dd></div>
+      </dl>
+    </section>
+  `;
+
+  const settingsOverlay = document.createElement('div');
+  settingsOverlay.className = 'modal-overlay admin-account-overlay';
+  settingsOverlay.hidden = true;
+  settingsOverlay.innerHTML = `
+    <section class="modal-card admin-account-modal" role="dialog" aria-modal="true" aria-labelledby="admin-settings-title">
+      <div class="modal-header">
+        <h2 id="admin-settings-title">Account Settings</h2>
+        <button class="modal-close" type="button" aria-label="Close account settings" data-close-admin-settings>&times;</button>
+      </div>
+      <p class="admin-settings-intro">Update your username, password, or both.</p>
+      <form data-admin-settings-form>
+        <div class="form-group">
+          <label for="admin-new-username">Username</label>
+          <input id="admin-new-username" name="username" type="text" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="admin-current-password">Current password</label>
+          <input id="admin-current-password" name="current-password" type="password" autocomplete="current-password" required />
+        </div>
+        <div class="form-group">
+          <label for="admin-new-password">New password <span>(leave blank to keep current)</span></label>
+          <input id="admin-new-password" name="new-password" type="password" autocomplete="new-password" minlength="6" />
+        </div>
+        <div class="form-group">
+          <label for="admin-confirm-password">Confirm new password</label>
+          <input id="admin-confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="6" />
+        </div>
+        <p class="form-message admin-settings-message" data-admin-settings-message role="status" aria-live="polite"></p>
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+      </form>
+    </section>
+  `;
+
+  document.body.append(profileOverlay, settingsOverlay);
+
+  const openOverlay = (overlay, focusTarget) => {
+    profileLink.closest('.user-dropdown')?.closest('details')?.removeAttribute('open');
+    overlay.hidden = false;
+    document.body.classList.add('modal-open');
+    focusTarget.focus();
+  };
+  const closeOverlay = (overlay) => {
+    overlay.hidden = true;
+    document.body.classList.remove('modal-open');
+    accountMenuTrigger.focus();
+  };
+  const populateProfile = (account) => {
+    profileOverlay.querySelector('[data-admin-profile-name]').textContent =
+      account?.fullName || account?.username || 'Administrator';
+    profileOverlay.querySelector('[data-admin-profile-username]').textContent =
+      account?.username || localStorage.getItem(currentUserStorageKey) || 'Not signed in';
+  };
+
+  profileLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    const username = localStorage.getItem(currentUserStorageKey);
+    const account = getAccounts().find(
+      (item) => item.username === username && item.role === 'Admin'
+    );
+    populateProfile(account);
+    openOverlay(profileOverlay, profileOverlay.querySelector('[data-close-admin-profile]'));
+  });
+
+  settingsLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    const form = settingsOverlay.querySelector('[data-admin-settings-form]');
+    const username = localStorage.getItem(currentUserStorageKey);
+    const account = getAccounts().find(
+      (item) => item.username === username && item.role === 'Admin'
+    );
+    form.reset();
+    form.elements.username.value = account?.username || '';
+    setMessage(settingsOverlay.querySelector('[data-admin-settings-message]'), '');
+    openOverlay(settingsOverlay, form.elements.username);
+  });
+
+  profileOverlay.querySelector('[data-close-admin-profile]').addEventListener('click', () => {
+    closeOverlay(profileOverlay);
+  });
+  settingsOverlay.querySelector('[data-close-admin-settings]').addEventListener('click', () => {
+    closeOverlay(settingsOverlay);
+  });
+  [profileOverlay, settingsOverlay].forEach((overlay) => {
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) closeOverlay(overlay);
+    });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (!profileOverlay.hidden) closeOverlay(profileOverlay);
+    if (!settingsOverlay.hidden) closeOverlay(settingsOverlay);
+  });
+
+  settingsOverlay.querySelector('[data-admin-settings-form]').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = settingsOverlay.querySelector('[data-admin-settings-message]');
+    const newUsername = form.elements.username.value.trim();
+    const currentPassword = form.elements['current-password'].value.trim();
+    const newPassword = form.elements['new-password'].value.trim();
+    const confirmPassword = form.elements['confirm-password'].value.trim();
+    const currentUsername = localStorage.getItem(currentUserStorageKey);
+
+    if (!newUsername || !currentPassword) {
+      setMessage(message, 'Enter a username and your current password.');
+      return;
+    }
+    if (newPassword && newPassword.length < 6) {
+      setMessage(message, 'Your new password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setMessage(message, 'The new password and confirmation do not match.');
+      return;
+    }
+    if (newPassword && newPassword === currentPassword) {
+      setMessage(message, 'Choose a new password that is different from your current password.');
+      return;
+    }
+
+    try {
+      const accounts = JSON.parse(localStorage.getItem(accountsStorageKey) || '[]');
+      if (!Array.isArray(accounts)) {
+        throw new Error('Stored accounts are not in a valid format.');
+      }
+
+      const account = accounts.find(
+        (item) => item.username === currentUsername && item.role === 'Admin'
+      );
+      if (!account || account.password !== currentPassword) {
+        setMessage(message, 'Your current password is incorrect.');
+        return;
+      }
+      const usernameTaken = accounts.some(
+        (item) => item !== account && item.username.toLowerCase() === newUsername.toLowerCase()
+      );
+      if (usernameTaken) {
+        setMessage(message, 'That username is already taken.');
+        return;
+      }
+
+      account.username = newUsername;
+      if (newPassword) account.password = newPassword;
+      localStorage.setItem(accountsStorageKey, JSON.stringify(accounts));
+      localStorage.setItem(currentUserStorageKey, newUsername);
+      updateUserDisplay();
+      populateProfile(account);
+      form.reset();
+      form.elements.username.value = newUsername;
+      setMessage(
+        message,
+        newPassword ? 'Username and password updated successfully.' : 'Username updated successfully.',
+        true
+      );
+    } catch (error) {
+      console.error('Could not update the admin account.', error);
+      setMessage(message, 'Unable to save your account changes. Please try again.');
+    }
+  });
+}
+
 function setupStudentNotifications() {
   const panel = document.querySelector('[data-student-notifications]');
   const list = panel?.querySelector('[data-notification-list]');
@@ -1051,4 +1237,5 @@ setupObservationSearch();
 setupReportExport();
 setupStudentNotifications();
 setupStudentAccountOverlays();
+setupAdminAccountOverlays();
 updateUserDisplay();
