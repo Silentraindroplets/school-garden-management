@@ -13,7 +13,7 @@
     <script src="../js/script.js" defer></script>
   </head>
 
-  <body class="admin">
+  <body calss="admin">
     <header class="admin-topbar">
   <button class="admin-sidebar-toggle" type="button" aria-label="Toggle sidebar">☰</button>
 
@@ -25,13 +25,13 @@
   <nav class="admin-breadcrumb" aria-label="Breadcrumb">
     <a href="admin_dashboard.html">Admin</a>
     <span class="sep">/</span>
-    <span class="current">Dashboard</span>   <!-- change per page -->
+    <span class="current">Manage Plots</span>   
   </nav>
 
 
   <div class="user-menu">
     <details>
-      <summary class="user-avatar" aria-label="Open user menu" data-username-initial>A</summary>
+      <summary class="user-avatar" aria-label="Open user menu">A</summary>
       <nav class="user-dropdown" aria-label="User menu">
         <a href="#profile">Profile</a>
         <a href="#account-settings">Account Settings</a>
@@ -39,7 +39,7 @@
       </nav>
     </details>
     <div class="user-info">
-      <strong data-username>Administrator</strong>
+      <strong>Administrator</strong>
       <span>Admin</span>
     </div>
   </div>
@@ -79,7 +79,7 @@
 
         <section class="filter-bar">
           <div class="form-group">
-            <label for="plot-search">Search garden plots</label>
+            <label for="plot-search">Search plots</label>
             <div class="search-input-wrap">
               <img src="../images/search.svg" alt="" class="search-icon" />
               <input
@@ -104,7 +104,7 @@
           <div class="table-container">
             <table>
               <thead>
-                <tr>
+                <tr class="plot-row">
                   <th>Plot ID</th>
 
                   <th>Location</th>
@@ -125,9 +125,7 @@
 
                   <td>Felix Cagampang</td>
 
-                  <td>
-                    <span class="badge badge-danger"> Assigned </span>
-                  </td>
+                  <td>Assigned</td>
 
                   <td>
                     <div class="table-actions">
@@ -151,9 +149,7 @@
 
                   <td>Maria Santos</td>
 
-                  <td>
-                    <span class="badge badge-danger"> Assigned </span>
-                  </td>
+                  <td>Assigned</td>
 
                   <td>
                     <div class="table-actions">
@@ -177,9 +173,7 @@
 
                   <td>Ana Reyes</td>
 
-                  <td>
-                    <span class="badge badge-danger"> Assigned </span>
-                  </td>
+                  <td>Assigned</td>
 
                   <td>
                     <div class="table-actions">
@@ -196,16 +190,14 @@
                   </td>
                 </tr>
 
-                <tr class="plot-row">
+                <tr>
                   <td>A-04</td>
 
                   <td>School Garden</td>
 
                   <td>—</td>
 
-                  <td>
-                    <span class="badge badge-info"> Available </span>
-                  </td>
+                  <td>Available</td>
 
                   <td>
                     <div class="table-actions">
@@ -223,8 +215,9 @@
                 </tr>
               </tbody>
             </table>
+
             <div class="table-empty-state" data-plot-empty hidden>
-              <p class="table-empty-title">No matching garden plots</p>
+              <p class="table-empty-title">No matching plots</p>
               <p class="table-empty-subtitle">Try a different search term.</p>
             </div>
           </div>

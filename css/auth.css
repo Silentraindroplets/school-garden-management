@@ -41,7 +41,7 @@
   height: 54px;
   margin: 0;
   border-radius: 12px;
-  background: var(--primary-light);
+  background: transparent;
 }
 
 .auth-brand h1 {
@@ -179,7 +179,6 @@
   justify-content: center;
   margin-bottom: 26px;
   border-radius: 20px;
-  background: transparent;
   overflow: hidden;
 }
 

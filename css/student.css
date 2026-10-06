@@ -124,8 +124,7 @@
   width: 100%;
   height: 220px;
   margin-top: 18px;
-  padding: 28px;
-  object-fit: contain;
+  object-fit: cover;
   background: #eef3eb;
   border-radius: 8px;
 }

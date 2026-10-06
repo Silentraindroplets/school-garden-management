@@ -236,6 +236,37 @@ function setupPlotAssignment() {
   });
 }
 
+function setupStudentModal() {
+  const modal = document.querySelector('[data-student-modal]');
+  const form = document.querySelector('[data-student-form]');
+  const closeButton = modal?.querySelector('[data-close-student-modal]');
+  const openButton = document.querySelector('[data-open-student-modal]');
+  if (!modal || !form || !openButton || !closeButton) return;
+
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    openButton.focus();
+  };
+
+  openButton.addEventListener('click', () => {
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    document.getElementById('new-student-name')?.focus();
+  });
+  closeButton.addEventListener('click', close);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) close();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal.hidden) close();
+  });
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    close();
+  });
+}
+
 function setupObservationLog() {
   const modal   = document.querySelector('[data-log-modal]');
   if (!modal) return;
@@ -286,6 +317,36 @@ function setupObservationLog() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !modal.hidden) close();
+  });
+}
+
+function setupObservationSearch() {
+  const searchInput = document.getElementById('observation-search');
+  if (!searchInput) return;
+
+  const rows      = [...document.querySelectorAll('.observation-row')];
+  const emptyState = document.querySelector('[data-observation-empty]');
+  const table      = searchInput.closest('.card')?.querySelector('table');
+
+  searchInput.addEventListener('input', () => {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+
+    rows.forEach((row) => {
+      const matches = row.textContent.toLowerCase().includes(searchTerm);
+      row.hidden = !matches;
+      if (matches) visibleCount++;
+    });
+
+    // Show/hide the "no results" state
+    if (emptyState) {
+      emptyState.hidden = visibleCount > 0;
+    }
+
+    // Hide the table header row when no results are visible
+    if (table) {
+      table.hidden = visibleCount === 0;
+    }
   });
 }
 
@@ -400,18 +461,13 @@ setupTableSearch({
   cardSelector: 'main .card',
 });
 
-setupTableSearch({
-  inputId: 'observation-search',
-  rowSelector: '.observation-row',
-  emptyStateSelector: '[data-observation-empty]',
-  cardSelector: 'main .card',
-});
-
 setupCustomSelects();
 
 ensureDemoAccounts();
 setupAuthentication();
 setupDashboard();
 setupPlotAssignment();
+setupStudentModal();
 setupObservationLog();
+setupObservationSearch();
 updateUserDisplay();

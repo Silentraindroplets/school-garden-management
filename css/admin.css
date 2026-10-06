@@ -1,6 +1,3 @@
-/* =====================================================
-   Admin Panel
-   ===================================================== */
 
 :root {
   --admin-sidebar-bg: #1f2a22;
@@ -18,10 +15,6 @@ body.admin {
   background: var(--admin-content-bg);
   display: block;
 }
-
-/* =====================================================
-   Topbar
-   ===================================================== */
 
 .admin-topbar {
   position: fixed;
@@ -120,17 +113,14 @@ body.admin {
   color: var(--muted);
 }
 
-/* =====================================================
-   Sidebar
-   ===================================================== */
 
 .admin-sidebar {
   position: fixed;
-  top: 0;                                /* ← now reaches the very top */
+  top: 0;                                
   left: 0;
   bottom: 0;
   width: var(--admin-sidebar-width);
-  padding: calc(var(--admin-topbar-height) + 16px) 12px 16px;  /* push links below logo */
+  padding: calc(var(--admin-topbar-height) + 16px) 12px 16px;  
   background: var(--admin-sidebar-bg);
   color: var(--admin-sidebar-text);
   overflow-y: auto;
@@ -194,9 +184,6 @@ body.admin {
   color: #6f7d72;
 }
 
-/* =====================================================
-   Main content area
-   ===================================================== */
 
 .admin-main {
   margin-left: var(--admin-sidebar-width);
@@ -204,6 +191,12 @@ body.admin {
   padding: 28px 32px 40px;
   min-height: calc(100vh - var(--admin-topbar-height));
   box-sizing: border-box;
+}
+
+.admin-main > .container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .admin-main .page-header {
@@ -267,7 +260,8 @@ body.admin {
   margin-bottom: 18px;
 }
 
-.admin-card-header h2 {
+.admin-main .card > h2,
+.admin-main .card .admin-card-header h2 {
   font-size: 18px;
 }
 
@@ -304,14 +298,7 @@ body.admin {
   font-size: 14px;
 }
 
-/* Stat cards — flatter admin style */
-/* Stat cards in admin panel — cleaner hover + focus */
 .admin-main .stat-card {
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  min-width: 0;
-  min-height: 156px;
   box-shadow: none;
   border: 1px solid var(--border);
   background: #fff;
@@ -349,16 +336,12 @@ body.admin {
 }
 
 .admin-main .stat-card p {
-  margin-top: auto;
   font-size: 12.5px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
 }
 
-/* =====================================================
-   Modal
-   ===================================================== */
 
 .modal-overlay {
   position: fixed;
@@ -417,10 +400,6 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* =====================================================
-   Actions
-   ===================================================== */
-
 .admin-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -449,9 +428,6 @@ body.modal-open {
   margin-bottom: 5px;
 }
 
-/* =====================================================
-   Filters
-   ===================================================== */
 
 .filter-bar {
   display: flex;
@@ -543,9 +519,6 @@ body.modal-open {
   outline-offset: 2px;
 }
 
-/* =====================================================
-   Reports
-   ===================================================== */
 
 .report-grid {
   display: grid;
@@ -570,9 +543,6 @@ body.modal-open {
   margin-bottom: 15px;
 }
 
-/* =====================================================
-   Mobile sidebar toggle
-   ===================================================== */
 
 .admin-sidebar-toggle {
   display: none;
@@ -611,9 +581,6 @@ body.modal-open {
   font-size: 13px;
 }
 
-/* =====================================================
-   Responsive
-   ===================================================== */
 
 @media (max-width: 900px) {
   .admin-sidebar {
