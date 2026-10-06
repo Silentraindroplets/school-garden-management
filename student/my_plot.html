@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/nav.css" />
     <link rel="stylesheet" href="../css/student.css" />
+    <script src="../js/student.js" defer></script>
     <script src="../js/script.js" defer></script>
   </head>
 
@@ -121,13 +122,14 @@
           <section class="card plot-photo-card my-plot-card">
             <div class="card-heading-row">
               <h2>Recent Plot Photo</h2>
-              <span class="note-label">September 9, 2026</span>
+              <span class="note-label" data-plot-photo-date>September 9, 2026</span>
             </div>
 
             <img
               src="../images/garden-plot.svg"
               alt="Recent photo of the assigned school garden plot"
               class="plot-photo"
+              data-plot-photo
             />
 
             <p class="photo-caption">Plot A-01 · Tomatoes growing</p>

@@ -1,4 +1,4 @@
-/* Navigation */
+/* Site navigation */
 
 .navbar {
   background: var(--white);
@@ -169,7 +169,7 @@
   color: var(--text-light);
 }
 
-/* Content */
+/* Main content */
 
 .main-content {
   padding: 35px 0 50px;

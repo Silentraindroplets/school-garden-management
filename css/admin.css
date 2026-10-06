@@ -68,7 +68,7 @@ body.admin {
   object-fit: contain;
 }
 
-/* Breadcrumb now takes all the middle space */
+/* Breadcrumb */
 .admin-breadcrumb {
   flex: 1;
   display: flex;
@@ -88,7 +88,7 @@ body.admin {
 .admin-breadcrumb .sep { color: #c7c1b5; }
 .admin-breadcrumb .current { color: var(--text); font-weight: 600; }
 
-/* User menu — pushed to the far right, comfortable spacing */
+/* Account menu */
 .admin-topbar .user-menu {
   padding-left: 18px;
   margin-left: 0;
@@ -106,6 +106,7 @@ body.admin {
 .admin-topbar .user-avatar img {
   width: 22px;
   height: 22px;
+  filter: brightness(0) invert(1);
 }
 
 .admin-topbar .user-info strong {
@@ -218,9 +219,7 @@ body.admin {
   font-size: 13.5px;
 }
 
-/* =====================================================
-   Admin header banner (kept from before)
-   ===================================================== */
+/* Welcome panel */
 
 .admin-header {
   background: var(--secondary);
@@ -240,9 +239,7 @@ body.admin {
   font-size: 13.5px;
 }
 
-/* =====================================================
-   Cards
-   ===================================================== */
+/* Cards and metrics */
 
 .admin-grid {
   display: grid;
@@ -325,7 +322,7 @@ body.admin {
   transform: translateY(-1px);
 }
 
-/* Override the browser's default blue focus ring */
+/* Keyboard focus */
 .admin-main .stat-card-link:focus {
   outline: none;
 }
@@ -679,9 +676,7 @@ body.modal-open {
   flex-shrink: 0;
 }
 
-/* =========================================
-   Table empty state
-   ========================================= */
+/* Empty search results */
 
 .table-empty-state {
   padding: 40px 20px;

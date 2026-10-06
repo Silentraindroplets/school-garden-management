@@ -1,4 +1,4 @@
-/* Dashboard */
+/* Dashboard intro */
 
 .student-welcome {
   background: var(--primary);
@@ -20,7 +20,7 @@
   color: #e8f1e8;
 }
 
-/* Plot */
+/* Plot details */
 
 .plot-card {
   display: flex;
@@ -133,7 +133,7 @@
   margin-top: 10px;
 }
 
-/* Actions */
+/* Quick actions */
 
 .quick-actions {
   display: grid;
@@ -173,7 +173,7 @@
   margin-bottom: 15px;
 }
 
-/* Icon select on weather observation form */
+/* Weather icons */
 
 .icon-select {
   background-repeat: no-repeat;
@@ -310,7 +310,7 @@
   flex-shrink: 0;
 }
 
-/* Observations */
+/* Observation form */
 
 .observation-form-card {
   width: 100%;
@@ -425,6 +425,21 @@
   line-height: 1;
 }
 
+.photo-upload-preview {
+  display: block;
+  max-width: min(100%, 320px);
+  max-height: 220px;
+  object-fit: contain;
+}
+
+.photo-upload-preview[hidden] {
+  display: none;
+}
+
+.observation-form [data-observation-submit-message]:empty {
+  display: none;
+}
+
 .observation-submit {
   width: 100%;
   border-radius: 3px;
@@ -471,7 +486,7 @@
   font-size: 14px;
 }
 
-/* Journal */
+/* Observation log */
 
 .log-entry {
   background: var(--white);
@@ -687,9 +702,7 @@
   box-shadow: none;
 }
 
-/* =========================================
-   Log Modal
-   ========================================= */
+/* Log details */
 
 .log-modal-card {
   width: min(100%, 560px);
@@ -813,9 +826,7 @@
   line-height: 1.6;
 }
 
-/* =========================================
-   Modal — used by the Logs page
-   ========================================= */
+/* Dialogs */
 
 .modal-overlay {
   position: fixed;
@@ -880,9 +891,7 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* =========================================
-   Student avatar — students.svg as white icon
-   ========================================= */
+/* Student avatar */
 
 .user-menu .user-avatar {
   width: 36px;
@@ -902,13 +911,13 @@ body.modal-open {
   height: 22px;
   display: block;
   object-fit: contain;
-  filter: brightness(0) invert(1);   /* force white */
+  filter: brightness(0) invert(1);
 }
 
 .user-menu details[open] .user-avatar,
 .user-menu .user-avatar:hover,
 .user-menu .user-avatar:focus-visible {
-  background: var(--secondary);      /* brown hover, like before */
+  background: var(--secondary);
 }
 
 .student-notifications {
@@ -1091,7 +1100,7 @@ body.modal-open {
   }
 }
 
-/* Responsive */
+/* Small screens */
 
 @media (max-width: 750px) {
   .quick-actions {

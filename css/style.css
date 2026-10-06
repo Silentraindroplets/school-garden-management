@@ -1,4 +1,4 @@
-/* Reset */
+/* Base reset */
 
 * {
   margin: 0;
@@ -6,7 +6,7 @@
   box-sizing: border-box;
 }
 
-/* Fonts */
+/* Typography */
 
 @font-face {
   font-family: "Poppins";
@@ -109,7 +109,7 @@ button {
   cursor: pointer;
 }
 
-/* Layout */
+/* Main layout */
 
 .container {
   width: min(1200px, 92%);
@@ -323,7 +323,7 @@ tr:hover td {
   color: #32678f;
 }
 
-/* Page header */
+/* Page headings */
 
 .page-header {
   margin-bottom: 25px;
