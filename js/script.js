@@ -680,7 +680,6 @@ if (typeof setupStudentModal === 'function') setupStudentModal();
 if (typeof setupObservationLog === 'function') setupObservationLog();
 if (typeof setupStudentObservationForm === 'function') setupStudentObservationForm();
 if (typeof setupPlotPhoto === 'function') setupPlotPhoto();
-if (typeof setupObservationSearch === 'function') setupObservationSearch();
 if (typeof setupReportExport === 'function') setupReportExport();
 if (typeof setupStudentNotifications === 'function') setupStudentNotifications();
 if (typeof markActiveSidebarLink === 'function') markActiveSidebarLink();
@@ -695,6 +694,12 @@ if (typeof setupTableSearch === 'function') {
     inputId: 'plot-search',
     rowSelector: '.plot-row',
     emptyStateSelector: '[data-plot-empty]',
+    cardSelector: 'main .card',
+  });
+  setupTableSearch({
+    inputId: 'observation-search',
+    rowSelector: '.observation-row',
+    emptyStateSelector: '[data-observation-empty]',
     cardSelector: 'main .card',
   });
 }
