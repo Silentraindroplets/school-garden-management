@@ -598,7 +598,7 @@ body.modal-open {
 
 .report-filter-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
   align-items: end;
   gap: 16px;
 }
@@ -611,11 +611,27 @@ body.modal-open {
 .report-filter-grid input,
 .report-filter-grid select {
   box-sizing: border-box;
-  min-height: 42px;
+  height: 42px;
 }
 
 .report-export-action {
-  padding-bottom: 18px;
+  padding-bottom: 0;
+}
+
+.report-export-action .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  white-space: nowrap;
+}
+
+.report-export-action .btn img {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) invert(1);
 }
 
 .report-export-action .btn:disabled {
@@ -739,9 +755,6 @@ body.modal-open {
     gap: 12px;
   }
 
-  .report-export-action {
-    padding-bottom: 0;
-  }
 }
 
 @media (max-width: 600px) {
