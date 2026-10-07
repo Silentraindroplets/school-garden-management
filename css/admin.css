@@ -377,6 +377,17 @@ body.admin {
   font-size: 13px;
 }
 
+.admin-record-dialog {
+  width: min(100%, 560px);
+}
+
+.admin-record-form .teacher-note-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+}
+
 .admin-record-form .form-group {
   margin-bottom: 12px;
 }

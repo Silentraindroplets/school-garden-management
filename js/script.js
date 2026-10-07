@@ -704,3 +704,4 @@ if (typeof setupTableSearch === 'function') {
   });
 }
 updateUserDisplay();
+if (typeof setupTeacherNotesDisplay === 'function') setupTeacherNotesDisplay();

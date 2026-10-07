@@ -74,18 +74,26 @@
         </div>
 
         <div class="my-plot-sections">
-          <section class="card teacher-notes-card my-plot-card">
+          <section
+            class="card teacher-notes-card my-plot-card"
+            data-teacher-notes
+            data-plot-id="A-01"
+          >
             <div class="card-heading-row">
               <h2>Teacher Notes</h2>
               <span class="note-label">Latest note</span>
             </div>
 
-            <blockquote>
+            <blockquote data-teacher-note-text>
               “Remember to water every morning before class. Check the soil
               moisture, and report any concerns to your teacher.”
             </blockquote>
 
-            <p class="note-meta">Ms. Rivera <span aria-hidden="true">·</span> September 7, 2024</p>
+            <p class="note-meta">
+              <span data-teacher-note-author>Ms. Rivera</span>
+              <span aria-hidden="true">·</span>
+              <time data-teacher-note-date datetime="2024-09-07">September 7, 2024</time>
+            </p>
           </section>
 
           <section class="card my-plot-card">
@@ -94,7 +102,7 @@
             <dl class="plot-detail-list">
               <div>
                 <dt>Plot ID</dt>
-                <dd>A-01</dd>
+                <dd data-student-plot-id>A-01</dd>
               </div>
 
               <div>

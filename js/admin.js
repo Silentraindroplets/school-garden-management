@@ -232,7 +232,9 @@ function setupAdminTableActions() {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     const dialog = document.createElement('section');
-    dialog.className = 'modal-card';
+    dialog.className = config.key === 'plots' && action === 'edit'
+      ? 'modal-card admin-record-dialog'
+      : 'modal-card';
     dialog.setAttribute('role', 'dialog');
     dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-labelledby', 'admin-record-dialog-title');
@@ -305,6 +307,48 @@ function setupAdminTableActions() {
         form.append(group);
       });
 
+      const teacherNoteInput = config.key === 'plots'
+        ? document.createElement('textarea')
+        : null;
+      const dialogStatus = document.createElement('p');
+      dialogStatus.className = 'admin-action-status';
+      dialogStatus.setAttribute('role', 'status');
+      dialogStatus.setAttribute('aria-live', 'polite');
+      if (teacherNoteInput) {
+        teacherNoteInput.id = 'admin-record-teacher-note';
+        teacherNoteInput.name = 'teacher-note';
+        teacherNoteInput.maxLength = 1000;
+        const noteField = document.createElement('div');
+        noteField.className = 'form-group teacher-note-field';
+        const noteLabel = document.createElement('label');
+        noteLabel.htmlFor = teacherNoteInput.id;
+        noteLabel.textContent = 'Teacher note for the assigned student';
+        noteField.append(noteLabel, teacherNoteInput);
+        form.append(noteField);
+
+        try {
+          const savedNotes = JSON.parse(localStorage.getItem('gardenTrackerTeacherNotes') || '[]');
+          if (
+            !Array.isArray(savedNotes)
+            || savedNotes.some((note) => (
+              !note
+              || typeof note.plotId !== 'string'
+              || typeof note.student !== 'string'
+              || typeof note.text !== 'string'
+              || typeof note.author !== 'string'
+              || typeof note.updatedAt !== 'string'
+            ))
+          ) {
+            throw new Error('Stored teacher notes are not in a valid format.');
+          }
+          teacherNoteInput.value = savedNotes.find((note) => note.plotId === record[0])?.text || '';
+        } catch (error) {
+          console.error('Could not load the teacher note for this plot.', error);
+          dialogStatus.textContent = 'Teacher note could not be loaded. Check the saved note data before saving.';
+        }
+        form.append(dialogStatus);
+      }
+
       const saveButton = document.createElement('button');
       saveButton.type = 'submit';
       saveButton.className = 'btn btn-primary';
@@ -318,10 +362,69 @@ function setupAdminTableActions() {
         const updated = records.map((item, recordIndex) =>
           recordIndex === index ? updatedRecord : item
         );
+
+        let previousNotes;
+        if (teacherNoteInput) {
+          const teacherNotesKey = 'gardenTrackerTeacherNotes';
+          previousNotes = localStorage.getItem(teacherNotesKey);
+          try {
+            const savedNotes = JSON.parse(previousNotes || '[]');
+            if (
+              !Array.isArray(savedNotes)
+              || savedNotes.some((note) => (
+                !note
+                || typeof note.plotId !== 'string'
+                || typeof note.student !== 'string'
+                || typeof note.text !== 'string'
+                || typeof note.author !== 'string'
+                || typeof note.updatedAt !== 'string'
+              ))
+            ) {
+              throw new Error('Stored teacher notes are not in a valid format.');
+            }
+
+            const noteText = teacherNoteInput.value.trim();
+            const plotId = updatedRecord[0];
+            const student = updatedRecord[2];
+            if (noteText && (!plotId || !student || student === '—')) {
+              dialogStatus.textContent = 'Assign this plot to a student before adding a teacher note.';
+              return;
+            }
+            const nextNotes = savedNotes.filter(
+              (note) => note.plotId !== record[0] && note.plotId !== plotId
+            );
+            if (noteText) {
+              nextNotes.push({
+                plotId,
+                student,
+                text: noteText,
+                author: document.querySelector('[data-username]')?.textContent.trim() || 'Teacher',
+                updatedAt: new Date().toISOString(),
+              });
+            }
+            localStorage.setItem(teacherNotesKey, JSON.stringify(nextNotes));
+          } catch (error) {
+            console.error('Could not save the teacher note for this plot.', error);
+            dialogStatus.textContent = 'Teacher note could not be saved. Please try again.';
+            return;
+          }
+        }
+
         if (saveRecords(updated)) {
           render();
           showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated.`);
           close();
+        } else if (teacherNoteInput) {
+          dialogStatus.textContent = status.textContent;
+          try {
+            if (previousNotes === null) {
+              localStorage.removeItem('gardenTrackerTeacherNotes');
+            } else {
+              localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+            }
+          } catch (error) {
+            console.error('Could not roll back the teacher note after plot save failed.', error);
+          }
         }
       });
       dialog.append(form);

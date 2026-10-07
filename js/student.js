@@ -330,3 +330,62 @@ function setupPlotPhoto() {
     console.error('Could not load the saved plot photo.', error);
   }
 }
+
+function setupTeacherNotesDisplay() {
+  const section = document.querySelector('[data-teacher-notes]');
+  const textElement = section?.querySelector('[data-teacher-note-text]');
+  const authorElement = section?.querySelector('[data-teacher-note-author]');
+  const dateElement = section?.querySelector('[data-teacher-note-date]');
+  if (!section || !textElement || !authorElement || !dateElement) return;
+
+  try {
+    let plotId = section.dataset.plotId;
+    const username = localStorage.getItem('gardenTrackerCurrentUser');
+    const account = getAccounts().find((entry) => entry.username === username);
+    const studentName = account?.fullName;
+    const savedStudents = localStorage.getItem('gardenTrackerAdminRows:students');
+    if (studentName && savedStudents) {
+      const students = JSON.parse(savedStudents);
+      if (!Array.isArray(students)) {
+        throw new Error('Stored student records are not in a valid format.');
+      }
+      const student = students.find((entry) => entry[1] === studentName);
+      if (student && typeof student[3] === 'string' && student[3] !== '—') {
+        plotId = student[3];
+        section.dataset.plotId = plotId;
+        const plotIdElement = document.querySelector('[data-student-plot-id]');
+        if (plotIdElement) plotIdElement.textContent = plotId;
+      }
+    }
+
+    const notes = JSON.parse(localStorage.getItem('gardenTrackerTeacherNotes') || '[]');
+    if (!Array.isArray(notes)) {
+      throw new Error('Stored teacher notes are not in a valid format.');
+    }
+
+    const note = notes.find((entry) => entry.plotId === plotId);
+    if (!note) return;
+    if (
+      typeof note.text !== 'string'
+      || typeof note.author !== 'string'
+      || typeof note.updatedAt !== 'string'
+    ) {
+      throw new Error('Stored teacher note is not in a valid format.');
+    }
+
+    const updatedAt = new Date(note.updatedAt);
+    if (Number.isNaN(updatedAt.getTime())) {
+      throw new Error('Stored teacher note has an invalid update date.');
+    }
+    textElement.textContent = note.text;
+    authorElement.textContent = note.author;
+    dateElement.dateTime = updatedAt.toISOString();
+    dateElement.textContent = new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(updatedAt);
+  } catch (error) {
+    console.error('Could not load the latest teacher note.', error);
+  }
+}
