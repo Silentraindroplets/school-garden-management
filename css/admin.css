@@ -101,6 +101,13 @@ body.admin {
   width: 36px;
   height: 36px;
   font-size: 15px;
+  background: var(--primary);
+}
+
+.admin-topbar .user-menu details[open] .user-avatar,
+.admin-topbar .user-avatar:hover,
+.admin-topbar .user-avatar:focus-visible {
+  background: var(--primary);
 }
 
 .admin-topbar .user-avatar img {
@@ -224,7 +231,7 @@ body.admin {
 /* Welcome panel */
 
 .admin-header {
-  background: var(--secondary);
+  background: var(--primary);
   color: var(--white);
   border-radius: 12px;
   padding: 22px 26px;
