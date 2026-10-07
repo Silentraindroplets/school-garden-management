@@ -252,8 +252,8 @@
           <div class="form-group">
             <label for="student">Student</label>
 
-            <select id="student">
-              <option>Select Student</option>
+            <select id="student" required>
+              <option value="" selected disabled>Select Student</option>
 
               <option>Juan Dela Cruz</option>
               <option>Maria Santos</option>
@@ -265,8 +265,8 @@
           <div class="form-group">
             <label for="plot">Garden Plot</label>
 
-            <select id="plot">
-              <option>Select Available Plot</option>
+            <select id="plot" required>
+              <option value="" selected disabled>Select Available Plot</option>
 
               <option>A-13</option>
               <option>A-14</option>
@@ -275,6 +275,7 @@
             </select>
           </div>
 
+          <p data-assign-plot-status role="status" aria-live="polite"></p>
           <button class="btn btn-primary" type="submit">Assign Plot</button>
         </form>
       </section>

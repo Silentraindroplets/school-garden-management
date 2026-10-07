@@ -173,7 +173,6 @@ function setupTableSearch({ inputId, rowSelector, emptyStateSelector, cardSelect
   const input = document.getElementById(inputId);
   if (!input) return;
 
-  const rows       = [...document.querySelectorAll(rowSelector)];
   const emptyState = document.querySelector(emptyStateSelector);
   const card       = cardSelector ? document.querySelector(cardSelector) : null;
   const table      = card?.querySelector('table') ?? null;
@@ -182,7 +181,7 @@ function setupTableSearch({ inputId, rowSelector, emptyStateSelector, cardSelect
     const term = input.value.trim().toLowerCase();
     let visible = 0;
 
-    rows.forEach((row) => {
+    document.querySelectorAll(rowSelector).forEach((row) => {
       const match = row.textContent.toLowerCase().includes(term);
       row.hidden = !match;
       if (match) visible++;
@@ -677,6 +676,7 @@ if (typeof setupCustomSelects === 'function') setupCustomSelects();
 if (typeof setupDashboard === 'function') setupDashboard();
 if (typeof setupPlotAssignment === 'function') setupPlotAssignment();
 if (typeof setupStudentModal === 'function') setupStudentModal();
+if (typeof setupAdminTableActions === 'function') setupAdminTableActions();
 if (typeof setupObservationLog === 'function') setupObservationLog();
 if (typeof setupStudentObservationForm === 'function') setupStudentObservationForm();
 if (typeof setupPlotPhoto === 'function') setupPlotPhoto();
