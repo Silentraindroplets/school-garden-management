@@ -107,9 +107,6 @@
     <section class="card">
       <div class="admin-card-header">
         <h2>Student List</h2>
-        <button class="btn btn-primary" type="button" data-open-student-modal>
-          + Add Student
-        </button>
       </div>
 
       <div class="table-container">
@@ -219,50 +216,6 @@
       </div>
     </section>
   </main>
-
-  <div class="modal-overlay" data-student-modal hidden>
-    <section
-      class="modal-card"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="student-modal-title"
-    >
-      <div class="modal-header">
-        <h2 id="student-modal-title">Add Student</h2>
-        <button
-          class="modal-close"
-          type="button"
-          aria-label="Close dialog"
-          data-close-student-modal
-        >
-          &times;
-        </button>
-      </div>
-
-      <form data-student-form>
-        <div class="form-group">
-          <label for="new-student-name">Name</label>
-          <input id="new-student-name" name="name" type="text" required />
-        </div>
-        <div class="form-group">
-          <label for="new-student-grade">Grade &amp; Section</label>
-          <input id="new-student-grade" name="grade" type="text" required />
-        </div>
-        <div class="form-group">
-          <label for="new-student-plot">Garden Plot</label>
-          <input id="new-student-plot" name="plot" type="text" />
-        </div>
-        <div class="form-group">
-          <label for="new-student-status">Status</label>
-          <select id="new-student-status" name="status">
-            <option>Active</option>
-            <option>Unassigned</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" type="submit">Add Student</button>
-      </form>
-    </section>
-  </div>
 
 </body>
 

@@ -41,47 +41,6 @@ function setupPlotAssignment() {
   });
 }
 
-function setupStudentModal() {
-  const modal = document.querySelector('[data-student-modal]');
-  const form = document.querySelector('[data-student-form]');
-  const closeButton = modal?.querySelector('[data-close-student-modal]');
-  const openButton = document.querySelector('[data-open-student-modal]');
-  if (!modal || !form || !openButton || !closeButton) return;
-
-  const close = () => {
-    modal.hidden = true;
-    document.body.classList.remove('modal-open');
-    openButton.focus();
-  };
-
-  openButton.addEventListener('click', () => {
-    modal.hidden = false;
-    document.body.classList.add('modal-open');
-    document.getElementById('new-student-name')?.focus();
-  });
-  closeButton.addEventListener('click', close);
-  modal.addEventListener('click', (event) => {
-    if (event.target === modal) close();
-  });
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !modal.hidden) close();
-  });
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    document.dispatchEvent(new CustomEvent('admin:add-student', {
-      detail: {
-        name: String(data.get('name') || '').trim(),
-        grade: String(data.get('grade') || '').trim(),
-        plot: String(data.get('plot') || '').trim() || '—',
-        status: String(data.get('status') || 'Active').trim(),
-      },
-    }));
-    form.reset();
-    close();
-  });
-}
-
 function setupAdminDashboard() {
   const studentCount = document.querySelector('[data-stat="students"]');
   const plotCount = document.querySelector('[data-stat="plots"]');
@@ -845,47 +804,6 @@ function setupAdminTableActions() {
     const row = button?.closest(`tr.${config.rowClass}`);
     if (!button || !row) return;
     openRecordDialog(button.dataset.rowAction, Number(row.dataset.recordIndex), button);
-  });
-
-  document.addEventListener('admin:add-student', (event) => {
-    if (config.key !== 'students') return;
-    const { name, grade, plot, status: studentStatus } = event.detail;
-    const nextId = records.reduce((next, record) => {
-      const match = record[0].match(/^STU-(\d+)$/);
-      return match ? Math.max(next, Number(match[1]) + 1) : next;
-    }, 1);
-    const updated = [...records, [
-      `STU-${String(nextId).padStart(3, '0')}`,
-      name,
-      grade,
-      plot,
-      studentStatus,
-    ]];
-    const studentRecord = updated[updated.length - 1];
-    const historyEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      key: config.key,
-      entity: config.entity,
-      action: 'create',
-      beforeRecord: null,
-      afterRecord: studentRecord,
-      index: records.length,
-      createdAt: new Date().toISOString(),
-    };
-    if (!appendAdminHistory(historyEntry)) {
-      showStatus('Could not save the student creation to action history. No changes were made.');
-      return;
-    }
-    if (saveRecords(updated)) {
-      render();
-      showStatus('Student added.');
-    } else {
-      try {
-        removeAdminHistoryEntry(historyEntry.id);
-      } catch (error) {
-        console.error('Could not remove the failed student creation from action history.', error);
-      }
-    }
   });
 
   document.addEventListener('admin:assign-plot', (event) => {
