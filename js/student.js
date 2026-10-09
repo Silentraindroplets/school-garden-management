@@ -347,7 +347,91 @@ function setupStudentObservationForm() {
     || !submitButton
   ) return;
 
+  const confirmationOverlay = document.createElement('div');
+  confirmationOverlay.className = 'modal-overlay';
+  confirmationOverlay.hidden = true;
+
+  const confirmationDialog = document.createElement('section');
+  confirmationDialog.className = 'modal-card observation-confirmation-modal';
+  confirmationDialog.setAttribute('role', 'dialog');
+  confirmationDialog.setAttribute('aria-modal', 'true');
+  confirmationDialog.setAttribute('aria-labelledby', 'observation-confirmation-title');
+  confirmationDialog.setAttribute('aria-describedby', 'observation-confirmation-message');
+
+  const confirmationHeader = document.createElement('div');
+  confirmationHeader.className = 'modal-header';
+  const confirmationTitle = document.createElement('h2');
+  confirmationTitle.id = 'observation-confirmation-title';
+  confirmationHeader.append(confirmationTitle);
+
+  const confirmationMessage = document.createElement('p');
+  confirmationMessage.id = 'observation-confirmation-message';
+
+  const confirmationActions = document.createElement('div');
+  confirmationActions.className = 'observation-confirmation-actions';
+  const cancelButton = document.createElement('button');
+  cancelButton.className = 'btn btn-secondary';
+  cancelButton.type = 'button';
+  cancelButton.textContent = 'Cancel';
+  const confirmButton = document.createElement('button');
+  confirmButton.className = 'btn btn-primary';
+  confirmButton.type = 'button';
+  confirmationActions.append(cancelButton, confirmButton);
+  confirmationDialog.append(confirmationHeader, confirmationMessage, confirmationActions);
+  confirmationOverlay.append(confirmationDialog);
+  document.body.append(confirmationOverlay);
+
+  let finishConfirmation = null;
+  const closeConfirmation = (confirmed) => {
+    if (!finishConfirmation) return;
+    const finish = finishConfirmation;
+    finishConfirmation = null;
+    confirmationOverlay.hidden = true;
+    document.body.classList.remove('modal-open');
+    submitButton.focus();
+    finish(confirmed);
+  };
+  const showObservationModal = ({ title, text, confirmLabel, cancelLabel }) => new Promise((resolve) => {
+    confirmationTitle.textContent = title;
+    confirmationMessage.textContent = text;
+    confirmButton.textContent = confirmLabel;
+    cancelButton.hidden = !cancelLabel;
+    if (cancelLabel) cancelButton.textContent = cancelLabel;
+    finishConfirmation = resolve;
+    confirmationOverlay.hidden = false;
+    document.body.classList.add('modal-open');
+    (cancelLabel ? cancelButton : confirmButton).focus();
+  });
+
+  cancelButton.addEventListener('click', () => closeConfirmation(false));
+  confirmButton.addEventListener('click', () => closeConfirmation(true));
+  confirmationOverlay.addEventListener('click', (event) => {
+    if (event.target === confirmationOverlay) closeConfirmation(false);
+  });
+  confirmationDialog.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeConfirmation(false);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusableButtons = cancelButton.hidden
+      ? [confirmButton]
+      : [cancelButton, confirmButton];
+    const first = focusableButtons[0];
+    const last = focusableButtons[focusableButtons.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
   let previewUrl = null;
+  let isSubmitting = false;
   const clearPreview = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = null;
@@ -419,35 +503,44 @@ function setupStudentObservationForm() {
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!window.confirm('Are you sure you want to submit this observation?')) return;
+    if (isSubmitting) return;
+    isSubmitting = true;
 
-    const username = localStorage.getItem(currentUserStorageKey);
-    const account = getAccounts().find(
-      (item) => item.username === username && item.role === 'Student'
-    );
-    if (!account) {
-      setMessage(message, 'Sign in to a student account before submitting an observation.');
-      return;
-    }
-
-    const fallbackPlot = form.closest('[data-observation-plot]')?.dataset.observationPlot || '';
-    let assignedPlot;
     try {
-      assignedPlot = getAssignedPlotForStudent(account, fallbackPlot);
-    } catch (error) {
-      console.error('Could not resolve the assigned plot for this observation.', error);
-      setMessage(message, 'Your assigned plot could not be loaded. Please contact your administrator.');
-      return;
-    }
-    if (!assignedPlot) {
-      setMessage(message, 'An assigned plot is required before submitting an observation.');
-      return;
-    }
-    if (plotLabel) plotLabel.textContent = `Submitting an observation for Plot ${assignedPlot}.`;
+      const confirmed = await showObservationModal({
+        title: 'Submit observation?',
+        text: 'Are you sure you want to submit this observation?',
+        confirmLabel: 'Submit observation',
+        cancelLabel: 'Cancel',
+      });
+      if (!confirmed) return;
+      submitButton.disabled = true;
 
-    submitButton.disabled = true;
-    setMessage(message, 'Submitting observation...');
-    try {
+      const username = localStorage.getItem(currentUserStorageKey);
+      const account = getAccounts().find(
+        (item) => item.username === username && item.role === 'Student'
+      );
+      if (!account) {
+        setMessage(message, 'Sign in to a student account before submitting an observation.');
+        return;
+      }
+
+      const fallbackPlot = form.closest('[data-observation-plot]')?.dataset.observationPlot || '';
+      let assignedPlot;
+      try {
+        assignedPlot = getAssignedPlotForStudent(account, fallbackPlot);
+      } catch (error) {
+        console.error('Could not resolve the assigned plot for this observation.', error);
+        setMessage(message, 'Your assigned plot could not be loaded. Please contact your administrator.');
+        return;
+      }
+      if (!assignedPlot) {
+        setMessage(message, 'An assigned plot is required before submitting an observation.');
+        return;
+      }
+      if (plotLabel) plotLabel.textContent = `Submitting an observation for Plot ${assignedPlot}.`;
+
+      setMessage(message, 'Submitting observation...');
       const file = photoInput.files?.[0];
       if (file) {
         const photo = await optimizeObservationPhoto(file);
@@ -505,18 +598,22 @@ function setupStudentObservationForm() {
       });
       localStorage.setItem(growthObservationsStorageKey, JSON.stringify(storedObservations));
 
-      setMessage(
-        message,
-        file
-          ? 'Observation submitted. Your plot photo has been updated.'
-          : 'Observation submitted successfully.',
-        true
-      );
+      setMessage(message, '');
+      await showObservationModal({
+        title: 'Observation submitted',
+        text: file
+          ? 'Your observation was added successfully, and your plot photo has been updated.'
+          : 'Your observation was added successfully.',
+        confirmLabel: 'Done',
+        cancelLabel: '',
+      });
     } catch (error) {
       console.error('Could not submit the student observation.', error);
       setMessage(message, 'Unable to submit the observation. Please try again.');
     } finally {
+      isSubmitting = false;
       submitButton.disabled = false;
+      submitButton.focus();
     }
   });
 }
