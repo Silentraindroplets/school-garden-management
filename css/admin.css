@@ -1,5 +1,5 @@
 
-/* Admin workspace dimensions and colors shared by the fixed header and sidebar. */
+/* Admin theme tokens: keep the fixed sidebar, header, and page content aligned across admin screens. */
 :root {
   --admin-sidebar-bg: #1f2a22;
   --admin-sidebar-text: #c9d1c8;
@@ -17,7 +17,7 @@ body.admin {
   display: block;
 }
 
-/* Fixed admin header; its gradient continues the sidebar color behind the logo. */
+/* Fixed top bar: the gradient reserves the sidebar-width area for the brand, followed by the white header. */
 .admin-topbar {
   position: fixed;
   top: 0;
@@ -70,7 +70,7 @@ body.admin {
   object-fit: contain;
 }
 
-/* Current admin page trail in the header. */
+/* Breadcrumb trail: distinguish the current page from its clickable parent section. */
 .admin-breadcrumb {
   flex: 1;
   display: flex;
@@ -90,7 +90,7 @@ body.admin {
 .admin-breadcrumb .sep { color: #c7c1b5; }
 .admin-breadcrumb .current { color: var(--text); font-weight: 600; }
 
-/* Admin identity and account controls at the right side of the header. */
+/* Header account area: separate the signed-in user's avatar, name, and role from the breadcrumb. */
 .admin-topbar .user-menu {
   padding-left: 18px;
   margin-left: 0;
@@ -130,7 +130,7 @@ body.admin {
   color: var(--muted);
 }
 
-/* Fixed navigation rail; on small screens it slides in when toggled. */
+/* Side navigation: fixed below the header, with scrollable links and a mobile slide-in state. */
 .admin-sidebar {
   position: fixed;
   top: 0;                                
@@ -201,7 +201,7 @@ body.admin {
   color: #6f7d72;
 }
 
-/* Content offset accounts for the fixed header and sidebar. */
+/* Main admin workspace: offset page content beneath the fixed top bar and beside the fixed sidebar. */
 .admin-main {
   margin-left: var(--admin-sidebar-width);
   margin-top: var(--admin-topbar-height);
@@ -230,7 +230,7 @@ body.admin {
   font-size: 13.5px;
 }
 
-/* Dashboard welcome banner. */
+/* Admin dashboard introduction: primary-color welcome banner with compact title and description. */
 .admin-header {
   background: var(--primary);
   color: var(--white);
@@ -249,7 +249,7 @@ body.admin {
   font-size: 13.5px;
 }
 
-/* Dashboard activity cards and summary metrics. */
+/* Dashboard overview: activity feed cards, their metadata, and the linked summary metric cards. */
 .admin-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -330,7 +330,7 @@ body.admin {
   transform: none;
 }
 
-/* Keep linked dashboard metrics visibly keyboard-accessible. */
+/* Linked metrics: show a high-contrast focus ring for keyboard navigation without changing hover styling. */
 .admin-main .stat-card-link:focus {
   outline: none;
 }
@@ -352,7 +352,7 @@ body.admin {
   color: var(--muted);
 }
 
-/* Shared admin dialogs, including record editing and confirmation windows. */
+/* Admin dialogs: dim the page, center a scrollable dialog, and size destructive-action confirmations. */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -382,7 +382,7 @@ body.admin {
   width: min(100%, 440px);
 }
 
-/* Confirmation controls and compact undo/delete actions in action history. */
+/* Dialog and archive actions: align confirmation buttons and keep row-level undo/delete controls compact. */
 .admin-confirmation-actions,
 .archive-actions {
   display: flex;
@@ -409,7 +409,7 @@ body.admin {
   overflow-wrap: anywhere;
 }
 
-/* Plot-specific growth chart and chronological notable-change cards. */
+/* Growth tracker: plot summary, scalable height chart, empty state, and chronological observation cards. */
 .growth-filter {
   max-width: 420px;
 }
@@ -578,7 +578,7 @@ body.admin {
   font-size: 13px;
 }
 
-/* Record editor and profile/settings dialog content. */
+/* Dialog contents: record-edit fields, account profile details, settings feedback, and shared title rows. */
 .admin-record-dialog {
   width: min(100%, 560px);
 }
@@ -694,12 +694,12 @@ body.admin {
   color: var(--primary);
 }
 
-/* Prevent background scrolling while an admin dialog is open. */
+/* Lock the page behind an open dialog so scrolling stays within the active modal. */
 body.modal-open {
   overflow: hidden;
 }
 
-/* Shortcut tiles used on admin overview pages. */
+/* Admin dashboard shortcuts: two-column action tiles that highlight their destination on hover. */
 .admin-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -728,7 +728,7 @@ body.modal-open {
   margin-bottom: 5px;
 }
 
-/* Search/filter controls shared by admin record tables and reports. */
+/* Shared filters: place search inputs and report filters in a bordered toolbar with aligned controls. */
 .filter-bar {
   display: flex;
   gap: 10px;
@@ -763,7 +763,7 @@ body.modal-open {
   padding-left: 42px;
 }
 
-/* Row actions, archive controls, and report data tables. */
+/* Admin tables: size action columns, style icon buttons, and keep archive entries readable. */
 .table-actions {
   display: flex;
   align-items: center;
@@ -825,7 +825,7 @@ body.modal-open {
   outline-offset: 2px;
 }
 
-/* Report filters, export controls, previews, and summary cards. */
+/* Reports page: arrange date filters, export button, period summary, preview table, and metric cards. */
 .report-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -922,7 +922,7 @@ body.modal-open {
   margin-bottom: 15px;
 }
 
-/* Sidebar toggle button appears when the fixed navigation rail is hidden. */
+/* Mobile navigation control: hidden on desktop and shown when the sidebar becomes a slide-in panel. */
 .admin-sidebar-toggle {
   display: none;
   width: 36px;
@@ -937,7 +937,7 @@ body.modal-open {
   flex-shrink: 0;
 }
 
-/* Empty-result message shown when a table filter has no matches. */
+/* Filter empty state: center a clear title and hint when a table search finds no rows. */
 .table-empty-state {
   padding: 40px 20px;
   text-align: center;
@@ -957,7 +957,7 @@ body.modal-open {
   font-size: 13px;
 }
 
-/* Collapse the sidebar and report layouts for tablet and phone widths. */
+/* Tablet layout: hide the fixed sidebar until toggled and stack dashboard and report columns. */
 @media (max-width: 900px) {
   .admin-sidebar {
     transform: translateX(-100%);

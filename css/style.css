@@ -1,4 +1,4 @@
-/* Reset default spacing and use predictable border-box sizing throughout the app. */
+/* Global reset: remove browser-default spacing and include padding/borders in every element's width. */
 
 * {
   margin: 0;
@@ -6,7 +6,7 @@
   box-sizing: border-box;
 }
 
-/* Shared font faces and color, shadow, and radius tokens used across pages. */
+/* Design foundation: register Poppins weights and define shared text, surface, status, shadow, and radius tokens. */
 
 @font-face {
   font-family: "Poppins";
@@ -109,7 +109,7 @@ button {
   cursor: pointer;
 }
 
-/* Shared page container and footer; login pages use a darker footer treatment. */
+/* Shared layout: constrain page content, style the site footer, and adapt its colors on authentication pages. */
 
 .container {
   width: min(1200px, 92%);
@@ -170,7 +170,7 @@ button {
   border-left-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Reusable button shapes and semantic color variants. */
+/* Shared buttons: consistent spacing and hover movement, with semantic brand, success, warning, danger, and info colors. */
 
 .btn {
   display: inline-block;
@@ -221,7 +221,7 @@ button {
   color: var(--white);
 }
 
-/* Keep logout choices grouped and visually distinguish staying from signing out. */
+/* Logout confirmation: group the actions and make staying signed in green while signing out is red. */
 .logout-modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -252,7 +252,7 @@ button {
   color: var(--white);
 }
 
-/* Default surface for grouped page content. */
+/* Reusable content card: white surface, subtle border and shadow, rounded corners, and standard padding. */
 
 .card {
   background: var(--white);
@@ -262,7 +262,7 @@ button {
   padding: 22px;
 }
 
-/* Baseline field spacing, sizing, and focus styling for standard forms. */
+/* Shared form controls: align labels, fill the available width, and highlight the active field. */
 
 .form-group {
   margin-bottom: 18px;
@@ -297,7 +297,7 @@ button {
   resize: vertical;
 }
 
-/* Shared table spacing, separators, and subtle row hover feedback. */
+/* Shared data tables: allow horizontal scrolling, align cell content, separate rows, and highlight hovered rows. */
 
 .table-container {
   overflow-x: auto;
@@ -324,7 +324,7 @@ tr:hover td {
   background: #fafcf9;
 }
 
-/* Compact status labels with consistent semantic colors. */
+/* Status badges: use compact pill labels with consistent colors for success, warning, danger, and information. */
 
 .badge {
   display: inline-block;
@@ -354,7 +354,7 @@ tr:hover td {
   color: #32678f;
 }
 
-/* Standard title and supporting text spacing for page headers. */
+/* Page headings: keep title size, bottom spacing, and supporting copy consistent across screens. */
 
 .page-header {
   margin-bottom: 25px;
@@ -369,7 +369,7 @@ tr:hover td {
   color: var(--text-light);
 }
 
-/* Dashboard summary cards and their responsive grid. */
+/* Dashboard metrics: arrange summary cards in a three-column grid and style linked cards with icons and counts. */
 
 .stats-grid {
   display: grid;
@@ -422,7 +422,7 @@ tr:hover td {
   font-size: 14px;
 }
 
-/* Reduce dashboard columns and reflow footer content on smaller screens. */
+/* Responsive shared layout: reduce metric columns on tablets and stack footer content and cards on phones. */
 
 @media (max-width: 900px) {
   .stats-grid {

@@ -1,4 +1,4 @@
-/* Student dashboard greeting panel and introductory message. */
+/* Dashboard welcome banner: green background, white text, and compact heading spacing. */
 
 .student-welcome {
   background: var(--primary);
@@ -20,7 +20,7 @@
   color: #e8f1e8;
 }
 
-/* Assigned-plot summary, teacher notes, and optional plot photo. */
+/* My Plot page: plot summary layout, assignment details, teacher notes, and the latest plot photo. */
 
 .plot-card {
   display: flex;
@@ -133,7 +133,7 @@
   margin-top: 10px;
 }
 
-/* Dashboard shortcut cards linking to common student tasks. */
+/* Dashboard quick-action cards: three-column layout with a small lift on hover. */
 
 .quick-actions {
   display: grid;
@@ -173,7 +173,7 @@
   margin-bottom: 15px;
 }
 
-/* Weather select icons and the custom accessible select dropdown. */
+/* Observation form selects: weather icons plus the trigger, selected value, and open options menu. */
 
 .icon-select {
   background-repeat: no-repeat;
@@ -310,7 +310,7 @@
   flex-shrink: 0;
 }
 
-/* Observation entry card, field grid, and photo-upload preview. */
+/* Observation form layout and fields, including the photo chooser, selected-file preview, and status. */
 
 .observation-form-card {
   width: 100%;
@@ -539,7 +539,7 @@
   }
 }
 
-/* Compact observation summaries used in dashboard and activity lists. */
+/* Short activity summaries: metadata on top, followed by the observation title and description. */
 .observation-item {
   padding: 17px 0;
 
@@ -569,7 +569,7 @@
   font-size: 14px;
 }
 
-/* Observation history cards, metadata, condition badges, and view control. */
+/* Observation log: card layout, date and plot metadata, condition badges, and the detail-view button. */
 
 .log-entry {
   background: var(--white);
@@ -785,7 +785,7 @@
   box-shadow: none;
 }
 
-/* Observation detail dialog and student account profile/settings dialogs. */
+/* Dialog-specific sizing and content layouts for observation details, student profiles, and settings. */
 
 .log-modal-card {
   width: min(100%, 560px);
@@ -909,7 +909,7 @@
   line-height: 1.6;
 }
 
-/* Shared student modal overlay, dialog surface, and close control. */
+/* Shared dialog foundation: dim the page, center a scrollable panel, and provide a visible close control. */
 
 .modal-overlay {
   position: fixed;
@@ -974,7 +974,7 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Student account-menu avatar and notification bell/dropdown. */
+/* Header account and notifications: avatar, unread-count badge, and the expandable notification panel. */
 
 .user-menu .user-avatar {
   width: 36px;
@@ -1162,7 +1162,7 @@ body.modal-open {
   display: none;
 }
 
-/* Reflow observation cards and detail fields on phone-sized screens. */
+/* At phone widths, stack log-entry controls and place each observation detail field on its own row. */
 @media (max-width: 600px) {
   .log-entry-header {
     align-items: flex-start;
@@ -1184,7 +1184,7 @@ body.modal-open {
   }
 }
 
-/* Stack dashboard shortcuts and align plot summaries on narrow screens. */
+/* At tablet and phone widths, stack dashboard shortcuts and keep plot-card content top-aligned. */
 
 @media (max-width: 750px) {
   .quick-actions {
