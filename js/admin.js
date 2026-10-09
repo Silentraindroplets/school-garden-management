@@ -82,6 +82,121 @@ function setupStudentModal() {
   });
 }
 
+function setupAdminDashboard() {
+  const studentCount = document.querySelector('[data-stat="students"]');
+  const plotCount = document.querySelector('[data-stat="plots"]');
+  const observationCount = document.querySelector('[data-stat="observations"]');
+  const activityList = document.querySelector('[data-admin-recent-activity]');
+  const activityEmpty = document.querySelector('[data-admin-activity-empty]');
+  const status = document.querySelector('[data-admin-dashboard-status]');
+  if (!studentCount || !plotCount || !observationCount || !activityList || !activityEmpty) return;
+
+  const readArray = (key, isValidRecord) => {
+    const stored = localStorage.getItem(key);
+    if (stored === null) return null;
+    const records = JSON.parse(stored);
+    if (!Array.isArray(records) || records.some((record) => !isValidRecord(record))) {
+      throw new Error(`Saved ${key} data has an invalid format.`);
+    }
+    return records;
+  };
+
+  try {
+    const isStringRecord = (length) => (record) => (
+      Array.isArray(record)
+      && record.length === length
+      && record.every((value) => typeof value === 'string')
+    );
+    const students = readArray('gardenTrackerAdminRows:students', isStringRecord(5));
+    const plots = readArray('gardenTrackerAdminRows:plots', isStringRecord(4));
+    const adminObservations = readArray('gardenTrackerAdminRows:observations', isStringRecord(5));
+    const growthObservations = readArray(
+      'gardenTrackerGrowthObservations',
+      (observation) => (
+        Boolean(observation)
+        && typeof observation.id === 'string'
+        && typeof observation.plot === 'string'
+        && typeof observation.student === 'string'
+        && typeof observation.date === 'string'
+        && (observation.height === null || (
+          typeof observation.height === 'number'
+          && Number.isFinite(observation.height)
+          && observation.height >= 0
+        ))
+        && typeof observation.weather === 'string'
+        && typeof observation.soil === 'string'
+        && typeof observation.condition === 'string'
+        && typeof observation.notes === 'string'
+        && typeof observation.submittedAt === 'string'
+        && !Number.isNaN(new Date(observation.submittedAt).getTime())
+      )
+    );
+    const history = readAdminArchive().map(normalizeAdminHistoryEntry);
+
+    if (students) studentCount.textContent = String(students.length);
+    if (plots) {
+      plotCount.textContent = String(
+        plots.filter((plot) => plot[3].toLowerCase() === 'assigned').length
+      );
+    }
+    if (growthObservations) {
+      observationCount.textContent = String(growthObservations.length);
+    } else if (adminObservations) {
+      observationCount.textContent = String(adminObservations.length);
+    }
+
+    const activities = [
+      ...history.map((entry) => ({
+        date: entry.createdAt || entry.deletedAt,
+        category: entry.action === 'assign' ? 'Assignment' : 'Admin action',
+        title: `${entry.action} ${entry.entity}`,
+        detail: entry.action === 'assign'
+          ? 'A plot assignment was changed.'
+          : `An admin ${entry.entity} record was ${entry.action}d.`,
+      })),
+      ...(growthObservations || []).map((observation) => ({
+        date: observation.submittedAt,
+        category: 'Observation',
+        title: `${observation.student} submitted an observation for Plot ${observation.plot}`,
+        detail: observation.notes || `Plant condition: ${observation.condition}`,
+      })),
+    ].filter((activity) => (
+      typeof activity.date === 'string'
+      && !Number.isNaN(new Date(activity.date).getTime())
+    )).sort((first, second) => new Date(second.date) - new Date(first.date)).slice(0, 5);
+
+    activityList.replaceChildren();
+    activities.forEach((activity) => {
+      const item = document.createElement('article');
+      item.className = 'observation-item';
+      const meta = document.createElement('div');
+      meta.className = 'observation-meta';
+      const date = document.createElement('time');
+      date.dateTime = activity.date;
+      date.textContent = new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(activity.date));
+      const category = document.createElement('span');
+      category.className = 'badge badge-info';
+      category.textContent = activity.category;
+      meta.append(date, category);
+
+      const title = document.createElement('h3');
+      title.textContent = activity.title;
+      const detail = document.createElement('p');
+      detail.textContent = activity.detail;
+      item.append(meta, title, detail);
+      activityList.append(item);
+    });
+    activityEmpty.hidden = activities.length > 0;
+    if (status) status.textContent = '';
+  } catch (error) {
+    console.error('Could not load admin dashboard data.', error);
+    if (status) status.textContent = 'Some dashboard data could not be loaded.';
+  }
+}
+
 const adminArchiveStorageKey = 'gardenTrackerAdminArchive';
 const adminArchiveRecordConfigs = {
   students: {

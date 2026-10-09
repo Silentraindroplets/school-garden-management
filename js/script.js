@@ -743,6 +743,7 @@ if (typeof setupStudentAccountOverlays === 'function') setupStudentAccountOverla
 if (typeof setupAdminAccountOverlays === 'function') setupAdminAccountOverlays();
 if (typeof setupCustomSelects === 'function') setupCustomSelects();
 if (typeof setupDashboard === 'function') setupDashboard();
+if (typeof setupAdminDashboard === 'function') setupAdminDashboard();
 if (typeof setupPlotAssignment === 'function') setupPlotAssignment();
 if (typeof setupStudentModal === 'function') setupStudentModal();
 if (typeof setupAdminTableActions === 'function') setupAdminTableActions();

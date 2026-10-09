@@ -120,25 +120,79 @@ function setupStudentNotifications() {
 }
 
 function setupDashboard() {
-  const students = ['Juan Dela Cruz', 'Maria Santos', 'Ana Reyes', 'Pedro Garcia'];
-  const plots = ['A-12', 'A-14', 'B-02', 'B-06'];
-  const observations = [
-    { date: 'Aug. 28, 2026', plot: 'A-12', student: 'Juan Dela Cruz' },
-    { date: 'Aug. 27, 2026', plot: 'A-14', student: 'Maria Santos' },
-    { date: 'Aug. 26, 2026', plot: 'B-02', student: 'Ana Reyes' },
-    { date: 'Aug. 25, 2026', plot: 'B-06', student: 'Pedro Garcia' },
-  ];
-  const studentLogs = [
-    { date: 'August 28, 2026' },
-    { date: 'August 24, 2026' },
-    { date: 'August 20, 2026' },
-  ];
+  const lastObservation = document.querySelector('[data-stat="last-observation"]');
+  const observationCount = document.querySelector('[data-stat="submitted-observations"]');
+  const status = document.querySelector('[data-student-dashboard-status]');
+  const plotLabel = document.querySelector('[data-dashboard-plot]');
+  const plotSummary = document.querySelector('[data-dashboard-plot-summary]');
+  if (!lastObservation || !observationCount) return;
+  if (status) status.textContent = '';
 
-  setText('[data-stat="students"]', students.length);
-  setText('[data-stat="plots"]', plots.length);
-  setText('[data-stat="observations"]', observations.length);
-  setText('[data-stat="last-observation"]', studentLogs[0].date);
-  setText('[data-stat="submitted-observations"]', studentLogs.length);
+  try {
+    const stored = localStorage.getItem(growthObservationsStorageKey);
+    const observations = stored === null ? [] : JSON.parse(stored);
+    if (!Array.isArray(observations) || observations.some((observation) => (
+      !observation
+      || typeof observation.id !== 'string'
+      || typeof observation.plot !== 'string'
+      || typeof observation.student !== 'string'
+      || typeof observation.date !== 'string'
+      || !(observation.height === null || (
+        typeof observation.height === 'number'
+        && Number.isFinite(observation.height)
+        && observation.height >= 0
+      ))
+      || typeof observation.weather !== 'string'
+      || typeof observation.soil !== 'string'
+      || typeof observation.condition !== 'string'
+      || typeof observation.notes !== 'string'
+      || typeof observation.submittedAt !== 'string'
+      || Number.isNaN(new Date(`${observation.date}T00:00:00`).getTime())
+      || Number.isNaN(new Date(observation.submittedAt).getTime())
+    ))) {
+      throw new Error('Saved growth observations have an invalid format.');
+    }
+
+    const username = localStorage.getItem(currentUserStorageKey);
+    const account = getAccounts().find(
+      (item) => item.username === username && item.role === 'Student'
+    );
+    const studentObservations = account
+      ? observations
+        .filter((observation) => observation.student === account.fullName)
+        .sort((first, second) => first.date.localeCompare(second.date)
+          || first.submittedAt.localeCompare(second.submittedAt))
+      : [];
+
+    observationCount.textContent = String(studentObservations.length);
+    const latestObservation = studentObservations[studentObservations.length - 1];
+    if (latestObservation) {
+      const date = new Date(`${latestObservation.date}T00:00:00`);
+      lastObservation.textContent = Number.isNaN(date.getTime())
+        ? '—'
+        : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
+    } else {
+      lastObservation.textContent = '—';
+    }
+
+    let assignedPlot = '';
+    if (account) {
+      try {
+        assignedPlot = getAssignedPlotForStudent(account, '');
+      } catch (error) {
+        console.error('Could not load the student dashboard plot assignment.', error);
+        if (status) status.textContent = 'Your plot assignment could not be loaded.';
+      }
+    }
+
+    if (plotLabel) plotLabel.textContent = assignedPlot
+      ? `Garden Plot ${assignedPlot}`
+      : 'No plot assigned';
+    if (plotSummary) plotSummary.textContent = assignedPlot || 'No plot assigned';
+  } catch (error) {
+    console.error('Could not load dashboard observations.', error);
+    if (status) status.textContent = 'Your observation summary could not be loaded.';
+  }
 }
 
 function setupObservationLog() {

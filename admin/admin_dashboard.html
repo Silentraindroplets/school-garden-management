@@ -98,7 +98,7 @@
           <a href="manage_students.html" class="stat-card stat-card-link">
             <img src="../images/students.svg" alt="" class="stat-icon" />
 
-            <h3 data-stat="students">0</h3>
+            <h3 data-stat="students">4</h3>
 
             <p>Registered Students</p>
             <img src="../images/redirect.svg" alt="" class="redirect-icon" />
@@ -107,7 +107,7 @@
           <a href="manage_plots.html" class="stat-card stat-card-link">
             <img src="../images/garden-plot.svg" alt="" class="stat-icon" />
 
-            <h3 data-stat="plots">0</h3>
+            <h3 data-stat="plots">3</h3>
 
             <p>Assigned Plots</p>
             <img src="../images/redirect.svg" alt="" class="redirect-icon" />
@@ -116,7 +116,7 @@
           <a href="student_observations.html" class="stat-card stat-card-link">
             <img src="../images/observations.svg" alt="" class="stat-icon" />
 
-            <h3 data-stat="observations">0</h3>
+            <h3 data-stat="observations">4</h3>
 
             <p>Observations</p>
             <img src="../images/redirect.svg" alt="" class="redirect-icon" />
@@ -129,41 +129,11 @@
               <h2>Recent Activity</h2>
             </div>
 
-            <div class="observation-item">
-              <div class="observation-meta">
-                <span>Today</span>
-
-                <span class="badge badge-info"> Observation </span>
-              </div>
-
-              <h3>Student A updated Plot A-12</h3>
-
-              <p>New garden observation submitted.</p>
-            </div>
-
-            <div class="observation-item">
-              <div class="observation-meta">
-                <span>Yesterday</span>
-
-                <span class="badge badge-success"> Assignment </span>
-              </div>
-
-              <h3>Plot B-05 assigned</h3>
-
-              <p>A garden plot was assigned to a student.</p>
-            </div>
-
-            <div class="observation-item">
-              <div class="observation-meta">
-                <span>August 28</span>
-
-                <span class="badge badge-info"> Student </span>
-              </div>
-
-              <h3>New student registered</h3>
-
-              <p>A new student account was created.</p>
-            </div>
+            <p data-admin-dashboard-status role="status" aria-live="polite"></p>
+            <div data-admin-recent-activity></div>
+            <p class="table-empty-state" data-admin-activity-empty hidden>
+              No recent activity yet.
+            </p>
           </div>
         </section>
       </div>
