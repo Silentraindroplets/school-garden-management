@@ -1,4 +1,4 @@
-/* Base reset */
+/* Reset default spacing and use predictable border-box sizing throughout the app. */
 
 * {
   margin: 0;
@@ -6,7 +6,7 @@
   box-sizing: border-box;
 }
 
-/* Typography */
+/* Shared font faces and color, shadow, and radius tokens used across pages. */
 
 @font-face {
   font-family: "Poppins";
@@ -109,7 +109,7 @@ button {
   cursor: pointer;
 }
 
-/* Main layout */
+/* Shared page container and footer; login pages use a darker footer treatment. */
 
 .container {
   width: min(1200px, 92%);
@@ -170,7 +170,7 @@ button {
   border-left-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Buttons */
+/* Reusable button shapes and semantic color variants. */
 
 .btn {
   display: inline-block;
@@ -221,6 +221,7 @@ button {
   color: var(--white);
 }
 
+/* Keep logout choices grouped and visually distinguish staying from signing out. */
 .logout-modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -251,7 +252,7 @@ button {
   color: var(--white);
 }
 
-/* Cards */
+/* Default surface for grouped page content. */
 
 .card {
   background: var(--white);
@@ -261,7 +262,7 @@ button {
   padding: 22px;
 }
 
-/* Forms */
+/* Baseline field spacing, sizing, and focus styling for standard forms. */
 
 .form-group {
   margin-bottom: 18px;
@@ -296,7 +297,7 @@ button {
   resize: vertical;
 }
 
-/* Tables */
+/* Shared table spacing, separators, and subtle row hover feedback. */
 
 .table-container {
   overflow-x: auto;
@@ -323,7 +324,7 @@ tr:hover td {
   background: #fafcf9;
 }
 
-/* Badges */
+/* Compact status labels with consistent semantic colors. */
 
 .badge {
   display: inline-block;
@@ -353,7 +354,7 @@ tr:hover td {
   color: #32678f;
 }
 
-/* Page headings */
+/* Standard title and supporting text spacing for page headers. */
 
 .page-header {
   margin-bottom: 25px;
@@ -368,7 +369,7 @@ tr:hover td {
   color: var(--text-light);
 }
 
-/* Stats */
+/* Dashboard summary cards and their responsive grid. */
 
 .stats-grid {
   display: grid;
@@ -421,7 +422,7 @@ tr:hover td {
   font-size: 14px;
 }
 
-/* Responsive */
+/* Reduce dashboard columns and reflow footer content on smaller screens. */
 
 @media (max-width: 900px) {
   .stats-grid {

@@ -1,4 +1,4 @@
-/* Login and registration */
+/* Shared authentication card, branding, field layout, and feedback messages. */
 
 .auth-page {
   min-height: 100vh;
@@ -132,6 +132,7 @@
   outline-offset: 3px;
 }
 
+/* Login screen: split brand and form panels over the garden background. */
 .login-page {
   min-height: 100vh;
   position: relative;
@@ -303,7 +304,7 @@
   color: #aaa39a;
 }
 
-/* Form options */
+/* Secondary form controls such as remember-me and password help links. */
 
 .form-options {
   display: flex;
@@ -325,7 +326,7 @@
 }
 
 
-/* Checkbox */
+/* Remember-me checkbox alignment and accent color. */
 
 .remember-me {
   display: flex;
@@ -347,7 +348,7 @@
 }
 
 
-/* Signup checkbox */
+/* Consent checkbox used on account registration forms. */
 
 .form-check {
   display: flex;
@@ -382,7 +383,7 @@
 }
 
 
-/* Signup rows */
+/* Pair related signup fields into columns on wider screens. */
 
 .form-row {
   display: grid;
@@ -393,7 +394,7 @@
 }
 
 
-/* Auth buttons */
+/* Primary login and registration submit button states. */
 
 .btn,
 .auth-button {
@@ -436,7 +437,7 @@
 }
 
 
-/* Demo box */
+/* Supporting demo-account information shown on the login screen. */
 
 .login-demo {
   margin-top: 25px;
@@ -465,7 +466,7 @@
 }
 
 
-/* Auth footer */
+/* Links and helper text below authentication forms. */
 
 .auth-footer {
   margin-top: 22px;
@@ -492,7 +493,7 @@
 }
 
 
-/* Responsive */
+/* Stack the login brand and form panels on narrow screens. */
 
 @media (max-width: 800px) {
 

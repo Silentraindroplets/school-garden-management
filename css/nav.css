@@ -1,4 +1,4 @@
-/* Site navigation */
+/* Public-site header, brand, and primary navigation layout. */
 
 .navbar {
   background: var(--white);
@@ -82,6 +82,7 @@
     text-decoration: none;
 }
 
+/* Shared account trigger, identity text, and dropdown menu. */
 .user-menu {
   position: relative;
   display: flex;
@@ -169,7 +170,7 @@
   color: var(--text-light);
 }
 
-/* Main content */
+/* Main page content spacing below the navigation bar. */
 
 .main-content {
   padding: 35px 0 50px;
@@ -178,7 +179,7 @@
 
 }
 
-/* Responsive */
+/* Allow navigation links to wrap or scroll when the viewport narrows. */
 
 @media (max-width: 900px) {
   .navbar-inner {

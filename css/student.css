@@ -1,4 +1,4 @@
-/* Dashboard intro */
+/* Student dashboard greeting panel and introductory message. */
 
 .student-welcome {
   background: var(--primary);
@@ -20,7 +20,7 @@
   color: #e8f1e8;
 }
 
-/* Plot details */
+/* Assigned-plot summary, teacher notes, and optional plot photo. */
 
 .plot-card {
   display: flex;
@@ -133,7 +133,7 @@
   margin-top: 10px;
 }
 
-/* Quick actions */
+/* Dashboard shortcut cards linking to common student tasks. */
 
 .quick-actions {
   display: grid;
@@ -173,7 +173,7 @@
   margin-bottom: 15px;
 }
 
-/* Weather icons */
+/* Weather select icons and the custom accessible select dropdown. */
 
 .icon-select {
   background-repeat: no-repeat;
@@ -310,7 +310,7 @@
   flex-shrink: 0;
 }
 
-/* Observation form */
+/* Observation entry card, field grid, and photo-upload preview. */
 
 .observation-form-card {
   width: 100%;
@@ -457,6 +457,7 @@
   }
 }
 
+/* Compact observation summaries used in dashboard and activity lists. */
 .observation-item {
   padding: 17px 0;
 
@@ -486,7 +487,7 @@
   font-size: 14px;
 }
 
-/* Observation log */
+/* Observation history cards, metadata, condition badges, and view control. */
 
 .log-entry {
   background: var(--white);
@@ -702,7 +703,7 @@
   box-shadow: none;
 }
 
-/* Log details */
+/* Observation detail dialog and student account profile/settings dialogs. */
 
 .log-modal-card {
   width: min(100%, 560px);
@@ -826,7 +827,7 @@
   line-height: 1.6;
 }
 
-/* Dialogs */
+/* Shared student modal overlay, dialog surface, and close control. */
 
 .modal-overlay {
   position: fixed;
@@ -891,7 +892,7 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Student avatar */
+/* Student account-menu avatar and notification bell/dropdown. */
 
 .user-menu .user-avatar {
   width: 36px;
@@ -1079,6 +1080,7 @@ body.modal-open {
   display: none;
 }
 
+/* Reflow observation cards and detail fields on phone-sized screens. */
 @media (max-width: 600px) {
   .log-entry-header {
     align-items: flex-start;
@@ -1100,7 +1102,7 @@ body.modal-open {
   }
 }
 
-/* Small screens */
+/* Stack dashboard shortcuts and align plot summaries on narrow screens. */
 
 @media (max-width: 750px) {
   .quick-actions {

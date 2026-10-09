@@ -1,4 +1,5 @@
 
+/* Admin workspace dimensions and colors shared by the fixed header and sidebar. */
 :root {
   --admin-sidebar-bg: #1f2a22;
   --admin-sidebar-text: #c9d1c8;
@@ -16,6 +17,7 @@ body.admin {
   display: block;
 }
 
+/* Fixed admin header; its gradient continues the sidebar color behind the logo. */
 .admin-topbar {
   position: fixed;
   top: 0;
@@ -68,7 +70,7 @@ body.admin {
   object-fit: contain;
 }
 
-/* Breadcrumb */
+/* Current admin page trail in the header. */
 .admin-breadcrumb {
   flex: 1;
   display: flex;
@@ -88,7 +90,7 @@ body.admin {
 .admin-breadcrumb .sep { color: #c7c1b5; }
 .admin-breadcrumb .current { color: var(--text); font-weight: 600; }
 
-/* Account menu */
+/* Admin identity and account controls at the right side of the header. */
 .admin-topbar .user-menu {
   padding-left: 18px;
   margin-left: 0;
@@ -128,7 +130,7 @@ body.admin {
   color: var(--muted);
 }
 
-
+/* Fixed navigation rail; on small screens it slides in when toggled. */
 .admin-sidebar {
   position: fixed;
   top: 0;                                
@@ -199,7 +201,7 @@ body.admin {
   color: #6f7d72;
 }
 
-
+/* Content offset accounts for the fixed header and sidebar. */
 .admin-main {
   margin-left: var(--admin-sidebar-width);
   margin-top: var(--admin-topbar-height);
@@ -228,8 +230,7 @@ body.admin {
   font-size: 13.5px;
 }
 
-/* Welcome panel */
-
+/* Dashboard welcome banner. */
 .admin-header {
   background: var(--primary);
   color: var(--white);
@@ -248,8 +249,7 @@ body.admin {
   font-size: 13.5px;
 }
 
-/* Cards and metrics */
-
+/* Dashboard activity cards and summary metrics. */
 .admin-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -330,7 +330,7 @@ body.admin {
   transform: none;
 }
 
-/* Keyboard focus */
+/* Keep linked dashboard metrics visibly keyboard-accessible. */
 .admin-main .stat-card-link:focus {
   outline: none;
 }
@@ -352,7 +352,7 @@ body.admin {
   color: var(--muted);
 }
 
-
+/* Shared admin dialogs, including record editing and confirmation windows. */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -382,6 +382,7 @@ body.admin {
   width: min(100%, 440px);
 }
 
+/* Confirmation controls and compact undo/delete actions in action history. */
 .admin-confirmation-actions,
 .archive-actions {
   display: flex;
@@ -414,6 +415,7 @@ body.admin {
   font-size: 13px;
 }
 
+/* Record editor and profile/settings dialog content. */
 .admin-record-dialog {
   width: min(100%, 560px);
 }
@@ -529,10 +531,12 @@ body.admin {
   color: var(--primary);
 }
 
+/* Prevent background scrolling while an admin dialog is open. */
 body.modal-open {
   overflow: hidden;
 }
 
+/* Shortcut tiles used on admin overview pages. */
 .admin-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -561,7 +565,7 @@ body.modal-open {
   margin-bottom: 5px;
 }
 
-
+/* Search/filter controls shared by admin record tables and reports. */
 .filter-bar {
   display: flex;
   gap: 10px;
@@ -596,6 +600,7 @@ body.modal-open {
   padding-left: 42px;
 }
 
+/* Row actions, archive controls, and report data tables. */
 .table-actions {
   display: flex;
   align-items: center;
@@ -657,7 +662,7 @@ body.modal-open {
   outline-offset: 2px;
 }
 
-
+/* Report filters, export controls, previews, and summary cards. */
 .report-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -754,7 +759,7 @@ body.modal-open {
   margin-bottom: 15px;
 }
 
-
+/* Sidebar toggle button appears when the fixed navigation rail is hidden. */
 .admin-sidebar-toggle {
   display: none;
   width: 36px;
@@ -769,8 +774,7 @@ body.modal-open {
   flex-shrink: 0;
 }
 
-/* Empty search results */
-
+/* Empty-result message shown when a table filter has no matches. */
 .table-empty-state {
   padding: 40px 20px;
   text-align: center;
@@ -790,7 +794,7 @@ body.modal-open {
   font-size: 13px;
 }
 
-
+/* Collapse the sidebar and report layouts for tablet and phone widths. */
 @media (max-width: 900px) {
   .admin-sidebar {
     transform: translateX(-100%);
