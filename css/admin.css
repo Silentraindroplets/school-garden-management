@@ -396,7 +396,7 @@ body.admin {
 .archive-actions {
   margin: 0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   gap: 8px;
 }
@@ -408,8 +408,8 @@ body.admin {
 .archive-table th:last-child,
 .archive-table td:last-child {
   width: 120px;
-  text-align: right;
-  padding-right: 10px;
+  text-align: center;
+  padding-right: 0;
 }
 
 .archive-table td:nth-child(3) {
