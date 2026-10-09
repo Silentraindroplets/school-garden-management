@@ -398,6 +398,10 @@ body.admin {
   justify-content: flex-start;
 }
 
+.archive-action-button {
+  flex: 0 0 34px;
+}
+
 .archive-table th:last-child,
 .archive-table td:last-child {
   width: 210px;
@@ -411,7 +415,8 @@ body.admin {
 
 /* Growth tracker: plot summary, scalable height chart, empty state, and chronological observation cards. */
 .growth-filter {
-  max-width: 420px;
+  width: 100%;
+  max-width: none;
 }
 
 .growth-plot-summary {
