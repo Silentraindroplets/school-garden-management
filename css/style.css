@@ -221,6 +221,36 @@ button {
   color: var(--white);
 }
 
+.logout-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.logout-modal-actions [data-cancel-logout] {
+  border: 2px solid var(--primary-dark);
+  background: var(--primary);
+  color: var(--white);
+}
+
+.logout-modal-actions [data-cancel-logout]:hover,
+.logout-modal-actions [data-cancel-logout]:focus-visible {
+  background: var(--primary-dark);
+  color: var(--white);
+}
+
+.logout-modal-actions [data-confirm-logout] {
+  background: var(--danger);
+  color: var(--white);
+}
+
+.logout-modal-actions [data-confirm-logout]:hover,
+.logout-modal-actions [data-confirm-logout]:focus-visible {
+  background: #922626;
+  color: var(--white);
+}
+
 /* Cards */
 
 .card {

@@ -378,6 +378,36 @@ body.admin {
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
 }
 
+.admin-confirmation-modal {
+  width: min(100%, 440px);
+}
+
+.admin-confirmation-actions,
+.archive-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.archive-actions {
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.archive-table th:last-child,
+.archive-table td:last-child {
+  width: 210px;
+  text-align: left;
+}
+
+.archive-table td:nth-child(3) {
+  min-width: 240px;
+  overflow-wrap: anywhere;
+}
+
 .admin-action-status {
   margin: 0 0 12px;
   color: var(--muted);
@@ -572,6 +602,11 @@ body.modal-open {
   justify-content: center;
   gap: 8px;
   white-space: nowrap;
+}
+
+.archive-table td:nth-child(2) {
+  min-width: 240px;
+  overflow-wrap: anywhere;
 }
 
 .table-container table th:last-child,

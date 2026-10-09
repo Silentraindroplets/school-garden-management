@@ -318,6 +318,74 @@ function setupAuthentication() {
   });
 }
 
+function setupLogoutConfirmation() {
+  const logoutLinks = Array.from(document.querySelectorAll('a'))
+    .filter((link) => link.textContent.trim().toLowerCase() === 'logout');
+  if (!logoutLinks.length) return;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.hidden = true;
+  modal.innerHTML = `
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title" aria-describedby="logout-modal-description">
+      <div class="modal-header">
+        <h2 id="logout-modal-title">Log out?</h2>
+      </div>
+      <p id="logout-modal-description">Are you sure you want to log out?</p>
+      <div class="logout-modal-actions">
+        <button class="btn btn-secondary" type="button" data-cancel-logout>Stay signed in</button>
+        <a class="btn btn-danger" href="#" data-confirm-logout>Log out</a>
+      </div>
+    </section>
+  `;
+  document.body.append(modal);
+
+  const cancelButton = modal.querySelector('[data-cancel-logout]');
+  const confirmLink = modal.querySelector('[data-confirm-logout]');
+  let activeLogoutLink = null;
+
+  const closeModal = () => {
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    activeLogoutLink?.focus();
+    activeLogoutLink = null;
+  };
+
+  logoutLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      activeLogoutLink = link;
+      confirmLink.href = link.href;
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      cancelButton.focus();
+    });
+  });
+
+  cancelButton.addEventListener('click', closeModal);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closeModal();
+  });
+  modal.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeModal();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusable = [cancelButton, confirmLink];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+}
+
 function setupStudentAccountOverlays() {
   const profileLink = document.querySelector('[data-open-student-profile]');
   const settingsLink = document.querySelector('[data-open-student-settings]');
@@ -670,6 +738,7 @@ function setupAdminAccountOverlays() {
 ensureDemoAccounts();
 
 if (typeof setupAuthentication === 'function') setupAuthentication();
+if (typeof setupLogoutConfirmation === 'function') setupLogoutConfirmation();
 if (typeof setupStudentAccountOverlays === 'function') setupStudentAccountOverlays();
 if (typeof setupAdminAccountOverlays === 'function') setupAdminAccountOverlays();
 if (typeof setupCustomSelects === 'function') setupCustomSelects();
@@ -677,6 +746,7 @@ if (typeof setupDashboard === 'function') setupDashboard();
 if (typeof setupPlotAssignment === 'function') setupPlotAssignment();
 if (typeof setupStudentModal === 'function') setupStudentModal();
 if (typeof setupAdminTableActions === 'function') setupAdminTableActions();
+if (typeof setupAdminArchivePage === 'function') setupAdminArchivePage();
 if (typeof setupObservationLog === 'function') setupObservationLog();
 if (typeof setupStudentObservationForm === 'function') setupStudentObservationForm();
 if (typeof setupPlotPhoto === 'function') setupPlotPhoto();

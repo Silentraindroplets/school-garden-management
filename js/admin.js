@@ -82,6 +82,202 @@ function setupStudentModal() {
   });
 }
 
+const adminArchiveStorageKey = 'gardenTrackerAdminArchive';
+const adminArchiveRecordConfigs = {
+  students: {
+    entity: 'student',
+    storageKey: 'gardenTrackerAdminRows:students',
+    recordLength: 5,
+    identityField: 0,
+  },
+  plots: {
+    entity: 'plot',
+    storageKey: 'gardenTrackerAdminRows:plots',
+    recordLength: 4,
+    identityField: 0,
+  },
+  observations: {
+    entity: 'observation',
+    storageKey: 'gardenTrackerAdminRows:observations',
+    recordLength: 5,
+    identityField: null,
+  },
+};
+
+function readAdminArchive() {
+  const stored = localStorage.getItem(adminArchiveStorageKey);
+  if (stored === null) return [];
+
+  const archive = JSON.parse(stored);
+  if (
+    !Array.isArray(archive)
+    || archive.some((entry) => {
+      if (
+        !entry
+        || typeof entry.id !== 'string'
+        || !Object.prototype.hasOwnProperty.call(adminArchiveRecordConfigs, entry.key)
+        || entry.entity !== adminArchiveRecordConfigs[entry.key].entity
+        || !Number.isInteger(entry.index)
+        || entry.index < 0
+      ) return true;
+
+      const validRecord = (record) => (
+        record === null
+        || (
+          Array.isArray(record)
+          && record.length === adminArchiveRecordConfigs[entry.key].recordLength
+          && record.every((value) => typeof value === 'string')
+        )
+      );
+
+      if (entry.action === undefined) {
+        return !Array.isArray(entry.record)
+          || !validRecord(entry.record)
+          || typeof entry.deletedAt !== 'string';
+      }
+
+      return !['create', 'update', 'delete', 'assign'].includes(entry.action)
+        || !validRecord(entry.beforeRecord)
+        || !validRecord(entry.afterRecord)
+        || (entry.action === 'create' && (entry.beforeRecord !== null || entry.afterRecord === null))
+        || (entry.action === 'delete' && (entry.beforeRecord === null || entry.afterRecord !== null))
+        || (entry.action === 'update'
+          && (entry.beforeRecord === null || entry.afterRecord === null))
+        || (entry.action === 'assign'
+          && (entry.beforeRecord === null || entry.afterRecord === null))
+        || typeof entry.createdAt !== 'string'
+        || (
+          entry.beforeTeacherNotes !== undefined
+          && !(
+            entry.beforeTeacherNotes === null
+            || (
+              Array.isArray(entry.beforeTeacherNotes)
+              && entry.beforeTeacherNotes.every((note) => (
+                note
+                && typeof note.plotId === 'string'
+                && typeof note.student === 'string'
+                && typeof note.text === 'string'
+                && typeof note.author === 'string'
+                && typeof note.updatedAt === 'string'
+              ))
+            )
+          )
+        )
+        || (
+          entry.afterTeacherNotes !== undefined
+          && !(
+            entry.afterTeacherNotes === null
+            || (
+              Array.isArray(entry.afterTeacherNotes)
+              && entry.afterTeacherNotes.every((note) => (
+                note
+                && typeof note.plotId === 'string'
+                && typeof note.student === 'string'
+                && typeof note.text === 'string'
+                && typeof note.author === 'string'
+                && typeof note.updatedAt === 'string'
+              ))
+            )
+          )
+        );
+    })
+  ) {
+    throw new Error('Saved admin action history has an invalid format.');
+  }
+  return archive;
+}
+
+function normalizeAdminHistoryEntry(entry) {
+  if (entry.action) return entry;
+  return {
+    id: entry.id,
+    key: entry.key,
+    entity: entry.entity,
+    action: 'delete',
+    beforeRecord: entry.record,
+    afterRecord: null,
+    index: entry.index,
+    createdAt: entry.deletedAt,
+  };
+}
+
+function appendAdminHistory(entry) {
+  try {
+    const history = readAdminArchive();
+    history.push(entry);
+    localStorage.setItem(adminArchiveStorageKey, JSON.stringify(history));
+    return true;
+  } catch (error) {
+    console.error('Could not save the admin action history.', error);
+    return false;
+  }
+}
+
+function removeAdminHistoryEntry(id) {
+  const history = readAdminArchive();
+  localStorage.setItem(
+    adminArchiveStorageKey,
+    JSON.stringify(history.filter((entry) => entry.id !== id))
+  );
+}
+
+function showAdminConfirmation({ title, message, confirmLabel, trigger, onConfirm }) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <section class="modal-card admin-confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="admin-confirmation-title" aria-describedby="admin-confirmation-message">
+      <div class="modal-header">
+        <h2 id="admin-confirmation-title"></h2>
+      </div>
+      <p id="admin-confirmation-message"></p>
+      <div class="admin-confirmation-actions">
+        <button class="btn btn-secondary" type="button" data-cancel-confirmation>Cancel</button>
+        <button class="btn btn-danger" type="button" data-accept-confirmation></button>
+      </div>
+    </section>
+  `;
+  overlay.querySelector('#admin-confirmation-title').textContent = title;
+  overlay.querySelector('#admin-confirmation-message').textContent = message;
+  const cancelButton = overlay.querySelector('[data-cancel-confirmation]');
+  const confirmButton = overlay.querySelector('[data-accept-confirmation]');
+  confirmButton.textContent = confirmLabel;
+  document.body.append(overlay);
+  document.body.classList.add('modal-open');
+
+  const close = () => {
+    overlay.remove();
+    document.body.classList.remove('modal-open');
+    document.removeEventListener('keydown', onKeyDown);
+    trigger?.focus();
+  };
+  const onKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      close();
+    } else if (event.key === 'Tab') {
+      const focusables = [cancelButton, confirmButton];
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  };
+  cancelButton.addEventListener('click', close);
+  confirmButton.addEventListener('click', () => {
+    close();
+    onConfirm();
+  });
+  overlay.addEventListener('click', (event) => {
+    if (event.target === overlay) close();
+  });
+  document.addEventListener('keydown', onKeyDown);
+  cancelButton.focus();
+}
+
 function setupAdminTableActions() {
   const table = document.querySelector('main .table-container table');
   const tbody = table?.tBodies[0];
@@ -220,12 +416,42 @@ function setupAdminTableActions() {
     if (!record) return;
 
     if (action === 'delete') {
-      if (!window.confirm(`Delete this ${config.entity}? This cannot be undone.`)) return;
-      const updated = records.filter((_, recordIndex) => recordIndex !== index);
-      if (saveRecords(updated)) {
-        render();
-        showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} deleted.`);
-      }
+      showAdminConfirmation({
+        title: `Delete ${config.entity}?`,
+        message: `This ${config.entity} will be moved to the archive, where you can undo this action.`,
+        confirmLabel: 'Move to archive',
+        trigger,
+        onConfirm: () => {
+          const historyEntry = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            key: config.key,
+            entity: config.entity,
+            action: 'delete',
+            beforeRecord: [...record],
+            afterRecord: null,
+            index,
+            createdAt: new Date().toISOString(),
+          };
+          if (!appendAdminHistory(historyEntry)) {
+            showStatus('Could not save the delete action to history. No changes were made.');
+            return;
+          }
+
+          const updated = records.filter((_, recordIndex) => recordIndex !== index);
+          if (saveRecords(updated)) {
+            render();
+            showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} moved to the archive.`);
+            return;
+          }
+
+          try {
+            removeAdminHistoryEntry(historyEntry.id);
+          } catch (error) {
+            console.error(`Could not roll back the ${config.entity} delete action.`, error);
+            showStatus(`Could not remove the failed ${config.entity} delete from history.`);
+          }
+        },
+      });
       return;
     }
 
@@ -363,7 +589,9 @@ function setupAdminTableActions() {
           recordIndex === index ? updatedRecord : item
         );
 
-        let previousNotes;
+        let previousNotes = null;
+        let previousTeacherNotes = null;
+        let updatedTeacherNotes = null;
         if (teacherNoteInput) {
           const teacherNotesKey = 'gardenTrackerTeacherNotes';
           previousNotes = localStorage.getItem(teacherNotesKey);
@@ -390,6 +618,7 @@ function setupAdminTableActions() {
               dialogStatus.textContent = 'Assign this plot to a student before adding a teacher note.';
               return;
             }
+            previousTeacherNotes = previousNotes === null ? null : savedNotes;
             const nextNotes = savedNotes.filter(
               (note) => note.plotId !== record[0] && note.plotId !== plotId
             );
@@ -402,20 +631,62 @@ function setupAdminTableActions() {
                 updatedAt: new Date().toISOString(),
               });
             }
-            localStorage.setItem(teacherNotesKey, JSON.stringify(nextNotes));
+            updatedTeacherNotes = nextNotes;
           } catch (error) {
-            console.error('Could not save the teacher note for this plot.', error);
-            dialogStatus.textContent = 'Teacher note could not be saved. Please try again.';
+            console.error('Could not prepare the teacher note for this plot.', error);
+            dialogStatus.textContent = 'Teacher note could not be prepared. Please try again.';
             return;
           }
+        }
+
+        const historyEntry = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          key: config.key,
+          entity: config.entity,
+          action: 'update',
+          beforeRecord: [...record],
+          afterRecord: updatedRecord,
+          index,
+          createdAt: new Date().toISOString(),
+        };
+        if (teacherNoteInput) {
+          historyEntry.beforeTeacherNotes = previousTeacherNotes;
+          historyEntry.afterTeacherNotes = updatedTeacherNotes;
+        }
+        if (!appendAdminHistory(historyEntry)) {
+          dialogStatus.textContent = 'Could not save the edit to action history. No changes were made.';
+          return;
+        }
+
+        try {
+          if (teacherNoteInput) {
+            localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(updatedTeacherNotes));
+          }
+        } catch (error) {
+          console.error('Could not save the teacher note for this plot.', error);
+          try {
+            removeAdminHistoryEntry(historyEntry.id);
+          } catch (rollbackError) {
+            console.error('Could not remove the failed edit from action history.', rollbackError);
+          }
+          dialogStatus.textContent = 'Teacher note could not be saved. No changes were made.';
+          return;
         }
 
         if (saveRecords(updated)) {
           render();
           showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated.`);
           close();
-        } else if (teacherNoteInput) {
-          dialogStatus.textContent = status.textContent;
+          return;
+        }
+
+        dialogStatus.textContent = status.textContent;
+        try {
+          removeAdminHistoryEntry(historyEntry.id);
+        } catch (error) {
+          console.error('Could not remove the failed edit from action history.', error);
+        }
+        if (teacherNoteInput) {
           try {
             if (previousNotes === null) {
               localStorage.removeItem('gardenTrackerTeacherNotes');
@@ -456,9 +727,30 @@ function setupAdminTableActions() {
       plot,
       studentStatus,
     ]];
+    const studentRecord = updated[updated.length - 1];
+    const historyEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      key: config.key,
+      entity: config.entity,
+      action: 'create',
+      beforeRecord: null,
+      afterRecord: studentRecord,
+      index: records.length,
+      createdAt: new Date().toISOString(),
+    };
+    if (!appendAdminHistory(historyEntry)) {
+      showStatus('Could not save the student creation to action history. No changes were made.');
+      return;
+    }
     if (saveRecords(updated)) {
       render();
       showStatus('Student added.');
+    } else {
+      try {
+        removeAdminHistoryEntry(historyEntry.id);
+      } catch (error) {
+        console.error('Could not remove the failed student creation from action history.', error);
+      }
     }
   });
 
@@ -466,6 +758,7 @@ function setupAdminTableActions() {
     if (config.key !== 'plots') return;
     const { student, plot } = event.detail;
     const plotIndex = records.findIndex((record) => record[0] === plot);
+    const previousRecord = plotIndex === -1 ? null : [...records[plotIndex]];
     const updated = records.map((record, index) => {
       if (index !== plotIndex) return record;
       const next = [...record];
@@ -474,10 +767,263 @@ function setupAdminTableActions() {
       return next;
     });
     if (plotIndex === -1) updated.push([plot, 'School Garden', student, 'Assigned']);
+    const nextIndex = plotIndex === -1 ? updated.length - 1 : plotIndex;
+    const historyEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      key: config.key,
+      entity: config.entity,
+      action: plotIndex === -1 ? 'create' : 'assign',
+      beforeRecord: previousRecord,
+      afterRecord: [...updated[nextIndex]],
+      index: nextIndex,
+      createdAt: new Date().toISOString(),
+    };
+    if (!appendAdminHistory(historyEntry)) {
+      showStatus('Could not save the plot assignment to action history. No changes were made.');
+      return;
+    }
     if (saveRecords(updated)) {
       render();
       showStatus(`Plot ${plot} assigned to ${student}.`);
+    } else {
+      try {
+        removeAdminHistoryEntry(historyEntry.id);
+      } catch (error) {
+        console.error('Could not remove the failed plot assignment from action history.', error);
+      }
     }
+  });
+
+  render();
+}
+
+function setupAdminArchivePage() {
+  const tbody = document.querySelector('[data-archive-records]');
+  if (!tbody) return;
+
+  const status = document.querySelector('[data-archive-status]');
+  const emptyState = document.querySelector('[data-archive-empty]');
+
+  const showStatus = (message) => {
+    status.textContent = message;
+  };
+
+  const render = () => {
+    let history;
+    try {
+      history = readAdminArchive();
+    } catch (error) {
+      console.error('Could not load admin action history.', error);
+      showStatus('Action history could not be loaded. Check the saved history data.');
+      return;
+    }
+
+    tbody.replaceChildren();
+    [...history].reverse().forEach((rawEntry) => {
+      const entry = normalizeAdminHistoryEntry(rawEntry);
+      const row = document.createElement('tr');
+      const entityCell = document.createElement('td');
+      entityCell.textContent = `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)}`;
+      const recordCell = document.createElement('td');
+      const before = entry.beforeRecord?.join(' · ');
+      const after = entry.afterRecord?.join(' · ');
+      recordCell.textContent = before && after
+        ? `${before} → ${after}`
+        : before || after;
+      const actionCellType = document.createElement('td');
+      const actionNames = {
+        create: 'Added',
+        update: 'Edited',
+        delete: 'Deleted',
+        assign: 'Plot assigned',
+      };
+      actionCellType.textContent = actionNames[entry.action];
+      const dateCell = document.createElement('td');
+      const actionDate = new Date(entry.createdAt);
+      dateCell.textContent = Number.isNaN(actionDate.getTime())
+        ? 'Unknown date'
+        : actionDate.toLocaleString();
+      const actionCell = document.createElement('td');
+      const undoButton = document.createElement('button');
+      undoButton.type = 'button';
+      undoButton.className = 'btn btn-primary';
+      undoButton.dataset.undoHistoryEntry = entry.id;
+      undoButton.textContent = 'Undo';
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'btn btn-danger';
+      deleteButton.dataset.deleteHistoryEntry = entry.id;
+      deleteButton.textContent = 'Delete';
+      const actions = document.createElement('div');
+      actions.className = 'archive-actions';
+      actions.append(undoButton, deleteButton);
+      actionCell.append(actions);
+      row.append(entityCell, actionCellType, recordCell, dateCell, actionCell);
+      tbody.append(row);
+    });
+
+    emptyState.hidden = history.length > 0;
+    showStatus(history.length ? `${history.length} action${history.length === 1 ? '' : 's'} in history.` : '');
+  };
+
+  tbody.addEventListener('click', (event) => {
+    const undoButton = event.target.closest('[data-undo-history-entry]');
+    const deleteButton = event.target.closest('[data-delete-history-entry]');
+    if (!undoButton && !deleteButton) return;
+
+    let history;
+    try {
+      history = readAdminArchive();
+    } catch (error) {
+      console.error('Could not read admin action history.', error);
+      showStatus('Action history could not be read. No records were changed.');
+      return;
+    }
+
+    const button = undoButton || deleteButton;
+    const historyIndex = history.findIndex((entry) => entry.id === button.dataset.undoHistoryEntry
+      || entry.id === button.dataset.deleteHistoryEntry);
+    const rawEntry = history[historyIndex];
+    if (!rawEntry) {
+      showStatus('This history entry is no longer available. Refresh the page and try again.');
+      render();
+      return;
+    }
+
+    const entry = normalizeAdminHistoryEntry(rawEntry);
+    if (deleteButton) {
+      showAdminConfirmation({
+        title: 'Delete history entry?',
+        message: 'This action will be permanently removed. If it represents a deleted record, that record will no longer be recoverable.',
+        confirmLabel: 'Delete permanently',
+        trigger: deleteButton,
+        onConfirm: () => {
+          try {
+            removeAdminHistoryEntry(entry.id);
+          } catch (error) {
+            console.error('Could not permanently delete the history entry.', error);
+            showStatus('Could not delete this history entry. Please try again.');
+            return;
+          }
+          render();
+          showStatus('History entry permanently deleted.');
+        },
+      });
+      return;
+    }
+
+    const config = adminArchiveRecordConfigs[entry.key];
+    const previousRecords = localStorage.getItem(config.storageKey);
+    let records;
+    try {
+      records = JSON.parse(previousRecords);
+      if (
+        previousRecords === null
+        || !Array.isArray(records)
+        || records.some((record) =>
+          !Array.isArray(record)
+          || record.length !== config.recordLength
+          || record.some((value) => typeof value !== 'string')
+        )
+      ) {
+        throw new Error(`Saved ${entry.entity} records have an invalid format.`);
+      }
+    } catch (error) {
+      console.error(`Could not load the active ${entry.entity} list for undo.`, error);
+      showStatus(`Could not undo this action. The active ${entry.entity} list could not be loaded.`);
+      return;
+    }
+
+    const expectedRecord = entry.action === 'delete' ? null : entry.afterRecord;
+    let recordIndex = -1;
+    if (entry.action !== 'delete') {
+      if (
+        records[entry.index]
+        && JSON.stringify(records[entry.index]) === JSON.stringify(expectedRecord)
+      ) {
+        recordIndex = entry.index;
+      } else {
+        const matches = records.reduce((indices, record, index) => {
+          if (JSON.stringify(record) === JSON.stringify(expectedRecord)) indices.push(index);
+          return indices;
+        }, []);
+        if (matches.length === 1) recordIndex = matches[0];
+      }
+      if (recordIndex === -1) {
+        showStatus(`This ${entry.entity} has changed since the action. Undo newer changes first.`);
+        return;
+      }
+    } else {
+      const identityField = config.identityField;
+      const alreadyExists = records.some((record) => (
+        identityField === null
+          ? JSON.stringify(record) === JSON.stringify(entry.beforeRecord)
+          : record[identityField] === entry.beforeRecord[identityField]
+      ));
+      if (alreadyExists) {
+        showStatus(`A matching ${entry.entity} already exists. The history entry was kept.`);
+        return;
+      }
+    }
+
+    let previousNotes = null;
+    let nextNotes = null;
+    if (entry.beforeTeacherNotes !== undefined) {
+      previousNotes = localStorage.getItem('gardenTrackerTeacherNotes');
+      try {
+        const currentNotes = previousNotes === null ? null : JSON.parse(previousNotes);
+        if (JSON.stringify(currentNotes) !== JSON.stringify(entry.afterTeacherNotes)) {
+          showStatus('The teacher note has changed since this edit. Undo newer note changes first.');
+          return;
+        }
+        nextNotes = entry.beforeTeacherNotes;
+      } catch (error) {
+        console.error('Could not load teacher notes for undo.', error);
+        showStatus('Could not undo this edit because the teacher notes could not be loaded.');
+        return;
+      }
+    }
+
+    const updatedRecords = [...records];
+    if (entry.action === 'delete') {
+      updatedRecords.splice(Math.min(entry.index, updatedRecords.length), 0, entry.beforeRecord);
+    } else if (entry.action === 'create') {
+      updatedRecords.splice(recordIndex, 1);
+    } else {
+      updatedRecords[recordIndex] = entry.beforeRecord;
+    }
+    const updatedHistory = history.filter((_, index) => index !== historyIndex);
+    const previousHistory = localStorage.getItem(adminArchiveStorageKey);
+    try {
+      localStorage.setItem(config.storageKey, JSON.stringify(updatedRecords));
+      if (entry.beforeTeacherNotes !== undefined) {
+        if (nextNotes === null) {
+          localStorage.removeItem('gardenTrackerTeacherNotes');
+        } else {
+          localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(nextNotes));
+        }
+      }
+      localStorage.setItem(adminArchiveStorageKey, JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.error(`Could not undo the ${entry.entity} action.`, error);
+      try {
+        if (previousRecords === null) localStorage.removeItem(config.storageKey);
+        else localStorage.setItem(config.storageKey, previousRecords);
+        if (entry.beforeTeacherNotes !== undefined) {
+          if (previousNotes === null) localStorage.removeItem('gardenTrackerTeacherNotes');
+          else localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+        }
+        if (previousHistory === null) localStorage.removeItem(adminArchiveStorageKey);
+        else localStorage.setItem(adminArchiveStorageKey, previousHistory);
+      } catch (rollbackError) {
+        console.error(`Could not roll back the ${entry.entity} action after undo failed.`, rollbackError);
+      }
+      showStatus('Could not undo this action. Please try again.');
+      return;
+    }
+
+    render();
+    showStatus(`${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone.`);
   });
 
   render();
