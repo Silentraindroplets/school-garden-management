@@ -268,24 +268,39 @@
             </div>
 
             <div class="form-group full-width">
-              <label for="observation-photo">Photo Upload</label>
-
-              <label class="photo-upload" for="observation-photo">
-                <span class="photo-upload-icon" aria-hidden="true">+</span>
-                <img
-                  class="photo-upload-preview"
-                  data-observation-photo-preview
-                  alt="Selected plant photo preview"
-                  hidden
-                />
-                <span data-observation-photo-label>Click to upload a photo of your plant</span>
-              </label>
+              <p class="photo-upload-label">Plant Photo</p>
               <input
                 type="file"
                 id="observation-photo"
                 accept="image/*"
                 class="photo-upload-input"
+                hidden
               />
+              <div class="photo-upload">
+                <div class="photo-upload-copy">
+                  <strong>Attach a photo of your plant</strong>
+                  <span id="observation-photo-help">Choose a clear image to support your observation. Maximum file size: 10 MB.</span>
+                </div>
+                <button class="btn btn-secondary photo-upload-button" type="button" data-observation-photo-select aria-describedby="observation-photo-help observation-photo-status">
+                  Choose Photo
+                </button>
+                <div class="photo-upload-selection" data-observation-photo-selection hidden>
+                  <img
+                    class="photo-upload-preview"
+                    data-observation-photo-preview
+                    alt="Preview of the selected plant photo"
+                    hidden
+                  />
+                  <div class="photo-upload-file-details">
+                    <strong data-observation-photo-name></strong>
+                    <span data-observation-photo-size></span>
+                  </div>
+                  <button class="photo-upload-remove" type="button" data-observation-photo-remove>
+                    Remove photo
+                  </button>
+                </div>
+                <p class="photo-upload-status" id="observation-photo-status" data-observation-photo-status role="status" aria-live="polite"></p>
+              </div>
             </div>
 
             <p class="form-message" data-observation-submit-message role="status" aria-live="polite"></p>

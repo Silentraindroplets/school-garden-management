@@ -324,11 +324,28 @@ function setupStudentObservationForm() {
   const form = document.querySelector('.observation-form');
   const photoInput = document.getElementById('observation-photo');
   const photoPreview = form?.querySelector('[data-observation-photo-preview]');
-  const photoLabel = form?.querySelector('[data-observation-photo-label]');
+  const photoSelectButton = form?.querySelector('[data-observation-photo-select]');
+  const photoSelection = form?.querySelector('[data-observation-photo-selection]');
+  const photoName = form?.querySelector('[data-observation-photo-name]');
+  const photoSize = form?.querySelector('[data-observation-photo-size]');
+  const photoStatus = form?.querySelector('[data-observation-photo-status]');
+  const photoRemoveButton = form?.querySelector('[data-observation-photo-remove]');
   const message = form?.querySelector('[data-observation-submit-message]');
   const submitButton = form?.querySelector('[type="submit"]');
   const plotLabel = form?.closest('[data-observation-plot]')?.querySelector('[data-observation-plot-label]');
-  if (!form || !photoInput || !photoPreview || !photoLabel || !message || !submitButton) return;
+  if (
+    !form
+    || !photoInput
+    || !photoPreview
+    || !photoSelectButton
+    || !photoSelection
+    || !photoName
+    || !photoSize
+    || !photoStatus
+    || !photoRemoveButton
+    || !message
+    || !submitButton
+  ) return;
 
   let previewUrl = null;
   const clearPreview = () => {
@@ -336,8 +353,50 @@ function setupStudentObservationForm() {
     previewUrl = null;
     photoPreview.hidden = true;
     photoPreview.removeAttribute('src');
-    photoLabel.textContent = 'Click to upload a photo of your plant';
+    photoName.textContent = '';
+    photoSize.textContent = '';
+    photoSelection.hidden = true;
+    photoSelectButton.textContent = 'Choose Photo';
   };
+
+  photoSelectButton.addEventListener('click', () => photoInput.click());
+  photoRemoveButton.addEventListener('click', () => {
+    photoInput.value = '';
+    clearPreview();
+    photoStatus.textContent = '';
+    photoSelectButton.focus();
+  });
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files?.[0];
+    setMessage(message, '');
+    photoStatus.textContent = '';
+    if (!file) {
+      clearPreview();
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      photoInput.value = '';
+      clearPreview();
+      photoStatus.textContent = 'Choose a valid image file.';
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      photoInput.value = '';
+      clearPreview();
+      photoStatus.textContent = 'This photo is larger than 10 MB. Choose a smaller image.';
+      return;
+    }
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(file);
+    photoPreview.src = previewUrl;
+    photoPreview.hidden = false;
+    photoName.textContent = file.name;
+    photoSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    photoSelection.hidden = false;
+    photoSelectButton.textContent = 'Change Photo';
+  });
 
   const signedInAccount = getAccounts().find(
     (item) => item.username === localStorage.getItem(currentUserStorageKey)
@@ -357,28 +416,6 @@ function setupStudentObservationForm() {
       plotLabel.textContent = 'Your assigned plot could not be loaded.';
     }
   }
-
-  photoInput.addEventListener('change', () => {
-    const file = photoInput.files?.[0];
-    setMessage(message, '');
-    if (!file) {
-      clearPreview();
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      photoInput.value = '';
-      clearPreview();
-      setMessage(message, 'Choose a valid image file.');
-      return;
-    }
-
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = URL.createObjectURL(file);
-    photoPreview.src = previewUrl;
-    photoPreview.hidden = false;
-    photoLabel.textContent = 'Selected photo (click to change)';
-  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
