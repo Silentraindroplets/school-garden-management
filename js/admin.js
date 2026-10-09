@@ -221,7 +221,14 @@ function removeAdminHistoryEntry(id) {
   );
 }
 
-function showAdminConfirmation({ title, message, confirmLabel, trigger, onConfirm }) {
+function showAdminConfirmation({
+  title,
+  message,
+  confirmLabel,
+  confirmClass = 'btn btn-danger',
+  trigger,
+  onConfirm,
+}) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -240,13 +247,16 @@ function showAdminConfirmation({ title, message, confirmLabel, trigger, onConfir
   overlay.querySelector('#admin-confirmation-message').textContent = message;
   const cancelButton = overlay.querySelector('[data-cancel-confirmation]');
   const confirmButton = overlay.querySelector('[data-accept-confirmation]');
+  confirmButton.className = confirmClass;
   confirmButton.textContent = confirmLabel;
   document.body.append(overlay);
   document.body.classList.add('modal-open');
 
   const close = () => {
     overlay.remove();
-    document.body.classList.remove('modal-open');
+    if (!document.querySelector('.modal-overlay')) {
+      document.body.classList.remove('modal-open');
+    }
     document.removeEventListener('keydown', onKeyDown);
     trigger?.focus();
   };
@@ -582,121 +592,130 @@ function setupAdminTableActions() {
       form.append(saveButton);
       form.addEventListener('submit', (event) => {
         event.preventDefault();
-        const updatedRecord = headings.map((_, fieldIndex) =>
-          String(new FormData(form).get(`field-${fieldIndex}`) || '').trim()
-        );
-        const updated = records.map((item, recordIndex) =>
-          recordIndex === index ? updatedRecord : item
-        );
+        showAdminConfirmation({
+          title: `Save ${config.entity} changes?`,
+          message: `Do you want to save these edits to this ${config.entity}?`,
+          confirmLabel: 'Save changes',
+          confirmClass: 'btn btn-primary',
+          trigger: saveButton,
+          onConfirm: () => {
+            const updatedRecord = headings.map((_, fieldIndex) =>
+              String(new FormData(form).get(`field-${fieldIndex}`) || '').trim()
+            );
+            const updated = records.map((item, recordIndex) =>
+              recordIndex === index ? updatedRecord : item
+            );
 
-        let previousNotes = null;
-        let previousTeacherNotes = null;
-        let updatedTeacherNotes = null;
-        if (teacherNoteInput) {
-          const teacherNotesKey = 'gardenTrackerTeacherNotes';
-          previousNotes = localStorage.getItem(teacherNotesKey);
-          try {
-            const savedNotes = JSON.parse(previousNotes || '[]');
-            if (
-              !Array.isArray(savedNotes)
-              || savedNotes.some((note) => (
-                !note
-                || typeof note.plotId !== 'string'
-                || typeof note.student !== 'string'
-                || typeof note.text !== 'string'
-                || typeof note.author !== 'string'
-                || typeof note.updatedAt !== 'string'
-              ))
-            ) {
-              throw new Error('Stored teacher notes are not in a valid format.');
+            let previousNotes = null;
+            let previousTeacherNotes = null;
+            let updatedTeacherNotes = null;
+            if (teacherNoteInput) {
+              const teacherNotesKey = 'gardenTrackerTeacherNotes';
+              previousNotes = localStorage.getItem(teacherNotesKey);
+              try {
+                const savedNotes = JSON.parse(previousNotes || '[]');
+                if (
+                  !Array.isArray(savedNotes)
+                  || savedNotes.some((note) => (
+                    !note
+                    || typeof note.plotId !== 'string'
+                    || typeof note.student !== 'string'
+                    || typeof note.text !== 'string'
+                    || typeof note.author !== 'string'
+                    || typeof note.updatedAt !== 'string'
+                  ))
+                ) {
+                  throw new Error('Stored teacher notes are not in a valid format.');
+                }
+
+                const noteText = teacherNoteInput.value.trim();
+                const plotId = updatedRecord[0];
+                const student = updatedRecord[2];
+                if (noteText && (!plotId || !student || student === '—')) {
+                  dialogStatus.textContent = 'Assign this plot to a student before adding a teacher note.';
+                  return;
+                }
+                previousTeacherNotes = previousNotes === null ? null : savedNotes;
+                const nextNotes = savedNotes.filter(
+                  (note) => note.plotId !== record[0] && note.plotId !== plotId
+                );
+                if (noteText) {
+                  nextNotes.push({
+                    plotId,
+                    student,
+                    text: noteText,
+                    author: document.querySelector('[data-username]')?.textContent.trim() || 'Teacher',
+                    updatedAt: new Date().toISOString(),
+                  });
+                }
+                updatedTeacherNotes = nextNotes;
+              } catch (error) {
+                console.error('Could not prepare the teacher note for this plot.', error);
+                dialogStatus.textContent = 'Teacher note could not be prepared. Please try again.';
+                return;
+              }
             }
 
-            const noteText = teacherNoteInput.value.trim();
-            const plotId = updatedRecord[0];
-            const student = updatedRecord[2];
-            if (noteText && (!plotId || !student || student === '—')) {
-              dialogStatus.textContent = 'Assign this plot to a student before adding a teacher note.';
+            const historyEntry = {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+              key: config.key,
+              entity: config.entity,
+              action: 'update',
+              beforeRecord: [...record],
+              afterRecord: updatedRecord,
+              index,
+              createdAt: new Date().toISOString(),
+            };
+            if (teacherNoteInput) {
+              historyEntry.beforeTeacherNotes = previousTeacherNotes;
+              historyEntry.afterTeacherNotes = updatedTeacherNotes;
+            }
+            if (!appendAdminHistory(historyEntry)) {
+              dialogStatus.textContent = 'Could not save the edit to action history. No changes were made.';
               return;
             }
-            previousTeacherNotes = previousNotes === null ? null : savedNotes;
-            const nextNotes = savedNotes.filter(
-              (note) => note.plotId !== record[0] && note.plotId !== plotId
-            );
-            if (noteText) {
-              nextNotes.push({
-                plotId,
-                student,
-                text: noteText,
-                author: document.querySelector('[data-username]')?.textContent.trim() || 'Teacher',
-                updatedAt: new Date().toISOString(),
-              });
+
+            try {
+              if (teacherNoteInput) {
+                localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(updatedTeacherNotes));
+              }
+            } catch (error) {
+              console.error('Could not save the teacher note for this plot.', error);
+              try {
+                removeAdminHistoryEntry(historyEntry.id);
+              } catch (rollbackError) {
+                console.error('Could not remove the failed edit from action history.', rollbackError);
+              }
+              dialogStatus.textContent = 'Teacher note could not be saved. No changes were made.';
+              return;
             }
-            updatedTeacherNotes = nextNotes;
-          } catch (error) {
-            console.error('Could not prepare the teacher note for this plot.', error);
-            dialogStatus.textContent = 'Teacher note could not be prepared. Please try again.';
-            return;
-          }
-        }
 
-        const historyEntry = {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          key: config.key,
-          entity: config.entity,
-          action: 'update',
-          beforeRecord: [...record],
-          afterRecord: updatedRecord,
-          index,
-          createdAt: new Date().toISOString(),
-        };
-        if (teacherNoteInput) {
-          historyEntry.beforeTeacherNotes = previousTeacherNotes;
-          historyEntry.afterTeacherNotes = updatedTeacherNotes;
-        }
-        if (!appendAdminHistory(historyEntry)) {
-          dialogStatus.textContent = 'Could not save the edit to action history. No changes were made.';
-          return;
-        }
-
-        try {
-          if (teacherNoteInput) {
-            localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(updatedTeacherNotes));
-          }
-        } catch (error) {
-          console.error('Could not save the teacher note for this plot.', error);
-          try {
-            removeAdminHistoryEntry(historyEntry.id);
-          } catch (rollbackError) {
-            console.error('Could not remove the failed edit from action history.', rollbackError);
-          }
-          dialogStatus.textContent = 'Teacher note could not be saved. No changes were made.';
-          return;
-        }
-
-        if (saveRecords(updated)) {
-          render();
-          showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated.`);
-          close();
-          return;
-        }
-
-        dialogStatus.textContent = status.textContent;
-        try {
-          removeAdminHistoryEntry(historyEntry.id);
-        } catch (error) {
-          console.error('Could not remove the failed edit from action history.', error);
-        }
-        if (teacherNoteInput) {
-          try {
-            if (previousNotes === null) {
-              localStorage.removeItem('gardenTrackerTeacherNotes');
-            } else {
-              localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+            if (saveRecords(updated)) {
+              render();
+              showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated.`);
+              close();
+              return;
             }
-          } catch (error) {
-            console.error('Could not roll back the teacher note after plot save failed.', error);
-          }
-        }
+
+            dialogStatus.textContent = status.textContent;
+            try {
+              removeAdminHistoryEntry(historyEntry.id);
+            } catch (error) {
+              console.error('Could not remove the failed edit from action history.', error);
+            }
+            if (teacherNoteInput) {
+              try {
+                if (previousNotes === null) {
+                  localStorage.removeItem('gardenTrackerTeacherNotes');
+                } else {
+                  localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+                }
+              } catch (error) {
+                console.error('Could not roll back the teacher note after plot save failed.', error);
+              }
+            }
+          },
+        });
       });
       dialog.append(form);
     }
@@ -912,6 +931,13 @@ function setupAdminArchivePage() {
       return;
     }
 
+    showAdminConfirmation({
+      title: 'Undo this action?',
+      message: `This will reverse the ${entry.action} action for this ${entry.entity}.`,
+      confirmLabel: 'Undo action',
+      confirmClass: 'btn btn-primary',
+      trigger: undoButton,
+      onConfirm: () => {
     const config = adminArchiveRecordConfigs[entry.key];
     const previousRecords = localStorage.getItem(config.storageKey);
     let records;
@@ -1024,6 +1050,8 @@ function setupAdminArchivePage() {
 
     render();
     showStatus(`${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone.`);
+      },
+    });
   });
 
   render();
