@@ -1,3 +1,5 @@
+const growthObservationsStorageKey = 'gardenTrackerGrowthObservations';
+
 function setupStudentNotifications() {
   const panel = document.querySelector('[data-student-notifications]');
   const list = panel?.querySelector('[data-notification-list]');
@@ -222,6 +224,48 @@ function optimizeObservationPhoto(file) {
   });
 }
 
+function getAssignedPlotForStudent(account, fallbackPlot) {
+  let assignedPlot = fallbackPlot;
+  const savedStudents = localStorage.getItem('gardenTrackerAdminRows:students');
+  if (savedStudents !== null) {
+    const students = JSON.parse(savedStudents);
+    if (
+      !Array.isArray(students)
+      || students.some((student) => (
+        !Array.isArray(student)
+        || student.length !== 5
+        || student.some((value) => typeof value !== 'string')
+      ))
+    ) {
+      throw new Error('Saved student records have an invalid format.');
+    }
+    const student = students.find((record) => record[1] === account.fullName);
+    assignedPlot = student
+      ? (student[3] !== '—' ? student[3] : '')
+      : fallbackPlot;
+  }
+
+  const savedPlots = localStorage.getItem('gardenTrackerAdminRows:plots');
+  if (savedPlots !== null) {
+    const plots = JSON.parse(savedPlots);
+    if (
+      !Array.isArray(plots)
+      || plots.some((plot) => (
+        !Array.isArray(plot)
+        || plot.length !== 4
+        || plot.some((value) => typeof value !== 'string')
+      ))
+    ) {
+      throw new Error('Saved plot records have an invalid format.');
+    }
+    const plot = plots.find((record) =>
+      record[2] === account.fullName && record[3].toLowerCase() === 'assigned'
+    );
+    if (plot) assignedPlot = plot[0];
+  }
+  return assignedPlot;
+}
+
 function setupStudentObservationForm() {
   const form = document.querySelector('.observation-form');
   const photoInput = document.getElementById('observation-photo');
@@ -229,6 +273,7 @@ function setupStudentObservationForm() {
   const photoLabel = form?.querySelector('[data-observation-photo-label]');
   const message = form?.querySelector('[data-observation-submit-message]');
   const submitButton = form?.querySelector('[type="submit"]');
+  const plotLabel = form?.closest('[data-observation-plot]')?.querySelector('[data-observation-plot-label]');
   if (!form || !photoInput || !photoPreview || !photoLabel || !message || !submitButton) return;
 
   let previewUrl = null;
@@ -239,6 +284,25 @@ function setupStudentObservationForm() {
     photoPreview.removeAttribute('src');
     photoLabel.textContent = 'Click to upload a photo of your plant';
   };
+
+  const signedInAccount = getAccounts().find(
+    (item) => item.username === localStorage.getItem(currentUserStorageKey)
+      && item.role === 'Student'
+  );
+  if (plotLabel && signedInAccount) {
+    try {
+      const assignedPlot = getAssignedPlotForStudent(
+        signedInAccount,
+        form.closest('[data-observation-plot]')?.dataset.observationPlot || ''
+      );
+      plotLabel.textContent = assignedPlot
+        ? `Submit your observation for Plot ${assignedPlot}.`
+        : 'An assigned plot is required before submitting an observation.';
+    } catch (error) {
+      console.error('Could not display the assigned plot for this observation.', error);
+      plotLabel.textContent = 'Your assigned plot could not be loaded.';
+    }
+  }
 
   photoInput.addEventListener('change', () => {
     const file = photoInput.files?.[0];
@@ -275,6 +339,21 @@ function setupStudentObservationForm() {
       return;
     }
 
+    const fallbackPlot = form.closest('[data-observation-plot]')?.dataset.observationPlot || '';
+    let assignedPlot;
+    try {
+      assignedPlot = getAssignedPlotForStudent(account, fallbackPlot);
+    } catch (error) {
+      console.error('Could not resolve the assigned plot for this observation.', error);
+      setMessage(message, 'Your assigned plot could not be loaded. Please contact your administrator.');
+      return;
+    }
+    if (!assignedPlot) {
+      setMessage(message, 'An assigned plot is required before submitting an observation.');
+      return;
+    }
+    if (plotLabel) plotLabel.textContent = `Submitting an observation for Plot ${assignedPlot}.`;
+
     submitButton.disabled = true;
     setMessage(message, 'Submitting observation...');
     try {
@@ -290,6 +369,50 @@ function setupStudentObservationForm() {
           })
         );
       }
+
+      const heightValue = document.getElementById('plant-height').value;
+      const height = heightValue === '' ? null : Number(heightValue);
+      if (height !== null && (!Number.isFinite(height) || height < 0)) {
+        throw new Error('Plant height must be a non-negative number.');
+      }
+      const storedObservations = JSON.parse(
+        localStorage.getItem(growthObservationsStorageKey) || '[]'
+      );
+      if (
+        !Array.isArray(storedObservations)
+        || storedObservations.some((observation) => (
+          !observation
+          || typeof observation.id !== 'string'
+          || typeof observation.plot !== 'string'
+          || typeof observation.student !== 'string'
+          || typeof observation.date !== 'string'
+          || !(observation.height === null || (
+            typeof observation.height === 'number'
+            && Number.isFinite(observation.height)
+            && observation.height >= 0
+          ))
+          || typeof observation.weather !== 'string'
+          || typeof observation.soil !== 'string'
+          || typeof observation.condition !== 'string'
+          || typeof observation.notes !== 'string'
+          || typeof observation.submittedAt !== 'string'
+        ))
+      ) {
+        throw new Error('Stored growth observations have an invalid format.');
+      }
+      storedObservations.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        plot: assignedPlot,
+        student: account.fullName,
+        date: document.getElementById('observation-date').value,
+        height,
+        weather: document.getElementById('weather-condition').value,
+        soil: document.getElementById('soil-condition').value,
+        condition: document.getElementById('plant-condition').value,
+        notes: document.getElementById('observation').value.trim(),
+        submittedAt: new Date().toISOString(),
+      });
+      localStorage.setItem(growthObservationsStorageKey, JSON.stringify(storedObservations));
 
       setMessage(
         message,

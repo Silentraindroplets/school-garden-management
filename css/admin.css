@@ -409,6 +409,169 @@ body.admin {
   overflow-wrap: anywhere;
 }
 
+/* Plot-specific growth chart and chronological notable-change cards. */
+.growth-filter {
+  max-width: 420px;
+}
+
+.growth-plot-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+}
+
+.growth-plot-summary[hidden] {
+  display: none;
+}
+
+.growth-plot-summary img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.growth-plot-summary h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.growth-plot-summary p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.growth-sample-badge {
+  margin-left: auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: #76500b;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.growth-chart-card,
+.growth-observations-card {
+  margin-bottom: 20px;
+}
+
+.growth-chart-card .admin-card-header,
+.growth-observations-card .admin-card-header {
+  margin-bottom: 8px;
+}
+
+.growth-chart-card .admin-card-header p,
+.growth-observations-card .admin-card-header p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.growth-chart-wrap {
+  min-height: 260px;
+  overflow-x: auto;
+}
+
+.growth-chart-wrap svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  min-height: 240px;
+}
+
+.growth-chart-gridline {
+  stroke: #e6ebe3;
+  stroke-width: 1;
+}
+
+.growth-chart-axis {
+  stroke: #8b958a;
+  stroke-width: 1.2;
+}
+
+.growth-chart-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.growth-chart-point {
+  fill: var(--white);
+  stroke: var(--primary);
+  stroke-width: 3;
+}
+
+.growth-chart-label {
+  fill: var(--muted);
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+}
+
+.growth-chart-axis-title {
+  fill: var(--text-light);
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+}
+
+.growth-empty {
+  margin: 24px 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.growth-observation-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.growth-observation {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fcfdfb;
+}
+
+.growth-observation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.growth-observation-header time {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.growth-observation > p {
+  margin: 0 0 7px;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+.growth-observation .growth-observation-notes {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.growth-observation .growth-observation-student {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .admin-action-status {
   margin: 0 0 12px;
   color: var(--muted);
@@ -854,5 +1017,14 @@ body.modal-open {
 
   .admin-topbar .user-info {
     display: none;
+  }
+
+  .growth-plot-summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .growth-sample-badge {
+    margin-left: 0;
   }
 }

@@ -747,6 +747,7 @@ if (typeof setupPlotAssignment === 'function') setupPlotAssignment();
 if (typeof setupStudentModal === 'function') setupStudentModal();
 if (typeof setupAdminTableActions === 'function') setupAdminTableActions();
 if (typeof setupAdminArchivePage === 'function') setupAdminArchivePage();
+if (typeof setupAdminGrowthTracker === 'function') setupAdminGrowthTracker();
 if (typeof setupObservationLog === 'function') setupObservationLog();
 if (typeof setupStudentObservationForm === 'function') setupStudentObservationForm();
 if (typeof setupPlotPhoto === 'function') setupPlotPhoto();

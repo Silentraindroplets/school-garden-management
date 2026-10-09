@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Archive | GardenTrack</title>
+    <title>Growth Tracker | GardenTrack</title>
     <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
     <link rel="stylesheet" href="../css/style.css" />
     <link rel="stylesheet" href="../css/nav.css" />
@@ -22,7 +22,7 @@
       <nav class="admin-breadcrumb" aria-label="Breadcrumb">
         <a href="admin_dashboard.html">Admin</a>
         <span class="sep">/</span>
-        <span class="current">Archive</span>
+        <span class="current">Growth Tracker</span>
       </nav>
       <div class="user-menu">
         <details>
@@ -61,7 +61,7 @@
         <img src="../images/observations.svg" alt="" />
         Observations
       </a>
-      <a href="growth_tracker.html">
+      <a href="growth_tracker.html" class="active">
         <img src="../images/growth.svg" alt="" />
         Growth Tracker
       </a>
@@ -69,7 +69,7 @@
         <img src="../images/report.svg" alt="" />
         Reports
       </a>
-      <a href="archive.html" class="active">
+      <a href="archive.html">
         <img src="../images/archive.svg" alt="" />
         Archive
       </a>
@@ -77,31 +77,52 @@
 
     <main class="admin-main">
       <div class="page-header">
-        <h1>Admin Action History</h1>
-        <p>Review changes to students, garden plots, and observations. Undo an action or permanently delete its history entry.</p>
+        <h1>Plot Growth Tracker</h1>
+        <p>Follow plant height and notable changes recorded in observations. Sample examples are shown for A-01 and A-02 until those plots have real observations.</p>
       </div>
 
-      <section class="card">
-        <div class="table-container">
-          <table class="archive-table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Action</th>
-                <th>Record</th>
-                <th>When</th>
-                <th>Manage</th>
-              </tr>
-            </thead>
-            <tbody data-archive-records></tbody>
-          </table>
-          <div class="table-empty-state" data-archive-empty hidden>
-            <p class="table-empty-title">No admin actions yet</p>
-            <p class="table-empty-subtitle">Changes made to student, plot, and observation records will appear here.</p>
+      <section class="filter-bar growth-filter">
+        <div class="form-group">
+          <label for="growth-plot">Assigned plot</label>
+          <select id="growth-plot" data-growth-plot>
+            <option value="" disabled>Select a plot</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="admin-card growth-plot-summary" data-growth-plot-summary hidden>
+        <img data-growth-crop-icon alt="" />
+        <div>
+          <h2 data-growth-crop-name></h2>
+          <p data-growth-plot-student></p>
+        </div>
+        <span class="growth-sample-badge" data-growth-sample-badge hidden>Sample data</span>
+      </section>
+
+      <section class="admin-card growth-chart-card">
+        <div class="admin-card-header">
+          <div>
+            <h2>Plant height over time</h2>
+            <p data-growth-summary aria-live="polite"></p>
           </div>
         </div>
-        <p class="admin-action-status" data-archive-status role="status" aria-live="polite"></p>
+        <div class="growth-chart-wrap">
+          <svg data-growth-chart role="img" aria-label="Plant growth chart"></svg>
+          <p class="growth-empty" data-growth-chart-empty hidden></p>
+        </div>
       </section>
+
+      <section class="admin-card growth-observations-card">
+        <div class="admin-card-header">
+          <div>
+            <h2>Notable changes</h2>
+            <p>Recent observations, plant condition, and growing conditions for the selected plot.</p>
+          </div>
+        </div>
+        <ol class="growth-observation-list" data-growth-observations></ol>
+        <p class="growth-empty" data-growth-observations-empty hidden>No observations recorded for this plot yet.</p>
+      </section>
+      <p class="admin-action-status" data-growth-status role="status" aria-live="polite"></p>
     </main>
   </body>
 </html>

@@ -1057,6 +1057,427 @@ function setupAdminArchivePage() {
   render();
 }
 
+function setupAdminGrowthTracker() {
+  const plotSelect = document.querySelector('[data-growth-plot]');
+  const plotSummary = document.querySelector('[data-growth-plot-summary]');
+  const cropIcon = document.querySelector('[data-growth-crop-icon]');
+  const cropName = document.querySelector('[data-growth-crop-name]');
+  const plotStudent = document.querySelector('[data-growth-plot-student]');
+  const sampleBadge = document.querySelector('[data-growth-sample-badge]');
+  const chart = document.querySelector('[data-growth-chart]');
+  const chartEmpty = document.querySelector('[data-growth-chart-empty]');
+  const observationList = document.querySelector('[data-growth-observations]');
+  const observationEmpty = document.querySelector('[data-growth-observations-empty]');
+  const summary = document.querySelector('[data-growth-summary]');
+  const status = document.querySelector('[data-growth-status]');
+  if (
+    !plotSelect
+    || !plotSummary
+    || !cropIcon
+    || !cropName
+    || !plotStudent
+    || !sampleBadge
+    || !chart
+    || !chartEmpty
+    || !observationList
+    || !observationEmpty
+    || !summary
+    || !status
+  ) return;
+
+  const svgNamespace = 'http://www.w3.org/2000/svg';
+  const createSvgElement = (name, attributes = {}) => {
+    const element = document.createElementNS(svgNamespace, name);
+    Object.entries(attributes).forEach(([key, value]) => {
+      element.setAttribute(key, String(value));
+    });
+    return element;
+  };
+  const formatDate = (dateValue) => {
+    const date = new Date(`${dateValue}T00:00:00`);
+    return Number.isNaN(date.getTime())
+      ? dateValue
+      : new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+  };
+  const samplePlots = {
+    'A-01': {
+      crop: 'Tomato',
+      icon: '../images/tomato.svg',
+      student: 'Felix Cagampang',
+      observations: [
+        {
+          id: 'sample-a01-1',
+          plot: 'A-01',
+          student: 'Felix Cagampang',
+          date: '2026-08-20',
+          height: 12.5,
+          weather: 'sunny',
+          soil: 'moist',
+          condition: 'healthy',
+          notes: 'Seedlings have emerged and the first true leaves are forming.',
+          submittedAt: '2026-08-20T08:00:00.000Z',
+          isSample: true,
+        },
+        {
+          id: 'sample-a01-2',
+          plot: 'A-01',
+          student: 'Felix Cagampang',
+          date: '2026-08-24',
+          height: 18.2,
+          weather: 'partly-cloudy',
+          soil: 'moist',
+          condition: 'healthy',
+          notes: 'Plants are taller and have several new leaves. Stems look strong.',
+          submittedAt: '2026-08-24T08:00:00.000Z',
+          isSample: true,
+        },
+        {
+          id: 'sample-a01-3',
+          plot: 'A-01',
+          student: 'Felix Cagampang',
+          date: '2026-08-28',
+          height: 25.6,
+          weather: 'sunny',
+          soil: 'moist',
+          condition: 'healthy',
+          notes: 'Tomato plants continue to grow well; small flower buds are visible.',
+          submittedAt: '2026-08-28T08:00:00.000Z',
+          isSample: true,
+        },
+      ],
+    },
+    'A-02': {
+      crop: 'Carrot',
+      icon: '../images/carrot.svg',
+      student: 'Maria Santos',
+      observations: [
+        {
+          id: 'sample-a02-1',
+          plot: 'A-02',
+          student: 'Maria Santos',
+          date: '2026-08-20',
+          height: 5.2,
+          weather: 'sunny',
+          soil: 'moist',
+          condition: 'healthy',
+          notes: 'Carrot seedlings have sprouted in neat rows.',
+          submittedAt: '2026-08-20T08:15:00.000Z',
+          isSample: true,
+        },
+        {
+          id: 'sample-a02-2',
+          plot: 'A-02',
+          student: 'Maria Santos',
+          date: '2026-08-24',
+          height: 8.4,
+          weather: 'partly-cloudy',
+          soil: 'moist',
+          condition: 'healthy',
+          notes: 'Feathery leaves are growing taller; seedlings were thinned.',
+          submittedAt: '2026-08-24T08:15:00.000Z',
+          isSample: true,
+        },
+        {
+          id: 'sample-a02-3',
+          plot: 'A-02',
+          student: 'Maria Santos',
+          date: '2026-08-28',
+          height: 12.1,
+          weather: 'cloudy',
+          soil: 'moist',
+          condition: 'healthy',
+          notes: 'Leaves have filled out and the plants look evenly spaced.',
+          submittedAt: '2026-08-28T08:15:00.000Z',
+          isSample: true,
+        },
+      ],
+    },
+  };
+
+  let observations = [];
+  try {
+    const stored = JSON.parse(localStorage.getItem('gardenTrackerGrowthObservations') || '[]');
+    if (
+      !Array.isArray(stored)
+      || stored.some((observation) => (
+        !observation
+        || typeof observation.id !== 'string'
+        || typeof observation.plot !== 'string'
+        || typeof observation.student !== 'string'
+        || typeof observation.date !== 'string'
+        || !(observation.height === null || (
+          typeof observation.height === 'number'
+          && Number.isFinite(observation.height)
+          && observation.height >= 0
+        ))
+        || typeof observation.weather !== 'string'
+        || typeof observation.soil !== 'string'
+        || typeof observation.condition !== 'string'
+        || typeof observation.notes !== 'string'
+        || typeof observation.submittedAt !== 'string'
+      ))
+    ) {
+      throw new Error('Stored growth observations have an invalid format.');
+    }
+    observations = stored;
+  } catch (error) {
+    console.error('Could not load growth observations.', error);
+    status.textContent = 'Growth observations could not be loaded. Check the saved observation data.';
+    plotSelect.disabled = true;
+    return;
+  }
+
+  const trackedPlots = new Set(observations.map((observation) => observation.plot));
+  try {
+    const savedPlots = localStorage.getItem('gardenTrackerAdminRows:plots');
+    if (savedPlots !== null) {
+      const plots = JSON.parse(savedPlots);
+      if (
+        !Array.isArray(plots)
+        || plots.some((plot) => (
+          !Array.isArray(plot)
+          || plot.length !== 4
+          || plot.some((value) => typeof value !== 'string')
+        ))
+      ) {
+        throw new Error('Saved plot records have an invalid format.');
+      }
+      plots
+        .filter((plot) => plot[2] !== '—' || plot[3].toLowerCase() === 'assigned')
+        .forEach((plot) => trackedPlots.add(plot[0]));
+    }
+  } catch (error) {
+    console.error('Could not load assigned plots for the growth tracker.', error);
+    status.textContent = 'Assigned plots could not be loaded. Check the saved plot data.';
+    plotSelect.disabled = true;
+    return;
+  }
+  Object.keys(samplePlots).forEach((plotId) => trackedPlots.add(plotId));
+  let savedPlots = [];
+  try {
+    const storedPlots = localStorage.getItem('gardenTrackerAdminRows:plots');
+    if (storedPlots !== null) savedPlots = JSON.parse(storedPlots);
+  } catch (error) {
+    console.error('Could not load plot assignments for the growth tracker labels.', error);
+  }
+
+  const plots = [...trackedPlots].sort((first, second) => first.localeCompare(second));
+  plots.forEach((plotId) => {
+    const option = document.createElement('option');
+    option.value = plotId;
+    option.textContent = plotId;
+    plotSelect.append(option);
+  });
+
+  const render = () => {
+    const plotId = plotSelect.value;
+    const realObservations = observations.filter((observation) => observation.plot === plotId);
+    const usingSampleData = realObservations.length === 0 && Boolean(samplePlots[plotId]);
+    const plotObservations = (usingSampleData ? samplePlots[plotId].observations : realObservations)
+      .sort((first, second) => first.date.localeCompare(second.date)
+        || first.submittedAt.localeCompare(second.submittedAt));
+    const sample = samplePlots[plotId];
+    const savedPlot = savedPlots.find((plot) => plot[0] === plotId);
+    const assignedStudent = savedPlot && savedPlot[2] !== '—'
+      ? savedPlot[2]
+      : sample?.student || 'No student assigned';
+    const assignedCrop = sample?.crop || 'Garden plot';
+    plotSummary.hidden = false;
+    cropIcon.src = sample?.icon || '../images/garden-plot.svg';
+    cropIcon.alt = `${assignedCrop} icon`;
+    cropName.textContent = `${assignedCrop} · Plot ${plotId}`;
+    plotStudent.textContent = `Assigned to ${assignedStudent}`;
+    sampleBadge.hidden = !usingSampleData;
+    sampleBadge.textContent = usingSampleData ? 'Sample data' : '';
+    const measurements = plotObservations.filter((observation) => (
+      observation.height !== null
+      && !Number.isNaN(new Date(`${observation.date}T00:00:00`).getTime())
+    ));
+
+    chart.replaceChildren();
+    chart.hidden = measurements.length === 0;
+    chartEmpty.hidden = measurements.length > 0;
+    if (measurements.length) {
+      const width = 760;
+      const height = 340;
+      const left = 62;
+      const right = 24;
+      const top = 26;
+      const bottom = 58;
+      const chartWidth = width - left - right;
+      const chartHeight = height - top - bottom;
+      const maxValue = Math.max(5, Math.ceil(Math.max(...measurements.map((item) => item.height)) / 5) * 5);
+      const pointX = (index) => measurements.length === 1
+        ? left + chartWidth / 2
+        : left + (chartWidth * index) / (measurements.length - 1);
+      const pointY = (value) => top + chartHeight - (value / maxValue) * chartHeight;
+
+      chart.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      chart.setAttribute(
+        'aria-label',
+        `Plant height for plot ${plotId} over ${measurements.length} measurements, from ${measurements[0].height} to ${measurements[measurements.length - 1].height} centimeters.`
+      );
+
+      for (let tick = 0; tick <= 4; tick += 1) {
+        const value = (maxValue * tick) / 4;
+        const y = pointY(value);
+        chart.append(createSvgElement('line', {
+          x1: left,
+          y1: y,
+          x2: width - right,
+          y2: y,
+          class: 'growth-chart-gridline',
+        }));
+        const label = createSvgElement('text', {
+          x: left - 12,
+          y: y + 4,
+          'text-anchor': 'end',
+          class: 'growth-chart-label',
+        });
+        label.textContent = Number.isInteger(value) ? String(value) : value.toFixed(1);
+        chart.append(label);
+      }
+
+      const verticalLabel = createSvgElement('text', {
+        x: 18,
+        y: top + chartHeight / 2,
+        transform: `rotate(-90 18 ${top + chartHeight / 2})`,
+        'text-anchor': 'middle',
+        class: 'growth-chart-axis-title',
+      });
+      verticalLabel.textContent = 'Plant height (cm)';
+      chart.append(verticalLabel);
+
+      chart.append(createSvgElement('line', {
+        x1: left,
+        y1: top + chartHeight,
+        x2: width - right,
+        y2: top + chartHeight,
+        class: 'growth-chart-axis',
+      }));
+
+      const pathData = measurements
+        .map((item, index) => `${index === 0 ? 'M' : 'L'} ${pointX(index)} ${pointY(item.height)}`)
+        .join(' ');
+      chart.append(createSvgElement('path', {
+        d: pathData,
+        class: 'growth-chart-line',
+      }));
+
+      measurements.forEach((item, index) => {
+        const x = pointX(index);
+        const y = pointY(item.height);
+        const circle = createSvgElement('circle', {
+          cx: x,
+          cy: y,
+          r: 6,
+          class: 'growth-chart-point',
+        });
+        const tooltip = createSvgElement('title');
+        tooltip.textContent = `${formatDate(item.date)}: ${item.height} cm`;
+        circle.append(tooltip);
+        chart.append(circle);
+
+        const labelInterval = Math.max(1, Math.ceil((measurements.length - 1) / 5));
+        if (index % labelInterval !== 0 && index !== measurements.length - 1) return;
+        const dateLabel = createSvgElement('text', {
+          x,
+          y: height - 28,
+          'text-anchor': 'middle',
+          class: 'growth-chart-label',
+        });
+        dateLabel.textContent = new Intl.DateTimeFormat(undefined, {
+          month: 'short',
+          day: 'numeric',
+        }).format(new Date(`${item.date}T00:00:00`));
+        chart.append(dateLabel);
+      });
+
+      const firstHeight = measurements[0].height;
+      const latestHeight = measurements[measurements.length - 1].height;
+      const difference = latestHeight - firstHeight;
+      summary.textContent = measurements.length > 1
+        ? `Latest: ${latestHeight} cm · Change since first measurement: ${difference > 0 ? '+' : ''}${difference.toFixed(1)} cm`
+        : `Latest recorded height: ${latestHeight} cm`;
+    } else {
+      chart.removeAttribute('aria-label');
+      summary.textContent = '';
+    }
+
+    chartEmpty.textContent = plotObservations.length
+      ? 'No plant-height measurements recorded for this plot yet. Height measurements will appear here as the chart fills in.'
+      : 'Submit observations for this plot to start its growth chart.';
+    observationList.replaceChildren();
+    [...plotObservations].reverse().forEach((observation) => {
+      const item = document.createElement('li');
+      item.className = 'growth-observation';
+      const header = document.createElement('div');
+      header.className = 'growth-observation-header';
+      const date = document.createElement('time');
+      date.dateTime = observation.date;
+      date.textContent = formatDate(observation.date);
+      const condition = document.createElement('span');
+      condition.className = `badge ${
+        observation.condition === 'healthy'
+          ? 'badge-success'
+          : observation.condition === 'needs-attention'
+            ? 'badge-warning'
+            : 'badge-danger'
+      }`;
+      condition.textContent = observation.condition.replace(/-/g, ' ');
+      header.append(date, condition);
+      if (observation.isSample) {
+        const sampleTag = document.createElement('span');
+        sampleTag.className = 'growth-observation-sample';
+        sampleTag.textContent = 'Example';
+        header.append(sampleTag);
+      }
+
+      const details = document.createElement('p');
+      const readings = [];
+      if (observation.height !== null) readings.push(`${observation.height} cm tall`);
+      if (observation.weather) readings.push(`Weather: ${observation.weather.replace(/-/g, ' ')}`);
+      if (observation.soil) readings.push(`Soil: ${observation.soil}`);
+      details.textContent = readings.join(' · ');
+
+      const notes = document.createElement('p');
+      notes.className = 'growth-observation-notes';
+      notes.textContent = observation.notes || 'No notable changes noted.';
+      const submittedBy = document.createElement('p');
+      submittedBy.className = 'growth-observation-student';
+      submittedBy.textContent = `Recorded by ${observation.student}`;
+      item.append(header);
+      if (details.textContent) item.append(details);
+      item.append(notes, submittedBy);
+      observationList.append(item);
+    });
+    observationEmpty.hidden = plotObservations.length > 0;
+    if (plotObservations.length) {
+      status.textContent = `${plotObservations.length} observation${plotObservations.length === 1 ? '' : 's'} for plot ${plotId}.`;
+    } else {
+      status.textContent = `No observations have been recorded for plot ${plotId} yet.`;
+    }
+  };
+
+  if (plots.length) {
+    plotSelect.value = plots[0];
+    render();
+  } else {
+    plotSelect.disabled = true;
+    chart.hidden = true;
+    chartEmpty.hidden = false;
+    chartEmpty.textContent = 'No assigned plots or observations are available yet.';
+    observationEmpty.hidden = false;
+    summary.textContent = '';
+    status.textContent = '';
+  }
+  plotSelect.addEventListener('change', render);
+}
+
 function markActiveSidebarLink() {
   const current = location.pathname.split('/').pop();
   document.querySelectorAll('.admin-sidebar a').forEach((link) => {
