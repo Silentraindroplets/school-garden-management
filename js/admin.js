@@ -991,12 +991,44 @@ function setupAdminArchivePage() {
       const entityCell = document.createElement('td');
       entityCell.textContent = `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)}`;
       const recordCell = document.createElement('td');
-      const before = entry.beforeRecord?.join(' · ');
-      const after = entry.afterRecord?.join(' · ');
-      const beforeAfterSame = before !== undefined && after !== undefined && before === after;
-      recordCell.textContent = before && after
+      const before = entry.beforeRecord ? entry.beforeRecord.join(' · ') : '';
+      const after = entry.afterRecord ? entry.afterRecord.join(' · ') : '';
+      const beforeAfterSame = before !== '' && after !== '' && before === after;
+      const recordValue = before && after
         ? (beforeAfterSame ? before : `${before} → ${after}`)
         : before || after;
+
+      const recordWrap = document.createElement('div');
+      recordWrap.className = 'archive-record';
+
+      if (before && after && !beforeAfterSame) {
+        const beforeGroup = document.createElement('div');
+        beforeGroup.className = 'archive-record-group';
+        const beforeLabel = document.createElement('span');
+        beforeLabel.className = 'archive-record-label';
+        beforeLabel.textContent = 'Before';
+        const beforeValue = document.createElement('span');
+        beforeValue.className = 'archive-record-pill';
+        beforeValue.textContent = before;
+        beforeGroup.append(beforeLabel, beforeValue);
+
+        const afterGroup = document.createElement('div');
+        afterGroup.className = 'archive-record-group';
+        const afterLabel = document.createElement('span');
+        afterLabel.className = 'archive-record-label';
+        afterLabel.textContent = 'After';
+        const afterValue = document.createElement('span');
+        afterValue.className = 'archive-record-pill';
+        afterValue.textContent = after;
+        afterGroup.append(afterLabel, afterValue);
+        recordWrap.append(beforeGroup, afterGroup);
+      } else {
+        const value = document.createElement('span');
+        value.className = 'archive-record-pill archive-record-pill-single';
+        value.textContent = recordValue;
+        recordWrap.append(value);
+      }
+      recordCell.append(recordWrap);
       const actionCellType = document.createElement('td');
       const actionNames = {
         create: 'Added',

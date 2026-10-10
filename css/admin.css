@@ -413,8 +413,53 @@ body.admin {
 }
 
 .archive-table td:nth-child(3) {
-  min-width: 240px;
-  overflow-wrap: anywhere;
+  min-width: 260px;
+  max-width: 500px;
+}
+
+.archive-record {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.archive-record-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.archive-record-label {
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.archive-record-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef3ed;
+  border: 1px solid #dfe7df;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.archive-record-pill-single {
+  width: 100%;
+}
+
+.archive-table td:nth-child(4) {
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--muted);
 }
 
 /* Growth tracker: plot summary, scalable height chart, empty state, and chronological observation cards. */
