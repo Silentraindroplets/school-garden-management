@@ -1,3 +1,21 @@
+const plotCropsStorageKey = 'gardenTrackerPlotCrops';
+
+function readAssignedPlotCrops() {
+  const stored = localStorage.getItem(plotCropsStorageKey);
+  if (stored === null) return {};
+
+  const crops = JSON.parse(stored);
+  if (
+    !crops
+    || Array.isArray(crops)
+    || typeof crops !== 'object'
+    || Object.values(crops).some((crop) => typeof crop !== 'string')
+  ) {
+    throw new Error('Saved plot crops have an invalid format.');
+  }
+  return crops;
+}
+
 function setupPlotAssignment() {
   const modal = document.querySelector('[data-assign-plot-modal]');
   const form = document.querySelector('[data-assign-plot-form]');
@@ -25,15 +43,16 @@ function setupPlotAssignment() {
     event.preventDefault();
     const student = document.getElementById('student')?.value.trim();
     const plot = document.getElementById('plot')?.value.trim();
+    const crop = document.getElementById('crop')?.value.trim();
     const feedback = form.querySelector('[data-assign-plot-status]');
 
-    if (!student || !plot || student === 'Select Student' || plot === 'Select Available Plot') {
-      if (feedback) feedback.textContent = 'Select both a student and an available plot.';
+    if (!student || !plot || !crop) {
+      if (feedback) feedback.textContent = 'Select a student, available plot, and crop.';
       return;
     }
 
     document.dispatchEvent(new CustomEvent('admin:assign-plot', {
-      detail: { student, plot },
+      detail: { student, plot, crop },
     }));
     if (feedback) feedback.textContent = '';
     form.reset();
@@ -983,9 +1002,17 @@ function setupAdminTableActions() {
 
   document.addEventListener('admin:assign-plot', (event) => {
     if (config.key !== 'plots') return;
-    const { student, plot } = event.detail;
+    const { student, plot, crop } = event.detail;
     const plotIndex = records.findIndex((record) => record[0] === plot);
     const previousRecord = plotIndex === -1 ? null : [...records[plotIndex]];
+    let previousCrops;
+    try {
+      previousCrops = readAssignedPlotCrops();
+    } catch (error) {
+      console.error('Could not load saved plot crops.', error);
+      showStatus('Could not load crop assignments. No changes were made.');
+      return;
+    }
     const updated = records.map((record, index) => {
       if (index !== plotIndex) return record;
       const next = [...record];
@@ -1009,10 +1036,34 @@ function setupAdminTableActions() {
       showStatus('Could not save the plot assignment to action history. No changes were made.');
       return;
     }
+    try {
+      localStorage.setItem(plotCropsStorageKey, JSON.stringify({
+        ...previousCrops,
+        [plot]: crop,
+      }));
+    } catch (error) {
+      console.error('Could not save the crop assignment.', error);
+      try {
+        removeAdminHistoryEntry(historyEntry.id);
+      } catch (rollbackError) {
+        console.error('Could not remove the failed crop assignment from history.', rollbackError);
+      }
+      showStatus('Unable to save the crop assignment. Please try again.');
+      return;
+    }
     if (saveRecords(updated)) {
       render();
-      showStatus(`Plot ${plot} assigned to ${student}.`);
+      showStatus(`Plot ${plot} assigned to ${student} for ${crop}.`);
     } else {
+      try {
+        if (Object.keys(previousCrops).length) {
+          localStorage.setItem(plotCropsStorageKey, JSON.stringify(previousCrops));
+        } else {
+          localStorage.removeItem(plotCropsStorageKey);
+        }
+      } catch (error) {
+        console.error('Could not roll back the failed crop assignment.', error);
+      }
       try {
         removeAdminHistoryEntry(historyEntry.id);
       } catch (error) {
@@ -1450,6 +1501,15 @@ function setupAdminGrowthTracker() {
   }
 
   const trackedPlots = new Set(observations.map((observation) => observation.plot));
+  let assignedCrops;
+  try {
+    assignedCrops = readAssignedPlotCrops();
+  } catch (error) {
+    console.error('Could not load saved crop assignments for the growth tracker.', error);
+    status.textContent = 'Crop assignments could not be loaded. Check the saved crop data.';
+    plotSelect.disabled = true;
+    return;
+  }
   try {
     const savedPlots = localStorage.getItem('gardenTrackerAdminRows:plots');
     if (savedPlots !== null) {
@@ -1503,9 +1563,11 @@ function setupAdminGrowthTracker() {
     const assignedStudent = savedPlot && savedPlot[2] !== '—'
       ? savedPlot[2]
       : sample?.student || 'No student assigned';
-    const assignedCrop = sample?.crop || 'Garden plot';
+    const assignedCrop = assignedCrops[plotId] || sample?.crop || 'Garden plot';
     plotSummary.hidden = false;
-    cropIcon.src = sample?.icon || '../images/garden-plot.svg';
+    cropIcon.src = assignedCrop === sample?.crop
+      ? sample.icon
+      : '../images/garden-plot.svg';
     cropIcon.alt = `${assignedCrop} icon`;
     cropName.textContent = `${assignedCrop} · Plot ${plotId}`;
     plotStudent.textContent = `Assigned to ${assignedStudent}`;
