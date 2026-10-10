@@ -275,6 +275,67 @@ function normalizeAdminHistoryEntry(entry) {
   };
 }
 
+function describeAdminHistoryAction(entry) {
+  const before = entry.beforeRecord || [];
+  const after = entry.afterRecord || [];
+  const entityName = entry.entity[0].toUpperCase() + entry.entity.slice(1);
+  const recordFields = {
+    student: ['ID', 'name', 'grade and section', 'garden plot', 'status'],
+    plot: ['plot', 'location', 'assigned student', 'status'],
+    observation: ['date', 'student', 'plot', 'condition', 'observation'],
+  }[entry.entity];
+  const subject = (record) => {
+    if (entry.entity === 'student') return `${record[1]} (${record[0]})`;
+    if (entry.entity === 'plot') return `Plot ${record[0]}`;
+    if (entry.entity === 'observation') return `the observation by ${record[1]} for Plot ${record[2]}`;
+    return `the ${entry.entity}`;
+  };
+
+  if (entry.action === 'create') {
+    const createdSubject = entry.entity === 'student'
+      ? `student ${subject(after)}`
+      : subject(after);
+    return `Added ${createdSubject}.`;
+  }
+  if (entry.action === 'delete') {
+    const removedSubject = entry.entity === 'student'
+      ? `student ${subject(before)}`
+      : subject(before);
+    return `Removed ${removedSubject}.`;
+  }
+  if (entry.action === 'assign') {
+    const previousStudent = before[2];
+    const nextStudent = after[2];
+    return previousStudent && previousStudent !== '—' && previousStudent !== nextStudent
+      ? `Reassigned Plot ${after[0]} from ${previousStudent} to ${nextStudent}.`
+      : `Assigned Plot ${after[0]} to ${nextStudent}.`;
+  }
+  if (entry.action === 'teacher-note') {
+    const previousNotes = entry.beforeTeacherNotes || [];
+    const nextNotes = entry.afterTeacherNotes || [];
+    const previousNote = previousNotes.find((note) => note.plotId === after[0]);
+    const nextNote = nextNotes.find((note) => note.plotId === after[0]);
+    const change = !previousNote && nextNote
+      ? 'added'
+      : previousNote && !nextNote
+        ? 'removed'
+        : 'updated';
+    return `${change[0].toUpperCase()}${change.slice(1)} a teacher note for Plot ${after[0]}.`;
+  }
+  if (entry.action === 'update') {
+    const changes = after.reduce((items, value, index) => {
+      if (before[index] !== value && recordFields[index] !== 'ID') {
+        items.push(`${recordFields[index]}: ${before[index] || '—'} → ${value || '—'}`);
+      }
+      return items;
+    }, []);
+    return changes.length
+      ? `Updated ${subject(after)} — ${changes.join('; ')}.`
+      : `Updated ${entityName.toLowerCase()} ${subject(after)}.`;
+  }
+  return `${entityName} action recorded.`;
+}
+
 function appendAdminHistory(entry) {
   try {
     const history = readAdminArchive();
@@ -991,44 +1052,10 @@ function setupAdminArchivePage() {
       const entityCell = document.createElement('td');
       entityCell.textContent = `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)}`;
       const recordCell = document.createElement('td');
-      const before = entry.beforeRecord ? entry.beforeRecord.join(' · ') : '';
-      const after = entry.afterRecord ? entry.afterRecord.join(' · ') : '';
-      const beforeAfterSame = before !== '' && after !== '' && before === after;
-      const recordValue = before && after
-        ? (beforeAfterSame ? before : `${before} → ${after}`)
-        : before || after;
-
-      const recordWrap = document.createElement('div');
-      recordWrap.className = 'archive-record';
-
-      if (before && after && !beforeAfterSame) {
-        const beforeGroup = document.createElement('div');
-        beforeGroup.className = 'archive-record-group';
-        const beforeLabel = document.createElement('span');
-        beforeLabel.className = 'archive-record-label';
-        beforeLabel.textContent = 'Before';
-        const beforeValue = document.createElement('span');
-        beforeValue.className = 'archive-record-pill';
-        beforeValue.textContent = before;
-        beforeGroup.append(beforeLabel, beforeValue);
-
-        const afterGroup = document.createElement('div');
-        afterGroup.className = 'archive-record-group';
-        const afterLabel = document.createElement('span');
-        afterLabel.className = 'archive-record-label';
-        afterLabel.textContent = 'After';
-        const afterValue = document.createElement('span');
-        afterValue.className = 'archive-record-pill';
-        afterValue.textContent = after;
-        afterGroup.append(afterLabel, afterValue);
-        recordWrap.append(beforeGroup, afterGroup);
-      } else {
-        const value = document.createElement('span');
-        value.className = 'archive-record-pill archive-record-pill-single';
-        value.textContent = recordValue;
-        recordWrap.append(value);
-      }
-      recordCell.append(recordWrap);
+      const details = document.createElement('span');
+      details.className = 'archive-record-details';
+      details.textContent = describeAdminHistoryAction(entry);
+      recordCell.append(details);
       const actionCellType = document.createElement('td');
       const actionNames = {
         create: 'Added',
@@ -1042,7 +1069,7 @@ function setupAdminArchivePage() {
       const actionDate = new Date(entry.createdAt);
       dateCell.textContent = Number.isNaN(actionDate.getTime())
         ? 'Unknown date'
-        : actionDate.toLocaleString();
+        : actionDate.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       const actionCell = document.createElement('td');
       const undoButton = document.createElement('button');
       undoButton.type = 'button';
