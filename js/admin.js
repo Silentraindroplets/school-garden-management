@@ -597,6 +597,23 @@ function setupAdminTableActions() {
     } else {
       const form = document.createElement('form');
       form.className = 'admin-record-form';
+      const plotStudentOptions = config.key === 'plots'
+        ? (() => {
+            const fallbackNames = ['Felix Cagampang', 'Maria Santos', 'Ana Reyes', 'Pedro Garcia'];
+            try {
+              const savedStudents = JSON.parse(localStorage.getItem('gardenTrackerAdminRows:students') || '[]');
+              if (Array.isArray(savedStudents) && savedStudents.length > 0) {
+                return Array.from(new Set(savedStudents
+                  .map((student) => (Array.isArray(student) ? student[1] : ''))
+                  .filter((student) => typeof student === 'string' && student.trim())));
+              }
+            } catch (error) {
+              console.warn('Could not load saved student names for plot assignment.', error);
+            }
+            return fallbackNames;
+          })()
+        : [];
+
       headings.forEach((heading, fieldIndex) => {
         const group = document.createElement('div');
         group.className = 'form-group';
@@ -604,16 +621,65 @@ function setupAdminTableActions() {
         const label = document.createElement('label');
         label.htmlFor = id;
         label.textContent = heading;
-        const input = document.createElement(
-          config.entity === 'observation' && heading.toLowerCase() === 'observation'
-            ? 'textarea'
-            : 'input'
-        );
-        input.id = id;
-        input.name = `field-${fieldIndex}`;
-        input.value = record[fieldIndex];
-        input.required = true;
-        group.append(label, input);
+
+        let field;
+        const headingText = heading.toLowerCase();
+        const isAssignedStudentField = config.key === 'plots' && headingText === 'assigned student';
+        const isStatusField = config.key === 'plots' && headingText === 'status';
+
+        if (isAssignedStudentField) {
+          field = document.createElement('select');
+          field.id = id;
+          field.name = `field-${fieldIndex}`;
+          field.required = true;
+
+          const emptyOption = document.createElement('option');
+          emptyOption.value = '—';
+          emptyOption.textContent = '—';
+          emptyOption.selected = record[fieldIndex] === '—';
+          field.append(emptyOption);
+
+          plotStudentOptions.forEach((studentName) => {
+            const option = document.createElement('option');
+            option.value = studentName;
+            option.textContent = studentName;
+            option.selected = record[fieldIndex] === studentName;
+            field.append(option);
+          });
+
+          if (record[fieldIndex] && record[fieldIndex] !== '—' && !plotStudentOptions.includes(record[fieldIndex])) {
+            const currentOption = document.createElement('option');
+            currentOption.value = record[fieldIndex];
+            currentOption.textContent = record[fieldIndex];
+            currentOption.selected = true;
+            field.append(currentOption);
+          }
+        } else if (isStatusField) {
+          field = document.createElement('select');
+          field.id = id;
+          field.name = `field-${fieldIndex}`;
+          field.required = true;
+
+          ['Available', 'Assigned'].forEach((statusValue) => {
+            const option = document.createElement('option');
+            option.value = statusValue;
+            option.textContent = statusValue;
+            option.selected = record[fieldIndex] === statusValue;
+            field.append(option);
+          });
+        } else {
+          field = document.createElement(
+            config.entity === 'observation' && headingText === 'observation'
+              ? 'textarea'
+              : 'input'
+          );
+          field.id = id;
+          field.name = `field-${fieldIndex}`;
+          field.value = record[fieldIndex];
+          field.required = true;
+        }
+
+        group.append(label, field);
         form.append(group);
       });
 
