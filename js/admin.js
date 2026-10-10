@@ -210,7 +210,7 @@ function readAdminArchive() {
           || typeof entry.deletedAt !== 'string';
       }
 
-      return !['create', 'update', 'delete', 'assign'].includes(entry.action)
+      return !['create', 'update', 'delete', 'assign', 'teacher-note'].includes(entry.action)
         || !validRecord(entry.beforeRecord)
         || !validRecord(entry.afterRecord)
         || (entry.action === 'create' && (entry.beforeRecord !== null || entry.afterRecord === null))
@@ -625,7 +625,9 @@ function setupAdminTableActions() {
         let field;
         const headingText = heading.toLowerCase();
         const isAssignedStudentField = config.key === 'plots' && headingText === 'assigned student';
-        const isStatusField = config.key === 'plots' && headingText === 'status';
+        const isStatusField = (config.key === 'plots' && headingText === 'status')
+          || (config.key === 'students' && headingText === 'status');
+        const isGardenPlotField = config.key === 'students' && headingText === 'garden plot';
 
         if (isAssignedStudentField) {
           field = document.createElement('select');
@@ -654,13 +656,55 @@ function setupAdminTableActions() {
             currentOption.selected = true;
             field.append(currentOption);
           }
+        } else if (isGardenPlotField) {
+          const plotOptions = (() => {
+            try {
+              const savedPlots = JSON.parse(localStorage.getItem('gardenTrackerAdminRows:plots') || '[]');
+              if (Array.isArray(savedPlots) && savedPlots.length > 0) {
+                return Array.from(new Set(savedPlots
+                  .map((plot) => (Array.isArray(plot) ? plot[0] : ''))
+                  .filter((plotId) => typeof plotId === 'string' && plotId.trim())));
+              }
+            } catch (error) {
+              console.warn('Could not load plot IDs for student assignment.', error);
+            }
+            return ['A-01', 'A-02', 'A-03', 'A-04', 'A-05'];
+          })();
+
+          field = document.createElement('select');
+          field.id = id;
+          field.name = `field-${fieldIndex}`;
+          field.required = true;
+
+          const emptyOption = document.createElement('option');
+          emptyOption.value = '—';
+          emptyOption.textContent = '—';
+          emptyOption.selected = record[fieldIndex] === '—';
+          field.append(emptyOption);
+
+          plotOptions.forEach((plotId) => {
+            const option = document.createElement('option');
+            option.value = plotId;
+            option.textContent = plotId;
+            option.selected = record[fieldIndex] === plotId;
+            field.append(option);
+          });
+
+          if (record[fieldIndex] && record[fieldIndex] !== '—' && !plotOptions.includes(record[fieldIndex])) {
+            const currentOption = document.createElement('option');
+            currentOption.value = record[fieldIndex];
+            currentOption.textContent = record[fieldIndex];
+            currentOption.selected = true;
+            field.append(currentOption);
+          }
         } else if (isStatusField) {
           field = document.createElement('select');
           field.id = id;
           field.name = `field-${fieldIndex}`;
           field.required = true;
 
-          ['Available', 'Assigned'].forEach((statusValue) => {
+          const statusValues = config.key === 'students' ? ['Active', 'Unassigned'] : ['Available', 'Assigned'];
+          statusValues.forEach((statusValue) => {
             const option = document.createElement('option');
             option.value = statusValue;
             option.textContent = statusValue;
@@ -749,6 +793,7 @@ function setupAdminTableActions() {
             let previousNotes = null;
             let previousTeacherNotes = null;
             let updatedTeacherNotes = null;
+            let initialTeacherNote = '';
             if (teacherNoteInput) {
               const teacherNotesKey = 'gardenTrackerTeacherNotes';
               previousNotes = localStorage.getItem(teacherNotesKey);
@@ -776,6 +821,7 @@ function setupAdminTableActions() {
                   return;
                 }
                 previousTeacherNotes = previousNotes === null ? null : savedNotes;
+                initialTeacherNote = savedNotes.find((note) => note.plotId === record[0])?.text || '';
                 const nextNotes = savedNotes.filter(
                   (note) => note.plotId !== record[0] && note.plotId !== plotId
                 );
@@ -796,11 +842,13 @@ function setupAdminTableActions() {
               }
             }
 
+            const recordChanged = headings.some((_, fieldIndex) => updatedRecord[fieldIndex] !== record[fieldIndex]);
+            const teacherNoteChanged = teacherNoteInput ? teacherNoteInput.value.trim() !== initialTeacherNote : false;
             const historyEntry = {
               id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
               key: config.key,
               entity: config.entity,
-              action: 'update',
+              action: teacherNoteChanged && !recordChanged ? 'teacher-note' : 'update',
               beforeRecord: [...record],
               afterRecord: updatedRecord,
               index,
@@ -945,8 +993,9 @@ function setupAdminArchivePage() {
       const recordCell = document.createElement('td');
       const before = entry.beforeRecord?.join(' · ');
       const after = entry.afterRecord?.join(' · ');
+      const beforeAfterSame = before !== undefined && after !== undefined && before === after;
       recordCell.textContent = before && after
-        ? `${before} → ${after}`
+        ? (beforeAfterSame ? before : `${before} → ${after}`)
         : before || after;
       const actionCellType = document.createElement('td');
       const actionNames = {
@@ -954,6 +1003,7 @@ function setupAdminArchivePage() {
         update: 'Edited',
         delete: 'Deleted',
         assign: 'Plot assigned',
+        'teacher-note': 'Teacher note',
       };
       actionCellType.textContent = actionNames[entry.action];
       const dateCell = document.createElement('td');
