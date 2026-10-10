@@ -54,6 +54,49 @@ function ensureDemoAccounts() {
   }
 }
 
+function normalizeStudentName(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function ensureStudentRecordForAccount(account) {
+  if (account.role !== 'Student') return;
+
+  try {
+    const storedStudents = JSON.parse(localStorage.getItem('gardenTrackerAdminRows:students') || '[]');
+    if (!Array.isArray(storedStudents)) {
+      throw new Error('Saved student records are not in a valid format.');
+    }
+
+    const existingStudent = storedStudents.find((student) => (
+      Array.isArray(student)
+      && student.length >= 2
+      && normalizeStudentName(student[1]) === normalizeStudentName(account.fullName)
+    ));
+
+    if (existingStudent) return;
+
+    const nextStudentId = (() => {
+      const ids = storedStudents
+        .filter((student) => Array.isArray(student) && typeof student[0] === 'string')
+        .map((student) => student[0])
+        .filter((value) => /^STU-\d+$/i.test(value))
+        .map((value) => Number.parseInt(value.replace(/^STU-/i, ''), 10))
+        .filter((value) => Number.isFinite(value));
+
+      const nextNumber = ids.length ? Math.max(...ids) + 1 : 1;
+      return `STU-${String(nextNumber).padStart(3, '0')}`;
+    })();
+
+    storedStudents.push([nextStudentId, account.fullName, 'Grade 9', '—', 'Unassigned']);
+    localStorage.setItem('gardenTrackerAdminRows:students', JSON.stringify(storedStudents));
+  } catch (error) {
+    console.error('Could not create a matching admin student record for a new signup.', error);
+  }
+}
+
 function saveAccount(account) {
   const accounts = getAccounts();
   const usernameExists = accounts.some(
@@ -64,6 +107,7 @@ function saveAccount(account) {
 
   accounts.push(account);
   localStorage.setItem(accountsStorageKey, JSON.stringify(accounts));
+  ensureStudentRecordForAccount(account);
   return true;
 }
 

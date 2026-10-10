@@ -159,7 +159,7 @@ function setupDashboard() {
     );
     const studentObservations = account
       ? observations
-        .filter((observation) => observation.student === account.fullName)
+        .filter((observation) => normalizeStudentName(observation.student) === normalizeStudentName(account.fullName))
         .sort((first, second) => first.date.localeCompare(second.date)
           || first.submittedAt.localeCompare(second.submittedAt))
       : [];
@@ -278,6 +278,13 @@ function optimizeObservationPhoto(file) {
   });
 }
 
+function normalizeStudentName(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
 function getAssignedPlotForStudent(account, fallbackPlot) {
   let assignedPlot = fallbackPlot;
   const savedStudents = localStorage.getItem('gardenTrackerAdminRows:students');
@@ -293,7 +300,7 @@ function getAssignedPlotForStudent(account, fallbackPlot) {
     ) {
       throw new Error('Saved student records have an invalid format.');
     }
-    const student = students.find((record) => record[1] === account.fullName);
+    const student = students.find((record) => normalizeStudentName(record[1]) === normalizeStudentName(account.fullName));
     assignedPlot = student
       ? (student[3] !== '—' ? student[3] : '')
       : fallbackPlot;
@@ -313,7 +320,8 @@ function getAssignedPlotForStudent(account, fallbackPlot) {
       throw new Error('Saved plot records have an invalid format.');
     }
     const plot = plots.find((record) =>
-      record[2] === account.fullName && record[3].toLowerCase() === 'assigned'
+      normalizeStudentName(record[2]) === normalizeStudentName(account.fullName)
+      && record[3].toLowerCase() === 'assigned'
     );
     if (plot) assignedPlot = plot[0];
   }
