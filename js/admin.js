@@ -1081,9 +1081,147 @@ function setupAdminArchivePage() {
 
   const status = document.querySelector('[data-archive-status]');
   const emptyState = document.querySelector('[data-archive-empty]');
+  const recordFields = {
+    student: ['ID', 'Name', 'Grade and section', 'Garden plot', 'Status'],
+    plot: ['Plot', 'Location', 'Assigned student', 'Status'],
+    observation: ['Date', 'Student', 'Plot', 'Condition', 'Observation'],
+  };
 
   const showStatus = (message) => {
     status.textContent = message;
+  };
+
+  const showHistoryDetails = (entry, trigger) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    const dialog = document.createElement('section');
+    dialog.className = 'modal-card archive-detail-dialog';
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'archive-detail-title');
+
+    const header = document.createElement('div');
+    header.className = 'modal-header';
+    const title = document.createElement('h2');
+    title.id = 'archive-detail-title';
+    title.textContent = `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action details`;
+    const closeButton = document.createElement('button');
+    closeButton.className = 'modal-close';
+    closeButton.type = 'button';
+    closeButton.setAttribute('aria-label', 'Close details');
+    closeButton.textContent = '×';
+    header.append(title, closeButton);
+    dialog.append(header);
+
+    const actionNames = {
+      create: 'Added',
+      update: 'Edited',
+      delete: 'Deleted',
+      assign: 'Plot assigned',
+      'teacher-note': 'Teacher note',
+    };
+    const actionDate = new Date(entry.createdAt);
+    const metadata = document.createElement('dl');
+    metadata.className = 'archive-detail-metadata';
+    [
+      ['Action', actionNames[entry.action] || entry.action],
+      ['When', Number.isNaN(actionDate.getTime())
+        ? 'Unknown date'
+        : actionDate.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })],
+    ].forEach(([labelText, valueText]) => {
+      const item = document.createElement('div');
+      const label = document.createElement('dt');
+      label.textContent = labelText;
+      const value = document.createElement('dd');
+      value.textContent = valueText;
+      item.append(label, value);
+      metadata.append(item);
+    });
+    dialog.append(metadata);
+
+    const appendRecord = (headingText, record) => {
+      if (!record) return;
+      const section = document.createElement('section');
+      section.className = 'archive-detail-section';
+      const heading = document.createElement('h3');
+      heading.textContent = headingText;
+      const fields = document.createElement('dl');
+      fields.className = 'archive-detail-fields';
+      recordFields[entry.entity].forEach((fieldName, index) => {
+        const item = document.createElement('div');
+        const label = document.createElement('dt');
+        label.textContent = fieldName;
+        const value = document.createElement('dd');
+        value.textContent = record[index] || '—';
+        item.append(label, value);
+        fields.append(item);
+      });
+      section.append(heading, fields);
+      dialog.append(section);
+    };
+
+    appendRecord('Record before action', entry.beforeRecord);
+    appendRecord('Record after action', entry.afterRecord);
+
+    if (entry.beforeTeacherNotes !== undefined || entry.afterTeacherNotes !== undefined) {
+      const appendNotes = (headingText, notes) => {
+        const section = document.createElement('section');
+        section.className = 'archive-detail-section';
+        const heading = document.createElement('h3');
+        heading.textContent = headingText;
+        section.append(heading);
+        if (!notes || notes.length === 0) {
+          const empty = document.createElement('p');
+          empty.textContent = 'No teacher notes.';
+          section.append(empty);
+        } else {
+          notes.forEach((note) => {
+            const fields = document.createElement('dl');
+            fields.className = 'archive-detail-fields';
+            [
+              ['Plot', note.plotId],
+              ['Student', note.student],
+              ['Note', note.text],
+              ['Author', note.author],
+              ['Updated', note.updatedAt],
+            ].forEach(([labelText, valueText]) => {
+              const item = document.createElement('div');
+              const label = document.createElement('dt');
+              label.textContent = labelText;
+              const value = document.createElement('dd');
+              value.textContent = valueText || '—';
+              item.append(label, value);
+              fields.append(item);
+            });
+            section.append(fields);
+          });
+        }
+        dialog.append(section);
+      };
+
+      appendNotes('Teacher notes before action', entry.beforeTeacherNotes);
+      appendNotes('Teacher notes after action', entry.afterTeacherNotes);
+    }
+
+    let onKeyDown;
+    const close = () => {
+      overlay.remove();
+      document.body.classList.remove('modal-open');
+      document.removeEventListener('keydown', onKeyDown);
+      trigger.focus();
+    };
+    closeButton.addEventListener('click', close);
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) close();
+    });
+    onKeyDown = (event) => {
+      if (event.key === 'Escape' && overlay.isConnected) close();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    overlay.append(dialog);
+    document.body.append(overlay);
+    document.body.classList.add('modal-open');
+    closeButton.focus();
   };
 
   const render = () => {
@@ -1122,6 +1260,16 @@ function setupAdminArchivePage() {
         ? 'Unknown date'
         : actionDate.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
       const actionCell = document.createElement('td');
+      const viewButton = document.createElement('button');
+      viewButton.type = 'button';
+      viewButton.className = 'icon-action archive-action-button';
+      viewButton.dataset.viewHistoryEntry = entry.id;
+      viewButton.setAttribute('aria-label', 'View action details');
+      viewButton.title = 'View';
+      const viewIcon = document.createElement('img');
+      viewIcon.src = '../images/view.svg';
+      viewIcon.alt = '';
+      viewButton.append(viewIcon);
       const undoButton = document.createElement('button');
       undoButton.type = 'button';
       undoButton.className = 'icon-action archive-action-button';
@@ -1144,7 +1292,7 @@ function setupAdminArchivePage() {
       deleteButton.append(deleteIcon);
       const actions = document.createElement('div');
       actions.className = 'archive-actions';
-      actions.append(undoButton, deleteButton);
+      actions.append(viewButton, undoButton, deleteButton);
       actionCell.append(actions);
       row.append(entityCell, actionCellType, recordCell, dateCell, actionCell);
       tbody.append(row);
@@ -1155,9 +1303,10 @@ function setupAdminArchivePage() {
   };
 
   tbody.addEventListener('click', (event) => {
+    const viewButton = event.target.closest('[data-view-history-entry]');
     const undoButton = event.target.closest('[data-undo-history-entry]');
     const deleteButton = event.target.closest('[data-delete-history-entry]');
-    if (!undoButton && !deleteButton) return;
+    if (!viewButton && !undoButton && !deleteButton) return;
 
     let history;
     try {
@@ -1168,8 +1317,9 @@ function setupAdminArchivePage() {
       return;
     }
 
-    const button = undoButton || deleteButton;
-    const historyIndex = history.findIndex((entry) => entry.id === button.dataset.undoHistoryEntry
+    const button = viewButton || undoButton || deleteButton;
+    const historyIndex = history.findIndex((entry) => entry.id === button.dataset.viewHistoryEntry
+      || entry.id === button.dataset.undoHistoryEntry
       || entry.id === button.dataset.deleteHistoryEntry);
     const rawEntry = history[historyIndex];
     if (!rawEntry) {
@@ -1179,6 +1329,10 @@ function setupAdminArchivePage() {
     }
 
     const entry = normalizeAdminHistoryEntry(rawEntry);
+    if (viewButton) {
+      showHistoryDetails(entry, viewButton);
+      return;
+    }
     if (deleteButton) {
       showAdminConfirmation({
         title: 'Delete history entry?',

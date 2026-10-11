@@ -426,7 +426,7 @@ body.admin {
 
 .archive-table th:last-child,
 .archive-table td:last-child {
-  width: 100px;
+  width: 136px;
   text-align: center;
   padding-right: 0;
 }
@@ -447,6 +447,51 @@ body.admin {
 .archive-table td:nth-child(4) {
   font-size: 12px;
   color: var(--muted);
+}
+
+.archive-detail-dialog {
+  width: min(100%, 600px);
+}
+
+.archive-detail-metadata,
+.archive-detail-fields {
+  margin: 0;
+}
+
+.archive-detail-metadata > div,
+.archive-detail-fields > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(0, 2fr);
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.archive-detail-metadata dt,
+.archive-detail-fields dt {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.archive-detail-metadata dd,
+.archive-detail-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.archive-detail-section {
+  margin-top: 20px;
+}
+
+.archive-detail-section h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.archive-detail-section p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 /* Growth tracker: plot summary, scalable height chart, empty state, and chronological observation cards. */
