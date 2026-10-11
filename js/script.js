@@ -236,6 +236,104 @@ function setupTableSearch({ inputId, rowSelector, emptyStateSelector, cardSelect
   });
 }
 
+function setupSystemTableEntries() {
+  document.querySelectorAll('.table-container table').forEach((table) => {
+    const tbody = table.tBodies[0];
+    if (!tbody || table.dataset.entriesEnabled === 'true') return;
+    table.dataset.entriesEnabled = 'true';
+
+    const controls = document.createElement('div');
+    controls.className = 'table-entry-controls';
+    const pageSizeLabel = document.createElement('label');
+    pageSizeLabel.className = 'table-entry-size';
+    pageSizeLabel.textContent = 'Show ';
+    const pageSizeSelect = document.createElement('select');
+    pageSizeSelect.setAttribute('aria-label', 'Items per page');
+    [10, 25, 50, 100].forEach((size) => {
+      const option = document.createElement('option');
+      option.value = String(size);
+      option.textContent = String(size);
+      pageSizeSelect.append(option);
+    });
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All';
+    pageSizeSelect.append(allOption);
+    pageSizeLabel.append(pageSizeSelect, document.createTextNode(' items'));
+
+    const range = document.createElement('span');
+    range.className = 'table-entry-range';
+    range.setAttribute('aria-live', 'polite');
+    const navigation = document.createElement('div');
+    navigation.className = 'table-entry-navigation';
+    const previousButton = document.createElement('button');
+    previousButton.type = 'button';
+    previousButton.className = 'btn btn-secondary';
+    previousButton.textContent = 'Previous';
+    const pageLabel = document.createElement('span');
+    pageLabel.className = 'table-entry-page';
+    const nextButton = document.createElement('button');
+    nextButton.type = 'button';
+    nextButton.className = 'btn btn-secondary';
+    nextButton.textContent = 'Next';
+    navigation.append(previousButton, pageLabel, nextButton);
+    controls.append(pageSizeLabel, range, navigation);
+    table.after(controls);
+
+    let page = 1;
+    let filteredRows = [...tbody.rows].filter((row) => !row.hidden);
+    const getPageSize = () => pageSizeSelect.value === 'all'
+      ? Math.max(filteredRows.length, 1)
+      : Number(pageSizeSelect.value);
+    const render = () => {
+      const pageSize = getPageSize();
+      const pageCount = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+      page = Math.min(page, pageCount);
+      const start = filteredRows.length === 0 ? 0 : ((page - 1) * pageSize) + 1;
+      const end = Math.min(page * pageSize, filteredRows.length);
+      const visibleRows = new Set(
+        filteredRows.slice((page - 1) * pageSize, page * pageSize)
+      );
+
+      [...tbody.rows].forEach((row) => {
+        row.hidden = !visibleRows.has(row);
+      });
+      range.textContent = `Showing ${start}–${end} of ${filteredRows.length} items`;
+      pageLabel.textContent = `Page ${page} of ${pageCount}`;
+      previousButton.disabled = page <= 1;
+      nextButton.disabled = page >= pageCount;
+    };
+    const refresh = () => {
+      filteredRows = [...tbody.rows].filter((row) => !row.hidden);
+      page = 1;
+      render();
+    };
+
+    pageSizeSelect.addEventListener('change', () => {
+      page = 1;
+      render();
+    });
+    previousButton.addEventListener('click', () => {
+      page--;
+      render();
+    });
+    nextButton.addEventListener('click', () => {
+      page++;
+      render();
+    });
+
+    document.addEventListener('input', (event) => {
+      if (event.target.matches?.('input[type="search"]')) refresh();
+    });
+    document.querySelectorAll('#report-period, #report-date').forEach((input) => {
+      input.addEventListener('input', refresh);
+      input.addEventListener('change', refresh);
+    });
+    tbody.addEventListener('tabledatachange', refresh);
+    render();
+  });
+}
+
 function validateCredentials(username, password) {
   const normalizedUser = username.trim();
   const normalizedPass = password.trim();
@@ -818,5 +916,6 @@ if (typeof setupTableSearch === 'function') {
     cardSelector: 'main .card',
   });
 }
+if (typeof setupSystemTableEntries === 'function') setupSystemTableEntries();
 updateUserDisplay();
 if (typeof setupTeacherNotesDisplay === 'function') setupTeacherNotesDisplay();

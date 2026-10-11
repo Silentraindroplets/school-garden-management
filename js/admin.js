@@ -573,6 +573,7 @@ function setupAdminTableActions() {
     if (emptyState) emptyState.hidden = records.length > 0;
     const search = document.getElementById(config.searchId);
     if (search) search.dispatchEvent(new Event('input', { bubbles: true }));
+    tbody.dispatchEvent(new Event('tabledatachange'));
   };
 
   const openRecordDialog = (action, index, trigger) => {
@@ -1299,7 +1300,8 @@ function setupAdminArchivePage() {
     });
 
     emptyState.hidden = history.length > 0;
-    showStatus(history.length ? `${history.length} action${history.length === 1 ? '' : 's'} in history.` : '');
+    showStatus('');
+    tbody.dispatchEvent(new Event('tabledatachange'));
   };
 
   tbody.addEventListener('click', (event) => {
