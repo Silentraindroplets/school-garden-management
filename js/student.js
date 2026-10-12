@@ -328,6 +328,229 @@ function getAssignedPlotForStudent(account, fallbackPlot) {
   return assignedPlot;
 }
 
+function setupStudentGrowthPreview() {
+  const section = document.querySelector('[data-student-growth]');
+  const previewChart = section?.querySelector('[data-student-growth-preview]');
+  const previewEmpty = section?.querySelector('[data-student-growth-preview-empty]');
+  const summary = section?.querySelector('[data-student-growth-summary]');
+  const openButton = section?.querySelector('[data-growth-open]');
+  const modal = document.querySelector('[data-growth-modal]');
+  const closeButton = modal?.querySelector('[data-growth-close]');
+  const modalChart = modal?.querySelector('[data-student-growth-chart]');
+  const modalEmpty = modal?.querySelector('[data-student-growth-empty]');
+  const modalSummary = modal?.querySelector('[data-growth-modal-summary]');
+  const modalPlot = modal?.querySelector('[data-growth-modal-plot]');
+  if (
+    !section
+    || !previewChart
+    || !previewEmpty
+    || !summary
+    || !openButton
+    || !modal
+    || !closeButton
+    || !modalChart
+    || !modalEmpty
+    || !modalSummary
+    || !modalPlot
+  ) return;
+
+  const renderChart = (chart, measurements, height = 320) => {
+    chart.replaceChildren();
+    if (!measurements.length) {
+      chart.setAttribute('hidden', '');
+      return;
+    }
+
+    const namespace = 'http://www.w3.org/2000/svg';
+    const createElement = (name, attributes = {}) => {
+      const element = document.createElementNS(namespace, name);
+      Object.entries(attributes).forEach(([key, value]) => {
+        element.setAttribute(key, String(value));
+      });
+      return element;
+    };
+    const width = 760;
+    const left = 58;
+    const right = 24;
+    const top = 22;
+    const bottom = 52;
+    const chartWidth = width - left - right;
+    const chartHeight = height - top - bottom;
+    const maxValue = Math.max(5, Math.ceil(Math.max(...measurements.map((item) => item.height)) / 5) * 5);
+    const pointX = (index) => measurements.length === 1
+      ? left + chartWidth / 2
+      : left + (chartWidth * index) / (measurements.length - 1);
+    const pointY = (value) => top + chartHeight - (value / maxValue) * chartHeight;
+
+    chart.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    chart.setAttribute(
+      'aria-label',
+      `Plant height for plot ${measurements[0].plot} across ${measurements.length} measurements.`
+    );
+    for (let tick = 0; tick <= 4; tick += 1) {
+      const value = (maxValue * tick) / 4;
+      const y = pointY(value);
+      chart.append(createElement('line', {
+        x1: left,
+        y1: y,
+        x2: width - right,
+        y2: y,
+        class: 'student-growth-gridline',
+      }));
+      const label = createElement('text', {
+        x: left - 10,
+        y: y + 4,
+        'text-anchor': 'end',
+        class: 'student-growth-label',
+      });
+      label.textContent = Number.isInteger(value) ? String(value) : value.toFixed(1);
+      chart.append(label);
+    }
+
+    const axisTitle = createElement('text', {
+      x: 16,
+      y: top + chartHeight / 2,
+      transform: `rotate(-90 16 ${top + chartHeight / 2})`,
+      'text-anchor': 'middle',
+      class: 'student-growth-axis-title',
+    });
+    axisTitle.textContent = 'Height (cm)';
+    chart.append(axisTitle);
+    chart.append(createElement('line', {
+      x1: left,
+      y1: top + chartHeight,
+      x2: width - right,
+      y2: top + chartHeight,
+      class: 'student-growth-axis',
+    }));
+    chart.append(createElement('path', {
+      d: measurements
+        .map((item, index) => `${index === 0 ? 'M' : 'L'} ${pointX(index)} ${pointY(item.height)}`)
+        .join(' '),
+      class: 'student-growth-line',
+    }));
+
+    measurements.forEach((item, index) => {
+      const point = createElement('circle', {
+        cx: pointX(index),
+        cy: pointY(item.height),
+        r: 6,
+        class: 'student-growth-point',
+      });
+      const tooltip = createElement('title');
+      tooltip.textContent = `${new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(`${item.date}T00:00:00`))}: ${item.height} cm`;
+      point.append(tooltip);
+      chart.append(point);
+
+      const labelInterval = Math.max(1, Math.ceil((measurements.length - 1) / 5));
+      if (index % labelInterval !== 0 && index !== measurements.length - 1) return;
+      const dateLabel = createElement('text', {
+        x: pointX(index),
+        y: height - 20,
+        'text-anchor': 'middle',
+        class: 'student-growth-label',
+      });
+      dateLabel.textContent = new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(`${item.date}T00:00:00`));
+      chart.append(dateLabel);
+    });
+    chart.removeAttribute('hidden');
+  };
+
+  let measurements = [];
+  let emptyMessage = 'Add plant-height measurements to your observations to start tracking growth.';
+  try {
+    const username = localStorage.getItem(currentUserStorageKey);
+    const account = getAccounts().find(
+      (item) => item.username === username && item.role === 'Student'
+    );
+    const assignedPlot = account
+      ? getAssignedPlotForStudent(account, section.dataset.plotId || '')
+      : '';
+    if (!account) {
+      throw new Error('A signed-in student account is required to load plot growth.');
+    }
+    modalPlot.textContent = assignedPlot ? `Plot ${assignedPlot}` : 'No plot assigned';
+    if (!assignedPlot) {
+      summary.textContent = 'No plot is assigned to your account yet.';
+      modalSummary.textContent = summary.textContent;
+      emptyMessage = summary.textContent;
+    } else {
+      const stored = localStorage.getItem(growthObservationsStorageKey);
+      const observations = stored === null ? [] : JSON.parse(stored);
+      if (!Array.isArray(observations) || observations.some((observation) => (
+        !observation
+        || typeof observation.plot !== 'string'
+        || typeof observation.student !== 'string'
+        || typeof observation.date !== 'string'
+        || !(observation.height === null || (
+          typeof observation.height === 'number'
+          && Number.isFinite(observation.height)
+          && observation.height >= 0
+        ))
+        || typeof observation.submittedAt !== 'string'
+        || Number.isNaN(new Date(`${observation.date}T00:00:00`).getTime())
+        || Number.isNaN(new Date(observation.submittedAt).getTime())
+      ))) {
+        throw new Error('Saved growth observations have an invalid format.');
+      }
+
+      measurements = observations
+        .filter((observation) => observation.plot === assignedPlot
+          && normalizeStudentName(observation.student) === normalizeStudentName(account.fullName)
+          && observation.height !== null)
+        .sort((first, second) => first.date.localeCompare(second.date)
+          || first.submittedAt.localeCompare(second.submittedAt));
+      if (measurements.length) {
+        const latest = measurements[measurements.length - 1];
+        summary.textContent = `${measurements.length} measurement${measurements.length === 1 ? '' : 's'} · Latest: ${latest.height} cm`;
+      } else {
+        summary.textContent = 'No plant-height measurements recorded for this plot yet.';
+      }
+      modalSummary.textContent = summary.textContent;
+    }
+  } catch (error) {
+    console.error('Could not load student plot growth.', error);
+    summary.textContent = 'Plot growth could not be loaded.';
+    modalSummary.textContent = summary.textContent;
+    emptyMessage = 'The growth chart is unavailable. Please try again later.';
+  }
+
+  previewEmpty.textContent = emptyMessage;
+  modalEmpty.textContent = emptyMessage;
+  const hasMeasurements = measurements.length > 0;
+  previewEmpty.hidden = hasMeasurements;
+  modalEmpty.hidden = hasMeasurements;
+  renderChart(previewChart, measurements, 200);
+  renderChart(modalChart, measurements);
+
+  let previouslyFocusedElement;
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    previouslyFocusedElement?.focus();
+  };
+  openButton.addEventListener('click', () => {
+    previouslyFocusedElement = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    closeButton.focus();
+  });
+  closeButton.addEventListener('click', close);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) close();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal.hidden) close();
+  });
+}
+
 function setupStudentObservationForm() {
   const form = document.querySelector('.observation-form');
   const photoInput = document.getElementById('observation-photo');

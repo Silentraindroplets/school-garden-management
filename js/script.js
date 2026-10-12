@@ -892,6 +892,7 @@ if (typeof setupAdminArchivePage === 'function') setupAdminArchivePage();
 if (typeof setupAdminGrowthTracker === 'function') setupAdminGrowthTracker();
 if (typeof setupObservationLog === 'function') setupObservationLog();
 if (typeof setupStudentObservationForm === 'function') setupStudentObservationForm();
+if (typeof setupStudentGrowthPreview === 'function') setupStudentGrowthPreview();
 if (typeof setupPlotPhoto === 'function') setupPlotPhoto();
 if (typeof setupReportExport === 'function') setupReportExport();
 if (typeof setupStudentNotifications === 'function') setupStudentNotifications();

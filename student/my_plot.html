@@ -137,6 +137,30 @@
             </dl>
           </section>
 
+          <section
+            class="card my-plot-card student-growth-card"
+            data-student-growth
+            data-plot-id="A-01"
+          >
+            <div class="card-heading-row">
+              <div>
+                <h2>Plant Growth</h2>
+                <p class="student-growth-summary" data-student-growth-summary>
+                  Your recorded plant-height measurements will appear here.
+                </p>
+              </div>
+              <button class="btn btn-primary student-growth-more" type="button" data-growth-open>
+                View more
+              </button>
+            </div>
+            <div class="student-growth-preview">
+              <svg data-student-growth-preview role="img" aria-label="Plant growth chart preview" hidden></svg>
+              <p class="student-growth-empty" data-student-growth-preview-empty>
+                Add plant-height measurements to your observations to start tracking growth.
+              </p>
+            </div>
+          </section>
+
           <section class="card plot-photo-card my-plot-card">
             <div class="card-heading-row">
               <h2>Recent Plot Photo</h2>
@@ -155,6 +179,33 @@
         </div>
       </div>
     </main>
+
+    <div class="modal-overlay" data-growth-modal hidden>
+      <section
+        class="modal-card student-growth-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="student-growth-modal-title"
+      >
+        <div class="modal-header">
+          <div>
+            <span class="note-label" data-growth-modal-plot>Plot A-01</span>
+            <h2 id="student-growth-modal-title">Plant growth over time</h2>
+          </div>
+          <button class="modal-close" type="button" aria-label="Close dialog" data-growth-close>
+            &times;
+          </button>
+        </div>
+        <p class="student-growth-summary" data-growth-modal-summary></p>
+        <div class="student-growth-chart">
+          <svg data-student-growth-chart role="img" aria-label="Plant height over time" hidden></svg>
+          <p class="student-growth-empty" data-student-growth-empty>
+            Add plant-height measurements to your observations to start tracking growth.
+          </p>
+        </div>
+      </section>
+    </div>
+
     <footer class="site-footer">
       <div class="footer-brand">
         <strong>GardenTrack</strong>
