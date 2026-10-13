@@ -1,4 +1,4 @@
-/* Shared sign-in and registration UI: centered card, brand block, form fields, focus rings, and feedback. */
+/* Shared sign-in and registration styles for the card, forms, focus states, and messages. */
 
 .auth-page {
   min-height: 100vh;
@@ -132,7 +132,7 @@
   outline-offset: 3px;
 }
 
-/* Login page: place the welcome/brand panel beside the credential form over a darkened garden photo. */
+/* Place the login form beside the welcome panel over a darkened garden photo. */
 .login-page {
   min-height: 100vh;
   position: relative;
@@ -304,7 +304,7 @@
   color: #aaa39a;
 }
 
-/* Sign-in options row: align the remember-me control with supporting links such as password help. */
+/* Align the remember-me option and help links on one row. */
 
 .form-options {
   display: flex;
@@ -326,7 +326,7 @@
 }
 
 
-/* Remember-me control: keep the checkbox and its label aligned and use the GardenTrack accent color. */
+/* Align the remember-me checkbox and label, using the brand accent color. */
 
 .remember-me {
   display: flex;
@@ -348,7 +348,7 @@
 }
 
 
-/* Registration consent row: align its checkbox with multi-line terms text and linked policy details. */
+/* Align the consent checkbox with the terms text and policy links. */
 
 .form-check {
   display: flex;
@@ -383,7 +383,7 @@
 }
 
 
-/* Signup field pairs: display related inputs side by side until the narrow-screen layout stacks them. */
+/* Place related sign-up fields side by side; stack them on narrow screens. */
 
 .form-row {
   display: grid;
@@ -394,7 +394,7 @@
 }
 
 
-/* Authentication submit buttons: share the primary brand color and provide a raised hover state. */
+/* Use the brand color for sign-in buttons and raise them slightly on hover. */
 
 .btn,
 .auth-button {
@@ -437,7 +437,7 @@
 }
 
 
-/* Login help panel: visually separate any demo-account guidance from the credential fields. */
+/* Separate login help or demo-account details from the credential fields. */
 
 .login-demo {
   margin-top: 25px;
@@ -466,7 +466,7 @@
 }
 
 
-/* Authentication footer: center account-switching links and supporting instructions below the form. */
+/* Center account links and supporting text below the authentication form. */
 
 .auth-footer {
   margin-top: 22px;
@@ -493,7 +493,7 @@
 }
 
 
-/* Tablet login layout: put the brand panel above the form when two columns no longer fit. */
+/* On tablets, place the welcome panel above the login form. */
 
 @media (max-width: 800px) {
 
@@ -521,7 +521,7 @@
 }
 
 
-/* Phone layout: reduce card padding, stack paired fields, and simplify the sign-in options row. */
+/* On phones, reduce card spacing, stack paired fields, and wrap sign-in options. */
 @media (max-width: 550px) {
 
   .auth-page {

@@ -1,4 +1,4 @@
-/* Shared student/public header: align the GardenTrack brand, page links, and responsive navigation row. */
+/* Header shared by student and public pages: logo, page links, and account menu. */
 
 .navbar {
   background: var(--white);
@@ -82,7 +82,7 @@
     text-decoration: none;
 }
 
-/* Account menu: style the avatar trigger, signed-in identity, and its anchored dropdown links. */
+/* Position the account avatar, user details, and dropdown menu. */
 .user-menu {
   position: relative;
   display: flex;
@@ -170,7 +170,7 @@
   color: var(--text-light);
 }
 
-/* Main content: provide space below the header and let the page body fill the available height. */
+/* Add space around the main content and let it fill the remaining page height. */
 
 .main-content {
   padding: 35px 0 50px;
@@ -179,7 +179,7 @@
 
 }
 
-/* Tablet and phone header: wrap the header row and let navigation links scroll horizontally if needed. */
+/* On tablet-sized screens, wrap the header and let the links scroll sideways if needed. */
 
 @media (max-width: 900px) {
   .navbar-inner {

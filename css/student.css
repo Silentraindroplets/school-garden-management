@@ -1,4 +1,4 @@
-/* Dashboard welcome banner: green background, white text, and compact heading spacing. */
+/* Style the dashboard welcome banner with white text and a compact heading. */
 
 .student-welcome {
   background: var(--primary);
@@ -20,7 +20,7 @@
   color: #e8f1e8;
 }
 
-/* My Plot page: plot summary layout, assignment details, teacher notes, and the latest plot photo. */
+/* Arrange plot details, teacher notes, and the latest photo on the My Plot page. */
 
 .plot-card {
   display: flex;
@@ -233,7 +233,7 @@
   display: none;
 }
 
-/* Dashboard quick-action cards: three-column layout with a small lift on hover. */
+/* Arrange dashboard shortcuts in three columns and lift them slightly on hover. */
 
 .quick-actions {
   display: grid;
@@ -273,7 +273,7 @@
   margin-bottom: 15px;
 }
 
-/* Observation form selects: weather icons plus the trigger, selected value, and open options menu. */
+/* Style the weather selector, including its icon, selected value, and options menu. */
 
 .icon-select {
   background-repeat: no-repeat;
@@ -410,7 +410,7 @@
   flex-shrink: 0;
 }
 
-/* Observation form layout and fields, including the photo chooser, selected-file preview, and status. */
+/* Arrange observation fields, photo upload and preview, and form status message. */
 
 .observation-form-card {
   width: 100%;
@@ -639,7 +639,7 @@
   }
 }
 
-/* Short activity summaries: metadata on top, followed by the observation title and description. */
+/* Show activity details above each observation's title and description. */
 .observation-item {
   padding: 17px 0;
 
@@ -669,7 +669,7 @@
   font-size: 14px;
 }
 
-/* Observation log: card layout, date and plot metadata, condition badges, and the detail-view button. */
+/* Arrange observation cards with dates, plot details, condition labels, and a detail button. */
 
 .log-entry {
   background: var(--white);
@@ -885,7 +885,7 @@
   box-shadow: none;
 }
 
-/* Dialog-specific sizing and content layouts for observation details, student profiles, and settings. */
+/* Size and arrange observation, profile, and settings dialog content. */
 
 .log-modal-card {
   width: min(100%, 560px);
@@ -1009,7 +1009,7 @@
   line-height: 1.6;
 }
 
-/* Shared dialog foundation: dim the page, center a scrollable panel, and provide a visible close control. */
+/* Dim the page behind dialogs and provide a centered, scrollable panel with a close button. */
 
 .modal-overlay {
   position: fixed;
@@ -1094,7 +1094,7 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Header account and notifications: avatar, unread-count badge, and the expandable notification panel. */
+/* Style the account avatar, unread notification count, and expandable notification panel. */
 
 .user-menu .user-avatar {
   width: 36px;
@@ -1282,7 +1282,7 @@ body.modal-open {
   display: none;
 }
 
-/* At phone widths, stack log-entry controls and place each observation detail field on its own row. */
+/* On phones, stack log controls and show each observation detail on a separate row. */
 @media (max-width: 600px) {
   .log-entry-header {
     align-items: flex-start;
@@ -1304,7 +1304,7 @@ body.modal-open {
   }
 }
 
-/* At tablet and phone widths, stack dashboard shortcuts and keep plot-card content top-aligned. */
+/* On smaller screens, stack dashboard shortcuts and align plot-card content at the top. */
 
 @media (max-width: 750px) {
   .quick-actions {
