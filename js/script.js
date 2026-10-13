@@ -278,7 +278,9 @@ function setupSystemTableEntries() {
     nextButton.textContent = 'Next';
     navigation.append(previousButton, pageLabel, nextButton);
     controls.append(pageSizeLabel, range, navigation);
-    table.after(controls);
+    const emptyState = table.parentElement.querySelector('.table-empty-state');
+    if (emptyState) emptyState.after(controls);
+    else table.after(controls);
 
     let page = 1;
     let filteredRows = [...tbody.rows].filter((row) => !row.hidden);
