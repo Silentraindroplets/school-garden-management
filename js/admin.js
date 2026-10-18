@@ -1,4 +1,6 @@
 const plotCropsStorageKey = 'gardenTrackerPlotCrops';
+const adminCropOptions = ['Tomato', 'Radish', 'Carrot'];
+const adminSampleCropByPlot = { 'A-01': 'Tomato', 'A-02': 'Carrot' };
 
 function readAssignedPlotCrops() {
   const stored = localStorage.getItem(plotCropsStorageKey);
@@ -272,6 +274,17 @@ function readAdminArchive() {
               ))
             )
           )
+        )
+        || (
+          entry.cropAssignment !== undefined
+          && (
+            !entry.cropAssignment
+            || typeof entry.cropAssignment.plotId !== 'string'
+            || !(entry.cropAssignment.beforeCrop === null
+              || typeof entry.cropAssignment.beforeCrop === 'string')
+            || !(entry.cropAssignment.afterCrop === null
+              || typeof entry.cropAssignment.afterCrop === 'string')
+          )
         );
     })
   ) {
@@ -348,6 +361,11 @@ function describeAdminHistoryAction(entry) {
       }
       return items;
     }, []);
+    if (entry.cropAssignment && entry.cropAssignment.beforeCrop !== entry.cropAssignment.afterCrop) {
+      changes.push(
+        `crop: ${entry.cropAssignment.beforeCrop || 'none'} → ${entry.cropAssignment.afterCrop || 'none'}`
+      );
+    }
     return changes.length
       ? `Updated ${subject(after)} — ${changes.join('; ')}.`
       : `Updated ${entityName.toLowerCase()} ${subject(after)}.`;
@@ -694,6 +712,7 @@ function setupAdminTableActions() {
             return fallbackNames;
           })()
         : [];
+      let cropPlotField = null;
 
       headings.forEach((heading, fieldIndex) => {
         const group = document.createElement('div');
@@ -756,6 +775,7 @@ function setupAdminTableActions() {
           field.id = id;
           field.name = `field-${fieldIndex}`;
           field.required = true;
+          cropPlotField = field;
 
           const emptyOption = document.createElement('option');
           emptyOption.value = '—';
@@ -808,13 +828,59 @@ function setupAdminTableActions() {
         form.append(group);
       });
 
-      const teacherNoteInput = config.key === 'plots'
-        ? document.createElement('textarea')
-        : null;
       const dialogStatus = document.createElement('p');
       dialogStatus.className = 'admin-action-status';
       dialogStatus.setAttribute('role', 'status');
       dialogStatus.setAttribute('aria-live', 'polite');
+      let cropField = null;
+      if (config.key === 'plots' || config.key === 'students') {
+        const cropGroup = document.createElement('div');
+        cropGroup.className = 'form-group';
+        const cropLabel = document.createElement('label');
+        cropLabel.htmlFor = 'admin-record-crop';
+        cropLabel.textContent = 'Crop';
+        cropField = document.createElement('select');
+        cropField.id = 'admin-record-crop';
+        cropField.name = 'crop';
+        const noCropOption = document.createElement('option');
+        noCropOption.value = '';
+        noCropOption.textContent = 'Select crop';
+        cropField.append(noCropOption);
+        adminCropOptions.forEach((crop) => {
+          const option = document.createElement('option');
+          option.value = crop;
+          option.textContent = crop;
+          cropField.append(option);
+        });
+        cropGroup.append(cropLabel, cropField);
+        form.append(cropGroup);
+
+        const updateCropField = () => {
+          const plotId = config.key === 'plots'
+            ? record[0]
+            : cropPlotField?.value;
+          cropField.disabled = !plotId || plotId === '—';
+          cropField.value = '';
+          if (cropField.disabled) return;
+          try {
+            const assignedCrops = readAssignedPlotCrops();
+            const crop = assignedCrops[plotId] || adminSampleCropByPlot[plotId];
+            if (adminCropOptions.includes(crop)) {
+              cropField.value = crop;
+            }
+          } catch (error) {
+            console.error('Could not load crop assignments for record editing.', error);
+            dialogStatus.textContent = 'Could not load crop assignments. Crop changes are unavailable.';
+            cropField.disabled = true;
+          }
+        };
+        updateCropField();
+        cropPlotField?.addEventListener('change', updateCropField);
+      }
+
+      const teacherNoteInput = config.key === 'plots'
+        ? document.createElement('textarea')
+        : null;
       if (teacherNoteInput) {
         teacherNoteInput.id = 'admin-record-teacher-note';
         teacherNoteInput.name = 'teacher-note';
@@ -847,8 +913,8 @@ function setupAdminTableActions() {
           console.error('Could not load the teacher note for this plot.', error);
           dialogStatus.textContent = 'Teacher note could not be loaded. Check the saved note data before saving.';
         }
-        form.append(dialogStatus);
       }
+      form.append(dialogStatus);
 
       const saveButton = document.createElement('button');
       saveButton.type = 'submit';
@@ -870,6 +936,32 @@ function setupAdminTableActions() {
             const updated = records.map((item, recordIndex) =>
               recordIndex === index ? updatedRecord : item
             );
+            let previousCropStorage = null;
+            let updatedCrops = null;
+            let cropAssignment = null;
+            if (cropField) {
+              const plotId = config.key === 'plots' ? updatedRecord[0] : updatedRecord[3];
+              if (plotId && plotId !== '—') {
+                previousCropStorage = localStorage.getItem(plotCropsStorageKey);
+                try {
+                  const previousCrops = readAssignedPlotCrops();
+                  const beforeCrop = previousCrops[plotId]
+                    ?? adminSampleCropByPlot[plotId]
+                    ?? null;
+                  const afterCrop = cropField.value || beforeCrop;
+                  if (beforeCrop !== afterCrop) {
+                    updatedCrops = { ...previousCrops };
+                    if (afterCrop) updatedCrops[plotId] = afterCrop;
+                    else delete updatedCrops[plotId];
+                    cropAssignment = { plotId, beforeCrop, afterCrop };
+                  }
+                } catch (error) {
+                  console.error('Could not prepare the crop assignment change.', error);
+                  dialogStatus.textContent = 'Crop assignments could not be loaded. No changes were made.';
+                  return;
+                }
+              }
+            }
 
             let previousNotes = null;
             let previousTeacherNotes = null;
@@ -929,12 +1021,13 @@ function setupAdminTableActions() {
               id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
               key: config.key,
               entity: config.entity,
-              action: teacherNoteChanged && !recordChanged ? 'teacher-note' : 'update',
+              action: teacherNoteChanged && !recordChanged && !cropAssignment ? 'teacher-note' : 'update',
               beforeRecord: [...record],
               afterRecord: updatedRecord,
               index,
               createdAt: new Date().toISOString(),
             };
+            if (cropAssignment) historyEntry.cropAssignment = cropAssignment;
             if (teacherNoteInput) {
               historyEntry.beforeTeacherNotes = previousTeacherNotes;
               historyEntry.afterTeacherNotes = updatedTeacherNotes;
@@ -948,14 +1041,33 @@ function setupAdminTableActions() {
               if (teacherNoteInput) {
                 localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(updatedTeacherNotes));
               }
+              if (updatedCrops) {
+                localStorage.setItem(plotCropsStorageKey, JSON.stringify(updatedCrops));
+              }
             } catch (error) {
-              console.error('Could not save the teacher note for this plot.', error);
+              console.error(`Could not save the ${config.entity} edit.`, error);
               try {
                 removeAdminHistoryEntry(historyEntry.id);
               } catch (rollbackError) {
                 console.error('Could not remove the failed edit from action history.', rollbackError);
               }
-              dialogStatus.textContent = 'Teacher note could not be saved. No changes were made.';
+              if (teacherNoteInput) {
+                try {
+                  if (previousNotes === null) localStorage.removeItem('gardenTrackerTeacherNotes');
+                  else localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+                } catch (rollbackError) {
+                  console.error('Could not roll back the teacher note after edit failed.', rollbackError);
+                }
+              }
+              if (cropAssignment) {
+                try {
+                  if (previousCropStorage === null) localStorage.removeItem(plotCropsStorageKey);
+                  else localStorage.setItem(plotCropsStorageKey, previousCropStorage);
+                } catch (rollbackError) {
+                  console.error('Could not roll back the crop assignment after edit failed.', rollbackError);
+                }
+              }
+              dialogStatus.textContent = 'Changes could not be saved. No changes were made.';
               return;
             }
 
@@ -981,6 +1093,14 @@ function setupAdminTableActions() {
                 }
               } catch (error) {
                 console.error('Could not roll back the teacher note after plot save failed.', error);
+              }
+            }
+            if (cropAssignment) {
+              try {
+                if (previousCropStorage === null) localStorage.removeItem(plotCropsStorageKey);
+                else localStorage.setItem(plotCropsStorageKey, previousCropStorage);
+              } catch (error) {
+                console.error('Could not roll back the crop assignment after record save failed.', error);
               }
             }
           },
@@ -1202,6 +1322,29 @@ function setupAdminArchivePage() {
 
       appendNotes('Teacher notes before action', entry.beforeTeacherNotes);
       appendNotes('Teacher notes after action', entry.afterTeacherNotes);
+    }
+    if (entry.cropAssignment) {
+      const section = document.createElement('section');
+      section.className = 'archive-detail-section';
+      const heading = document.createElement('h3');
+      heading.textContent = 'Crop assignment';
+      const fields = document.createElement('dl');
+      fields.className = 'archive-detail-fields';
+      [
+        ['Plot', entry.cropAssignment.plotId],
+        ['Before', entry.cropAssignment.beforeCrop || 'No crop assigned'],
+        ['After', entry.cropAssignment.afterCrop || 'No crop assigned'],
+      ].forEach(([labelText, valueText]) => {
+        const item = document.createElement('div');
+        const label = document.createElement('dt');
+        label.textContent = labelText;
+        const value = document.createElement('dd');
+        value.textContent = valueText;
+        item.append(label, value);
+        fields.append(item);
+      });
+      section.append(heading, fields);
+      dialog.append(section);
     }
 
     let onKeyDown;
@@ -1435,6 +1578,30 @@ function setupAdminArchivePage() {
       }
     }
 
+    let previousCropStorage = null;
+    let nextCrops = null;
+    if (entry.cropAssignment) {
+      previousCropStorage = localStorage.getItem(plotCropsStorageKey);
+      try {
+        const currentCrops = readAssignedPlotCrops();
+        const currentCrop = currentCrops[entry.cropAssignment.plotId] || null;
+        if (currentCrop !== entry.cropAssignment.afterCrop) {
+          showStatus('The crop assignment has changed since this edit. Undo newer changes first.');
+          return;
+        }
+        nextCrops = { ...currentCrops };
+        if (entry.cropAssignment.beforeCrop) {
+          nextCrops[entry.cropAssignment.plotId] = entry.cropAssignment.beforeCrop;
+        } else {
+          delete nextCrops[entry.cropAssignment.plotId];
+        }
+      } catch (error) {
+        console.error('Could not load crop assignments for undo.', error);
+        showStatus('Could not undo this edit because crop assignments could not be loaded.');
+        return;
+      }
+    }
+
     const updatedRecords = [...records];
     if (entry.action === 'delete') {
       updatedRecords.splice(Math.min(entry.index, updatedRecords.length), 0, entry.beforeRecord);
@@ -1454,6 +1621,13 @@ function setupAdminArchivePage() {
           localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(nextNotes));
         }
       }
+      if (entry.cropAssignment) {
+        if (Object.keys(nextCrops).length) {
+          localStorage.setItem(plotCropsStorageKey, JSON.stringify(nextCrops));
+        } else {
+          localStorage.removeItem(plotCropsStorageKey);
+        }
+      }
       localStorage.setItem(adminArchiveStorageKey, JSON.stringify(updatedHistory));
     } catch (error) {
       console.error(`Could not undo the ${entry.entity} action.`, error);
@@ -1463,6 +1637,10 @@ function setupAdminArchivePage() {
         if (entry.beforeTeacherNotes !== undefined) {
           if (previousNotes === null) localStorage.removeItem('gardenTrackerTeacherNotes');
           else localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+        }
+        if (entry.cropAssignment) {
+          if (previousCropStorage === null) localStorage.removeItem(plotCropsStorageKey);
+          else localStorage.setItem(plotCropsStorageKey, previousCropStorage);
         }
         if (previousHistory === null) localStorage.removeItem(adminArchiveStorageKey);
         else localStorage.setItem(adminArchiveStorageKey, previousHistory);
@@ -1622,7 +1800,11 @@ function setupAdminGrowthTracker() {
       ],
     },
   };
-
+  const cropIcons = {
+    Tomato: '../images/tomato.svg',
+    Radish: '../images/radish.svg',
+    Carrot: '../images/carrot.svg',
+  };
   let observations = [];
   try {
     const stored = JSON.parse(localStorage.getItem('gardenTrackerGrowthObservations') || '[]');
@@ -1719,11 +1901,12 @@ function setupAdminGrowthTracker() {
     const assignedStudent = savedPlot && savedPlot[2] !== '—'
       ? savedPlot[2]
       : sample?.student || 'No student assigned';
-    const assignedCrop = assignedCrops[plotId] || sample?.crop || 'Garden plot';
+    const savedCrop = assignedCrops[plotId];
+    const assignedCrop = adminCropOptions.includes(savedCrop)
+      ? savedCrop
+      : sample?.crop || 'Garden plot';
     plotSummary.hidden = false;
-    cropIcon.src = assignedCrop === sample?.crop
-      ? sample.icon
-      : '../images/garden-plot.svg';
+    cropIcon.src = cropIcons[assignedCrop] || sample?.icon || '../images/garden-plot.svg';
     cropIcon.alt = `${assignedCrop} icon`;
     cropName.textContent = `${assignedCrop} · Plot ${plotId}`;
     plotStudent.textContent = `Assigned to ${assignedStudent}`;

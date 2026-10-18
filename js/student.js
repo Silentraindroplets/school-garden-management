@@ -900,6 +900,36 @@ function setupTeacherNotesDisplay() {
       }
     }
 
+    const cropElement = document.querySelector('[data-student-plot-crop]');
+    if (cropElement) {
+      try {
+        const savedCrops = JSON.parse(localStorage.getItem('gardenTrackerPlotCrops') || '{}');
+        if (
+          !savedCrops
+          || Array.isArray(savedCrops)
+          || typeof savedCrops !== 'object'
+          || Object.values(savedCrops).some((crop) => typeof crop !== 'string')
+        ) {
+          throw new Error('Saved plot crops have an invalid format.');
+        }
+        const validCrops = ['Tomato', 'Radish', 'Carrot'];
+        const assignedCrop = savedCrops[plotId];
+        if (assignedCrop) {
+          cropElement.textContent = validCrops.includes(assignedCrop)
+            ? assignedCrop
+            : 'No crop assigned';
+        } else if (plotId === 'A-01') {
+          cropElement.textContent = 'Tomato';
+        } else if (plotId === 'A-02') {
+          cropElement.textContent = 'Carrot';
+        } else {
+          cropElement.textContent = 'No crop assigned';
+        }
+      } catch (error) {
+        console.error('Could not load the assigned crop for the student plot.', error);
+      }
+    }
+
     const notes = JSON.parse(localStorage.getItem('gardenTrackerTeacherNotes') || '[]');
     if (!Array.isArray(notes)) {
       throw new Error('Stored teacher notes are not in a valid format.');
