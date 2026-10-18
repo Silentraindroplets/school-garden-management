@@ -1,6 +1,55 @@
 const plotCropsStorageKey = 'gardenTrackerPlotCrops';
+const adminNotificationsStorageKey = 'gardenTrackerNotifications';
 const adminCropOptions = ['Tomato', 'Radish', 'Carrot'];
 const adminSampleCropByPlot = { 'A-01': 'Tomato', 'A-02': 'Carrot' };
+
+function notifyStudentAccounts(studentNames, title, message) {
+  try {
+    const accounts = JSON.parse(localStorage.getItem('gardenTrackerAccounts') || '[]');
+    if (!Array.isArray(accounts) || accounts.some((account) => (
+      !account
+      || typeof account.username !== 'string'
+      || typeof account.fullName !== 'string'
+      || typeof account.role !== 'string'
+    ))) {
+      throw new Error('Saved accounts have an invalid format.');
+    }
+    const usernames = new Set(studentNames.map((name) => name.trim().toLowerCase()));
+    const recipients = accounts.filter((account) => (
+      account.role === 'Student'
+      && usernames.has(account.fullName.trim().toLowerCase())
+    ));
+    if (!recipients.length) return true;
+
+    const stored = localStorage.getItem(adminNotificationsStorageKey);
+    const notifications = stored === null ? [] : JSON.parse(stored);
+    if (!Array.isArray(notifications) || notifications.some((notification) => (
+      !notification
+      || typeof notification.id !== 'string'
+      || typeof notification.username !== 'string'
+      || typeof notification.title !== 'string'
+      || typeof notification.message !== 'string'
+      || typeof notification.createdAt !== 'string'
+      || typeof notification.read !== 'boolean'
+    ))) {
+      throw new Error('Saved notifications have an invalid format.');
+    }
+    const createdAt = new Date().toISOString();
+    recipients.forEach((account) => notifications.unshift({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      username: account.username,
+      title,
+      message,
+      createdAt,
+      read: false,
+    }));
+    localStorage.setItem(adminNotificationsStorageKey, JSON.stringify(notifications));
+    return true;
+  } catch (error) {
+    console.error('Could not send student notifications.', error);
+    return false;
+  }
+}
 
 function readAssignedPlotCrops() {
   const stored = localStorage.getItem(plotCropsStorageKey);
@@ -623,7 +672,19 @@ function setupAdminTableActions() {
           const updated = records.filter((_, recordIndex) => recordIndex !== index);
           if (saveRecords(updated)) {
             render();
-            showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} moved to the archive.`);
+            const studentName = config.key === 'plots' ? record[2] : record[1];
+            const notificationSent = config.key === 'plots' || config.key === 'students'
+              ? notifyStudentAccounts(
+                [studentName],
+                config.key === 'plots' ? `Plot ${record[0]} updated` : 'Your student record was updated',
+                config.key === 'plots'
+                  ? `Your teacher moved Plot ${record[0]} to the archive.`
+                  : 'Your teacher moved your student record to the archive.'
+              )
+              : true;
+            showStatus(notificationSent
+              ? `${config.entity[0].toUpperCase()}${config.entity.slice(1)} moved to the archive.`
+              : `${config.entity[0].toUpperCase()}${config.entity.slice(1)} moved to the archive, but the student notification could not be sent.`);
             return;
           }
 
@@ -1073,7 +1134,62 @@ function setupAdminTableActions() {
 
             if (saveRecords(updated)) {
               render();
-              showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated.`);
+              let notificationSent = true;
+              if (config.key === 'plots' && (recordChanged || teacherNoteChanged || cropAssignment)) {
+                const changes = [];
+                headings.forEach((heading, fieldIndex) => {
+                  if (record[fieldIndex] !== updatedRecord[fieldIndex]) {
+                    changes.push(`${heading}: ${record[fieldIndex]} → ${updatedRecord[fieldIndex]}`);
+                  }
+                });
+                if (cropAssignment) {
+                  changes.push(`Crop: ${cropAssignment.beforeCrop || 'none'} → ${cropAssignment.afterCrop || 'none'}`);
+                }
+                if (teacherNoteChanged) {
+                  const noteText = teacherNoteInput.value.trim();
+                  changes.push(noteText
+                    ? `Teacher note: ${noteText}`
+                    : 'Your teacher removed the plot note.');
+                }
+                const assignedStudent = updatedRecord[2];
+                if (assignedStudent && assignedStudent !== '—') {
+                  notificationSent = notifyStudentAccounts(
+                    [assignedStudent],
+                    `Teacher update for Plot ${updatedRecord[0]}`,
+                    `Your teacher updated Plot ${updatedRecord[0]}. ${changes.join('. ')}`
+                  );
+                }
+                const previousStudent = record[2];
+                if (
+                  previousStudent
+                  && previousStudent !== '—'
+                  && previousStudent !== assignedStudent
+                ) {
+                  notificationSent = notifyStudentAccounts(
+                    [previousStudent],
+                    `Plot ${updatedRecord[0]} assignment changed`,
+                    `Plot ${updatedRecord[0]} is no longer assigned to you. It is now assigned to ${assignedStudent && assignedStudent !== '—' ? assignedStudent : 'no student'}.`
+                  ) && notificationSent;
+                }
+              } else if ((config.key === 'students' || config.key === 'observations') && recordChanged) {
+                const changedFields = headings.reduce((changes, heading, fieldIndex) => {
+                  if (record[fieldIndex] !== updatedRecord[fieldIndex]) {
+                    changes.push(`${heading}: ${record[fieldIndex]} → ${updatedRecord[fieldIndex]}`);
+                  }
+                  return changes;
+                }, []);
+                const isStudentRecord = config.key === 'students';
+                notificationSent = notifyStudentAccounts(
+                  isStudentRecord ? [record[1], updatedRecord[1]] : [updatedRecord[1]],
+                  isStudentRecord ? 'Your student record was updated' : 'Your observation was updated',
+                  isStudentRecord
+                    ? `Your teacher updated your student record. ${changedFields.join('. ')}`
+                    : `Your teacher updated your observation for Plot ${updatedRecord[2]}. ${changedFields.join('. ')}`
+                );
+              }
+              showStatus(notificationSent
+                ? `${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated.`
+                : `${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated, but the student notification could not be sent.`);
               close();
               return;
             }
@@ -1174,7 +1290,14 @@ function setupAdminTableActions() {
     }
     if (saveRecords(updated)) {
       render();
-      showStatus(`Plot ${plot} assigned to ${student} for ${crop}.`);
+      const notificationSent = notifyStudentAccounts(
+        [student],
+        `Plot ${plot} assigned`,
+        `Your teacher assigned Plot ${plot} to you for ${crop}.`
+      );
+      showStatus(notificationSent
+        ? `Plot ${plot} assigned to ${student} for ${crop}.`
+        : `Plot ${plot} assigned to ${student}, but the student notification could not be sent.`);
     } else {
       try {
         if (Object.keys(previousCrops).length) {
@@ -1652,7 +1775,30 @@ function setupAdminArchivePage() {
     }
 
     render();
-    showStatus(`${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone.`);
+    const changedRecord = entry.action === 'create'
+      ? entry.afterRecord
+      : entry.beforeRecord || entry.afterRecord;
+    const studentNames = entry.key === 'plots'
+      ? [entry.beforeRecord?.[2], entry.afterRecord?.[2]]
+      : entry.key === 'students'
+        ? [entry.beforeRecord?.[1], entry.afterRecord?.[1]]
+        : entry.key === 'observations'
+          ? [entry.beforeRecord?.[1], entry.afterRecord?.[1]]
+          : [];
+    const notificationSent = studentNames.length
+      ? notifyStudentAccounts(
+        studentNames.filter((name) => name && name !== '—'),
+        entry.key === 'plots'
+          ? `Plot ${changedRecord?.[0] || ''} changed`
+          : 'A teacher update was reversed',
+        entry.key === 'plots'
+          ? `Your teacher reversed a change to Plot ${changedRecord?.[0] || ''}.`
+          : `Your teacher reversed a change to your ${entry.entity} record.`
+      )
+      : true;
+    showStatus(notificationSent
+      ? `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone.`
+      : `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone, but the student notification could not be sent.`);
       },
     });
   });

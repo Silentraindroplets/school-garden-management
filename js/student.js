@@ -59,10 +59,33 @@ function setupStudentNotifications() {
     });
   };
 
+  const isValidNotification = (notification) => (
+    Boolean(notification)
+    && typeof notification.id === 'string'
+    && typeof notification.username === 'string'
+    && typeof notification.title === 'string'
+    && typeof notification.message === 'string'
+    && typeof notification.createdAt === 'string'
+    && !Number.isNaN(new Date(notification.createdAt).getTime())
+    && typeof notification.read === 'boolean'
+  );
+
+  const loadNotifications = () => {
+    const stored = JSON.parse(localStorage.getItem(notificationsStorageKey) || '[]');
+    if (!Array.isArray(stored) || stored.some((notification) => !isValidNotification(notification))) {
+      throw new Error('Stored notifications are not in a valid format.');
+    }
+    notifications = username
+      ? stored.filter((notification) => notification.username === username)
+      : [];
+    status.textContent = '';
+    render();
+  };
+
   const updateStoredNotifications = (update) => {
     try {
       const stored = JSON.parse(localStorage.getItem(notificationsStorageKey) || '[]');
-      if (!Array.isArray(stored)) {
+      if (!Array.isArray(stored) || stored.some((notification) => !isValidNotification(notification))) {
         throw new Error('Stored notifications are not in a valid format.');
       }
 
@@ -80,18 +103,21 @@ function setupStudentNotifications() {
   };
 
   try {
-    const stored = JSON.parse(localStorage.getItem(notificationsStorageKey) || '[]');
-    if (!Array.isArray(stored)) {
-      throw new Error('Stored notifications are not in a valid format.');
-    }
-    notifications = username
-      ? stored.filter((notification) => notification.username === username)
-      : [];
-    render();
+    loadNotifications();
   } catch (error) {
     console.error('Could not load student notifications.', error);
     status.textContent = 'Notifications could not be loaded.';
   }
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== notificationsStorageKey) return;
+    try {
+      loadNotifications();
+    } catch (error) {
+      console.error('Could not refresh student notifications.', error);
+      status.textContent = 'Notifications could not be refreshed.';
+    }
+  });
 
   panel.addEventListener('click', (event) => {
     if (!username) return;
