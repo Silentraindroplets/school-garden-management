@@ -189,6 +189,29 @@ function setupDashboard() {
       ? `Garden Plot ${assignedPlot}`
       : 'No plot assigned';
     if (plotSummary) plotSummary.textContent = assignedPlot || 'No plot assigned';
+
+    const cropIcon = document.querySelector('[data-dashboard-crop-icon]');
+    if (cropIcon && assignedPlot) {
+      try {
+        const crops = JSON.parse(localStorage.getItem('gardenTrackerPlotCrops') || '{}');
+        if (
+          !crops
+          || Array.isArray(crops)
+          || typeof crops !== 'object'
+          || Object.values(crops).some((crop) => typeof crop !== 'string')
+        ) {
+          throw new Error('Saved plot crops have an invalid format.');
+        }
+        const icons = {
+          Tomato: '../images/tomato.svg',
+          Radish: '../images/radish.svg',
+          Carrot: '../images/carrot.svg',
+        };
+        cropIcon.src = icons[crops[assignedPlot]] || '../images/garden-plot.svg';
+      } catch (error) {
+        console.error('Could not load the crop icon for the student dashboard.', error);
+      }
+    }
   } catch (error) {
     console.error('Could not load dashboard observations.', error);
     if (status) status.textContent = 'Your observation summary could not be loaded.';
@@ -198,6 +221,9 @@ function setupDashboard() {
 function setupObservationLog() {
   const modal   = document.querySelector('[data-log-modal]');
   if (!modal) return;
+  const logList = document.querySelector('[data-student-observation-logs]');
+  const logEmpty = document.querySelector('[data-observation-logs-empty]');
+  const logStatus = document.querySelector('[data-observation-logs-status]');
 
   const closeBtn = modal.querySelector('[data-log-close]');
   const fields = {
@@ -211,6 +237,145 @@ function setupObservationLog() {
     condition: modal.querySelector('[data-log-modal-condition]'),
     notes:     modal.querySelector('[data-log-modal-notes]'),
   };
+
+  if (logList && logEmpty) {
+    try {
+      const username = localStorage.getItem(currentUserStorageKey);
+      const account = getAccounts().find(
+        (item) => item.username === username && item.role === 'Student'
+      );
+      const stored = JSON.parse(localStorage.getItem(growthObservationsStorageKey) || '[]');
+      if (!Array.isArray(stored) || stored.some((observation) => (
+        !observation
+        || typeof observation.id !== 'string'
+        || typeof observation.plot !== 'string'
+        || typeof observation.student !== 'string'
+        || typeof observation.date !== 'string'
+        || !(observation.height === null || (
+          typeof observation.height === 'number'
+          && Number.isFinite(observation.height)
+          && observation.height >= 0
+        ))
+        || typeof observation.weather !== 'string'
+        || typeof observation.soil !== 'string'
+        || typeof observation.condition !== 'string'
+        || typeof observation.notes !== 'string'
+        || typeof observation.submittedAt !== 'string'
+        || Number.isNaN(new Date(`${observation.date}T00:00:00`).getTime())
+      ))) {
+        throw new Error('Saved growth observations have an invalid format.');
+      }
+
+      const crops = JSON.parse(localStorage.getItem('gardenTrackerPlotCrops') || '{}');
+      if (
+        !crops
+        || Array.isArray(crops)
+        || typeof crops !== 'object'
+        || Object.values(crops).some((crop) => typeof crop !== 'string')
+      ) {
+        throw new Error('Saved plot crops have an invalid format.');
+      }
+      const formatLabel = (value) => value
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+      const conditionLabels = {
+        healthy: 'Healthy',
+        'needs-attention': 'Needs Attention',
+        damaged: 'Damaged',
+        diseased: 'Diseased',
+      };
+      const conditionClasses = {
+        healthy: 'badge-success',
+        'needs-attention': 'badge-warning',
+        damaged: 'badge-danger',
+        diseased: 'badge-danger',
+      };
+      const observations = account
+        ? stored
+          .filter((observation) => (
+            normalizeStudentName(observation.student) === normalizeStudentName(account.fullName)
+          ))
+          .sort((first, second) => second.date.localeCompare(first.date)
+            || second.submittedAt.localeCompare(first.submittedAt))
+        : [];
+
+      logList.replaceChildren();
+      observations.forEach((observation) => {
+        const crop = crops[observation.plot] || 'Garden plant';
+        const condition = conditionLabels[observation.condition] || observation.condition;
+        const article = document.createElement('article');
+        article.className = 'log-entry';
+
+        const header = document.createElement('div');
+        header.className = 'log-entry-header';
+        const titleGroup = document.createElement('div');
+        const date = document.createElement('div');
+        date.className = 'log-date';
+        date.textContent = new Intl.DateTimeFormat(undefined, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }).format(new Date(`${observation.date}T00:00:00`));
+        const title = document.createElement('h3');
+        title.textContent = `${condition} ${crop.toLowerCase()} growth`;
+        const badge = document.createElement('span');
+        badge.className = `badge ${conditionClasses[observation.condition] || 'badge-info'}`;
+        badge.textContent = condition;
+        titleGroup.append(date, title);
+        header.append(titleGroup, badge);
+
+        const meta = document.createElement('ul');
+        meta.className = 'log-meta';
+        const metaItems = [
+          ['Plot', observation.plot],
+          ['Height', observation.height === null ? 'Not recorded' : `${observation.height} cm`],
+          ['Weather', formatLabel(observation.weather)],
+          ['Soil', formatLabel(observation.soil)],
+        ];
+        metaItems.forEach(([labelText, valueText]) => {
+          const item = document.createElement('li');
+          const label = document.createElement('span');
+          label.className = 'log-meta-label';
+          label.textContent = labelText;
+          item.append(label, ` ${valueText}`);
+          meta.append(item);
+        });
+
+        const footer = document.createElement('div');
+        footer.className = 'log-entry-footer';
+        const summary = document.createElement('p');
+        summary.className = 'log-summary';
+        summary.textContent = observation.notes || 'No notes were added.';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-secondary log-view-button';
+        button.dataset.logOpen = '';
+        button.dataset.date = date.textContent;
+        button.dataset.title = title.textContent;
+        button.dataset.plot = observation.plot;
+        button.dataset.plant = crop;
+        button.dataset.height = observation.height === null
+          ? 'Not recorded'
+          : `${observation.height} cm`;
+        button.dataset.weather = formatLabel(observation.weather);
+        button.dataset.soil = formatLabel(observation.soil);
+        button.dataset.condition = condition;
+        button.dataset.notes = observation.notes || 'No notes were added.';
+        button.textContent = 'View details';
+        footer.append(summary, button);
+        article.append(header, meta, footer);
+        logList.append(article);
+      });
+
+      logEmpty.hidden = observations.length > 0;
+      if (logStatus) logStatus.textContent = '';
+    } catch (error) {
+      console.error('Could not load student observation logs.', error);
+      logList.replaceChildren();
+      logEmpty.hidden = false;
+      if (logStatus) logStatus.textContent = 'Observation logs could not be loaded.';
+    }
+  }
 
   const open = (data) => {
     fields.date.textContent      = data.date;

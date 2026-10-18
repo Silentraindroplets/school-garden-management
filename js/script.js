@@ -5,7 +5,7 @@ const plotPhotoStoragePrefix = 'gardenTrackerPlotPhoto:';
 const demoAccounts = [
   {
     username: 'student',
-    fullName: 'Student User',
+    fullName: 'Jordan Lee',
     password: 'student123',
     role: 'Student',
     redirect: 'student/student_dashboard.html',
@@ -37,20 +37,54 @@ function getAccounts() {
 
 function ensureDemoAccounts() {
   const accounts = getAccounts();
-  const usernames = new Set(accounts.map((account) => account.username.toLowerCase()));
-  const missingAccounts = demoAccounts.filter(
-    (account) => (
-      !usernames.has(account.username.toLowerCase())
-      && !accounts.some(
-        (existingAccount) =>
-          existingAccount.role === account.role
-          && existingAccount.redirect === account.redirect
-      )
-    )
-  );
+  let accountsChanged = false;
+  let previousDemoStudentName = '';
 
-  if (missingAccounts.length) {
-    localStorage.setItem(accountsStorageKey, JSON.stringify([...accounts, ...missingAccounts]));
+  demoAccounts.forEach((demoAccount) => {
+    const existingAccount = accounts.find((account) => (
+      account
+      && typeof account.username === 'string'
+      && account.username.toLowerCase() === demoAccount.username.toLowerCase()
+    ));
+    if (existingAccount) {
+      if (
+        demoAccount.username === 'student'
+        && existingAccount.role === 'Student'
+        && normalizeStudentName(existingAccount.fullName) === 'student user'
+      ) {
+        previousDemoStudentName = existingAccount.fullName;
+        existingAccount.fullName = demoAccount.fullName;
+        accountsChanged = true;
+      }
+      return;
+    }
+
+    const roleAlreadyExists = accounts.some((account) => (
+      account
+      && account.role === demoAccount.role
+      && account.redirect === demoAccount.redirect
+    ));
+    if (!roleAlreadyExists) {
+      accounts.push({ ...demoAccount });
+      accountsChanged = true;
+    }
+  });
+
+  if (accountsChanged) {
+    try {
+      localStorage.setItem(accountsStorageKey, JSON.stringify(accounts));
+    } catch (error) {
+      console.error('Could not save the demo accounts.', error);
+    }
+  }
+
+  const demoStudent = accounts.find((account) => (
+    account
+    && account.username === 'student'
+    && account.role === 'Student'
+  ));
+  if (demoStudent) {
+    ensureDemoStudentData(demoStudent, previousDemoStudentName);
   }
 }
 
@@ -94,6 +128,190 @@ function ensureStudentRecordForAccount(account) {
     localStorage.setItem('gardenTrackerAdminRows:students', JSON.stringify(storedStudents));
   } catch (error) {
     console.error('Could not create a matching admin student record for a new signup.', error);
+  }
+}
+
+const demoStudentSeedKey = 'gardenTrackerDemoStudentDataSeeded';
+const demoStudentBaseRows = [
+  ['STU-001', 'Felix Cagampang', 'Grade 9', 'A-01', 'Active'],
+  ['STU-002', 'Maria Santos', 'Grade 9', 'A-02', 'Active'],
+  ['STU-003', 'Pedro Garcia', 'Grade 9', '—', 'Unassigned'],
+  ['STU-004', 'Ana Reyes', 'Grade 9', 'A-03', 'Active'],
+];
+const demoPlotBaseRows = [
+  ['A-01', 'School Garden', 'Felix Cagampang', 'Assigned'],
+  ['A-02', 'School Garden', 'Maria Santos', 'Assigned'],
+  ['A-03', 'School Garden', 'Ana Reyes', 'Assigned'],
+  ['A-04', 'School Garden', '—', 'Available'],
+];
+
+function ensureDemoStudentData(account, previousName = '') {
+  if (localStorage.getItem(demoStudentSeedKey) === 'true') return;
+
+  try {
+    const readRecords = (key, defaultRows, length) => {
+      const stored = localStorage.getItem(key);
+      const rows = stored === null ? defaultRows.map((row) => [...row]) : JSON.parse(stored);
+      if (
+        !Array.isArray(rows)
+        || rows.some((row) => (
+          !Array.isArray(row)
+          || row.length !== length
+          || row.some((value) => typeof value !== 'string')
+        ))
+      ) {
+        throw new Error(`Saved ${key} data has an invalid format.`);
+      }
+      return rows;
+    };
+
+    const studentKey = 'gardenTrackerAdminRows:students';
+    const plotKey = 'gardenTrackerAdminRows:plots';
+    const observationsKey = 'gardenTrackerGrowthObservations';
+    const cropKey = 'gardenTrackerPlotCrops';
+    const students = readRecords(studentKey, demoStudentBaseRows, 5);
+    const plots = readRecords(plotKey, demoPlotBaseRows, 4);
+    const storedObservations = localStorage.getItem(observationsKey);
+    const observations = storedObservations === null ? [] : JSON.parse(storedObservations);
+    if (!Array.isArray(observations) || observations.some((observation) => (
+      !observation
+      || typeof observation.id !== 'string'
+      || typeof observation.plot !== 'string'
+      || typeof observation.student !== 'string'
+      || typeof observation.date !== 'string'
+      || !(observation.height === null || (
+        typeof observation.height === 'number'
+        && Number.isFinite(observation.height)
+        && observation.height >= 0
+      ))
+      || typeof observation.weather !== 'string'
+      || typeof observation.soil !== 'string'
+      || typeof observation.condition !== 'string'
+      || typeof observation.notes !== 'string'
+      || typeof observation.submittedAt !== 'string'
+    ))) {
+      throw new Error('Saved growth observations have an invalid format.');
+    }
+    const storedCrops = localStorage.getItem(cropKey);
+    const crops = storedCrops === null ? {} : JSON.parse(storedCrops);
+    if (
+      !crops
+      || Array.isArray(crops)
+      || typeof crops !== 'object'
+      || Object.values(crops).some((crop) => typeof crop !== 'string')
+    ) {
+      throw new Error('Saved plot crops have an invalid format.');
+    }
+
+    const matchingNames = new Set(
+      [account.fullName, previousName, 'Student User']
+        .map(normalizeStudentName)
+        .filter(Boolean)
+    );
+    let student = students.find((row) => matchingNames.has(normalizeStudentName(row[1])));
+    const existingDemoPlot = plots.find((plot) => (
+      normalizeStudentName(plot[2]) === normalizeStudentName(account.fullName)
+      && plot[3].toLowerCase() === 'assigned'
+    ));
+    let plotId = existingDemoPlot?.[0] || (student && student[3] !== '—' ? student[3] : '');
+    if (!plotId || plots.some((plot) => (
+      plot[0] === plotId
+      && normalizeStudentName(plot[2]) !== normalizeStudentName(account.fullName)
+    ))) {
+      let suffix = 1;
+      do {
+        plotId = `B-${String(suffix).padStart(2, '0')}`;
+        suffix += 1;
+      } while (plots.some((plot) => plot[0] === plotId));
+    }
+
+    if (!student) {
+      const ids = students
+        .map((row) => row[0])
+        .filter((value) => /^STU-\d+$/i.test(value))
+        .map((value) => Number.parseInt(value.replace(/^STU-/i, ''), 10));
+      const nextId = ids.length ? Math.max(...ids) + 1 : 1;
+      student = [`STU-${String(nextId).padStart(3, '0')}`, account.fullName, 'Grade 8', plotId, 'Active'];
+      students.push(student);
+    } else {
+      student[1] = account.fullName;
+      if (student[3] === '—' || student[4].toLowerCase() === 'unassigned') {
+        student[2] = 'Grade 8';
+      }
+      if (student[3] !== plotId || student[4].toLowerCase() === 'unassigned') {
+        student[3] = plotId;
+        student[4] = 'Active';
+      }
+    }
+
+    const plotIndex = plots.findIndex((plot) => plot[0] === plotId);
+    if (plotIndex === -1) {
+      plots.push([plotId, 'School Garden', account.fullName, 'Assigned']);
+    } else if (normalizeStudentName(plots[plotIndex][2]) === normalizeStudentName(account.fullName)) {
+      plots[plotIndex][3] = 'Assigned';
+    }
+
+    const observationSamples = [
+      {
+        id: 'demo-jordan-lee-b01-2026-10-03',
+        plot: plotId,
+        student: account.fullName,
+        date: '2026-10-03',
+        height: 4.2,
+        weather: 'sunny',
+        soil: 'moist',
+        condition: 'healthy',
+        notes: 'Radish seedlings have emerged evenly across the bed.',
+        submittedAt: '2026-10-03T08:15:00.000Z',
+      },
+      {
+        id: 'demo-jordan-lee-b01-2026-10-10',
+        plot: plotId,
+        student: account.fullName,
+        date: '2026-10-10',
+        height: 7.6,
+        weather: 'partly-cloudy',
+        soil: 'moist',
+        condition: 'healthy',
+        notes: 'The leaves are fuller and the seedlings are growing steadily.',
+        submittedAt: '2026-10-10T08:20:00.000Z',
+      },
+      {
+        id: 'demo-jordan-lee-b01-2026-10-17',
+        plot: plotId,
+        student: account.fullName,
+        date: '2026-10-17',
+        height: 11.3,
+        weather: 'cloudy',
+        soil: 'moist',
+        condition: 'healthy',
+        notes: 'Plants look healthy and have gained height since the last check.',
+        submittedAt: '2026-10-17T08:10:00.000Z',
+      },
+    ];
+    const knownObservationIds = new Set(observations.map((observation) => observation.id));
+    observations.push(...observationSamples.filter((observation) => !knownObservationIds.has(observation.id)));
+    if (!crops[plotId]) crops[plotId] = 'Radish';
+
+    const updates = [
+      [studentKey, students],
+      [plotKey, plots],
+      [observationsKey, observations],
+      [cropKey, crops],
+    ];
+    const previousValues = updates.map(([key]) => [key, localStorage.getItem(key)]);
+    try {
+      updates.forEach(([key, value]) => localStorage.setItem(key, JSON.stringify(value)));
+      localStorage.setItem(demoStudentSeedKey, 'true');
+    } catch (error) {
+      previousValues.forEach(([key, value]) => {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      });
+      throw error;
+    }
+  } catch (error) {
+    console.error('Could not prepare the demo student data.', error);
   }
 }
 
