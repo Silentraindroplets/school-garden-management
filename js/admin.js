@@ -136,8 +136,10 @@ function setupAdminDashboard() {
       && record.length === length
       && record.every((value) => typeof value === 'string')
     );
-    const students = readArray('gardenTrackerAdminRows:students', isStringRecord(5));
-    const plots = readArray('gardenTrackerAdminRows:plots', isStringRecord(4));
+    const students = readArray('gardenTrackerAdminRows:students', isStringRecord(5))
+      || (typeof demoStudentBaseRows !== 'undefined' ? demoStudentBaseRows : []);
+    const plots = readArray('gardenTrackerAdminRows:plots', isStringRecord(4))
+      || (typeof demoPlotBaseRows !== 'undefined' ? demoPlotBaseRows : []);
     const adminObservations = readArray('gardenTrackerAdminRows:observations', isStringRecord(5));
     const growthObservations = readArray(
       'gardenTrackerGrowthObservations',
@@ -162,17 +164,13 @@ function setupAdminDashboard() {
     );
     const history = readAdminArchive().map(normalizeAdminHistoryEntry);
 
-    if (students) studentCount.textContent = String(students.length);
-    if (plots) {
-      plotCount.textContent = String(
-        plots.filter((plot) => plot[3].toLowerCase() === 'assigned').length
-      );
-    }
-    if (growthObservations) {
-      observationCount.textContent = String(growthObservations.length);
-    } else if (adminObservations) {
-      observationCount.textContent = String(adminObservations.length);
-    }
+    studentCount.textContent = String(students.length);
+    plotCount.textContent = String(
+      plots.filter((plot) => plot[3].toLowerCase() === 'assigned').length
+    );
+    observationCount.textContent = String(
+      (growthObservations || adminObservations || []).length
+    );
 
     const activities = [
       ...history.map((entry) => ({
@@ -753,6 +751,51 @@ function setupAdminTableActions() {
         entry.append(label, value);
         details.append(entry);
       });
+      if (config.key === 'plots' || config.key === 'students') {
+        const cropEntry = document.createElement('div');
+        const cropLabel = document.createElement('dt');
+        cropLabel.textContent = 'Primary crop';
+        const cropValue = document.createElement('dd');
+        try {
+          let plotId = config.key === 'plots' ? record[0] : null;
+          if (config.key === 'students') {
+            const storedPlots = localStorage.getItem('gardenTrackerAdminRows:plots');
+            const savedPlots = storedPlots === null ? null : JSON.parse(storedPlots);
+            if (
+              savedPlots !== null
+              && (
+                !Array.isArray(savedPlots)
+                || savedPlots.some((entry) => (
+                  !Array.isArray(entry)
+                  || entry.length !== 4
+                  || entry.some((value) => typeof value !== 'string')
+                ))
+              )
+            ) {
+              throw new Error('Saved plot records have an invalid format.');
+            }
+            const plot = savedPlots?.find((entry) => (
+              entry[3].toLowerCase() === 'assigned'
+              && entry[2].trim().toLowerCase() === record[1].trim().toLowerCase()
+            ));
+            plotId = plot?.[0] || (
+              !savedPlots?.length && record[3] !== '—' ? record[3] : null
+            );
+          }
+          const crops = readAssignedPlotCrops();
+          const crop = plotId
+            ? crops[plotId] || adminSampleCropByPlot[plotId]
+            : null;
+          cropValue.textContent = adminCropOptions.includes(crop)
+            ? crop
+            : 'No crop assigned';
+        } catch (error) {
+          console.error('Could not load the crop for this admin record.', error);
+          cropValue.textContent = 'Crop unavailable';
+        }
+        cropEntry.append(cropLabel, cropValue);
+        details.append(cropEntry);
+      }
       dialog.append(details);
     } else {
       const form = document.createElement('form');
