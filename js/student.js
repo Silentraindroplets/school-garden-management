@@ -204,7 +204,7 @@ function setupDashboard() {
     let assignedPlot = '';
     if (account) {
       try {
-        assignedPlot = getAssignedPlotForStudent(account, '');
+        assignedPlot = getAssignedPlotForStudent(account);
       } catch (error) {
         console.error('Could not load the student dashboard plot assignment.', error);
         if (status) status.textContent = 'Your plot assignment could not be loaded.';
@@ -217,7 +217,7 @@ function setupDashboard() {
     if (plotSummary) plotSummary.textContent = assignedPlot || 'No plot assigned';
 
     const cropIcon = document.querySelector('[data-dashboard-crop-icon]');
-    if (cropIcon && assignedPlot) {
+    if (cropIcon) {
       try {
         const crops = JSON.parse(localStorage.getItem('gardenTrackerPlotCrops') || '{}');
         if (
@@ -233,7 +233,9 @@ function setupDashboard() {
           Radish: '../images/radish.svg',
           Carrot: '../images/carrot.svg',
         };
-        cropIcon.src = icons[crops[assignedPlot]] || '../images/garden-plot.svg';
+        cropIcon.src = assignedPlot
+          ? icons[crops[assignedPlot]] || '../images/garden-plot.svg'
+          : '../images/garden-plot.svg';
       } catch (error) {
         console.error('Could not load the crop icon for the student dashboard.', error);
       }
@@ -476,8 +478,8 @@ function normalizeStudentName(value) {
     .toLowerCase();
 }
 
-function getAssignedPlotForStudent(account, fallbackPlot) {
-  let assignedPlot = fallbackPlot;
+function getAssignedPlotForStudent(account) {
+  let assignedPlot = '';
   const savedStudents = localStorage.getItem('gardenTrackerAdminRows:students');
   if (savedStudents !== null) {
     const students = JSON.parse(savedStudents);
@@ -492,9 +494,7 @@ function getAssignedPlotForStudent(account, fallbackPlot) {
       throw new Error('Saved student records have an invalid format.');
     }
     const student = students.find((record) => normalizeStudentName(record[1]) === normalizeStudentName(account.fullName));
-    assignedPlot = student
-      ? (student[3] !== '—' ? student[3] : '')
-      : fallbackPlot;
+    assignedPlot = student && student[3] !== '—' ? student[3] : '';
   }
 
   const savedPlots = localStorage.getItem('gardenTrackerAdminRows:plots');
@@ -662,7 +662,7 @@ function setupStudentGrowthPreview() {
       (item) => item.username === username && item.role === 'Student'
     );
     const assignedPlot = account
-      ? getAssignedPlotForStudent(account, section.dataset.plotId || '')
+      ? getAssignedPlotForStudent(account)
       : '';
     if (!account) {
       throw new Error('A signed-in student account is required to load plot growth.');
@@ -754,7 +754,7 @@ function setupStudentObservationForm() {
   const photoRemoveButton = form?.querySelector('[data-observation-photo-remove]');
   const message = form?.querySelector('[data-observation-submit-message]');
   const submitButton = form?.querySelector('[type="submit"]');
-  const plotLabel = form?.closest('[data-observation-plot]')?.querySelector('[data-observation-plot-label]');
+  const plotLabel = document.querySelector('[data-observation-plot-label]');
   if (
     !form
     || !photoInput
@@ -910,10 +910,7 @@ function setupStudentObservationForm() {
   );
   if (plotLabel && signedInAccount) {
     try {
-      const assignedPlot = getAssignedPlotForStudent(
-        signedInAccount,
-        form.closest('[data-observation-plot]')?.dataset.observationPlot || ''
-      );
+      const assignedPlot = getAssignedPlotForStudent(signedInAccount);
       plotLabel.textContent = assignedPlot
         ? `Submit your observation for Plot ${assignedPlot}.`
         : 'An assigned plot is required before submitting an observation.';
@@ -947,10 +944,9 @@ function setupStudentObservationForm() {
         return;
       }
 
-      const fallbackPlot = form.closest('[data-observation-plot]')?.dataset.observationPlot || '';
       let assignedPlot;
       try {
-        assignedPlot = getAssignedPlotForStudent(account, fallbackPlot);
+        assignedPlot = getAssignedPlotForStudent(account);
       } catch (error) {
         console.error('Could not resolve the assigned plot for this observation.', error);
         setMessage(message, 'Your assigned plot could not be loaded. Please contact your administrator.');
@@ -1043,24 +1039,73 @@ function setupStudentObservationForm() {
 function setupPlotPhoto() {
   const photoElement = document.querySelector('[data-plot-photo]');
   const dateElement = document.querySelector('[data-plot-photo-date]');
+  const captionElement = document.querySelector('[data-plot-photo-caption]');
   const username = localStorage.getItem(currentUserStorageKey);
-  if (!photoElement || !username) return;
+  if (!photoElement || !dateElement || !captionElement) return;
 
-  const savedPhoto = localStorage.getItem(`${plotPhotoStoragePrefix}${username}`);
-  if (!savedPhoto) return;
+  const showNoPhoto = () => {
+    dateElement.textContent = 'None';
+    captionElement.textContent = 'No plot photo has been submitted yet.';
+    photoElement.alt = 'No plot photo has been submitted';
+  };
+  if (!username) {
+    showNoPhoto();
+    return;
+  }
 
   try {
+    const account = getAccounts().find((item) => item.username === username && item.role === 'Student');
+    if (!account) {
+      showNoPhoto();
+      return;
+    }
+    const assignedPlot = getAssignedPlotForStudent(account);
+    const savedPhoto = localStorage.getItem(`${plotPhotoStoragePrefix}${username}`);
+    if (savedPhoto === null) {
+      if (username !== 'student' || !assignedPlot) {
+        showNoPhoto();
+        return;
+      }
+      const crops = JSON.parse(localStorage.getItem('gardenTrackerPlotCrops') || '{}');
+      if (
+        !crops
+        || Array.isArray(crops)
+        || typeof crops !== 'object'
+        || Object.values(crops).some((crop) => typeof crop !== 'string')
+      ) {
+        throw new Error('Saved plot crops have an invalid format.');
+      }
+      const crop = crops[assignedPlot]
+        || (assignedPlot === 'A-01' ? 'Tomato' : assignedPlot === 'A-02' ? 'Carrot' : '');
+      captionElement.textContent = crop
+        ? `Plot ${assignedPlot} · ${crop} growing`
+        : `Plot ${assignedPlot}`;
+      photoElement.alt = `Sample photo for Plot ${assignedPlot}`;
+      return;
+    }
+
     const photoData = JSON.parse(savedPhoto);
-    if (typeof photoData.photo !== 'string' || !photoData.photo.startsWith('data:image/')) {
+    if (
+      typeof photoData.photo !== 'string'
+      || !photoData.photo.startsWith('data:image/')
+      || typeof photoData.observationDate !== 'string'
+      || Number.isNaN(new Date(`${photoData.observationDate}T00:00:00`).getTime())
+    ) {
       throw new Error('Stored plot photo is not a valid image.');
     }
     photoElement.src = photoData.photo;
-    if (dateElement && photoData.observationDate) {
-      dateElement.textContent = new Date(`${photoData.observationDate}T00:00:00`)
-        .toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-    }
+    const observationDate = new Date(`${photoData.observationDate}T00:00:00`);
+    dateElement.textContent = observationDate
+      .toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    captionElement.textContent = assignedPlot
+      ? `Plot ${assignedPlot} · Recent student photo`
+      : 'Recent student photo';
+    photoElement.alt = assignedPlot
+      ? `Recent photo of Plot ${assignedPlot}`
+      : 'Recent student garden photo';
   } catch (error) {
     console.error('Could not load the saved plot photo.', error);
+    showNoPhoto();
   }
 }
 
@@ -1095,7 +1140,7 @@ function setupTeacherNotesDisplay() {
       return;
     }
 
-    const plotId = getAssignedPlotForStudent(account, '');
+    const plotId = getAssignedPlotForStudent(account);
     section.dataset.plotId = plotId;
     const readRecords = (key, recordLength) => {
       const stored = localStorage.getItem(key);
@@ -1120,6 +1165,33 @@ function setupTeacherNotesDisplay() {
         && normalizeStudentName(record[2]) === normalizeStudentName(account.fullName)
         && record[3].toLowerCase() === 'assigned')
       : null;
+    const storedObservations = localStorage.getItem(growthObservationsStorageKey);
+    const observations = storedObservations === null ? [] : JSON.parse(storedObservations);
+    if (!Array.isArray(observations) || observations.some((observation) => (
+      !observation
+      || typeof observation.id !== 'string'
+      || typeof observation.plot !== 'string'
+      || typeof observation.student !== 'string'
+      || typeof observation.date !== 'string'
+      || typeof observation.soil !== 'string'
+      || typeof observation.condition !== 'string'
+      || typeof observation.submittedAt !== 'string'
+      || Number.isNaN(new Date(observation.submittedAt).getTime())
+    ))) {
+      throw new Error('Saved growth observations have an invalid format.');
+    }
+    const latestObservation = observations
+      .filter((observation) => (
+        observation.plot === plotId
+        && normalizeStudentName(observation.student) === normalizeStudentName(account.fullName)
+      ))
+      .sort((first, second) => first.submittedAt.localeCompare(second.submittedAt))
+      .at(-1);
+    const formatValue = (value) => value
+      ? value.split(/[-\s]+/).map((word) => (
+        word ? `${word[0].toUpperCase()}${word.slice(1)}` : ''
+      )).join(' ')
+      : 'None';
     const setDetail = (selector, value) => {
       const element = document.querySelector(selector);
       if (element) element.textContent = value;
@@ -1127,9 +1199,26 @@ function setupTeacherNotesDisplay() {
     setDetail('[data-student-plot-id]', plotId || 'None');
     setDetail('[data-student-assigned-name]', plotId ? account.fullName : 'None');
     setDetail('[data-student-plot-location]', plotId ? assignedPlot?.[1] || 'None' : 'None');
-    setDetail('[data-student-plant-condition]', plotId ? 'Healthy' : 'None');
-    setDetail('[data-student-soil-condition]', plotId ? 'Moist' : 'None');
-    setDetail('[data-student-plot-status]', plotId ? student?.[4] || 'Active' : 'None');
+    setDetail(
+      '[data-student-plant-condition]',
+      latestObservation
+        ? formatValue(latestObservation.condition)
+        : plotId && account.username === 'student'
+          ? 'Healthy'
+          : 'None'
+    );
+    setDetail(
+      '[data-student-soil-condition]',
+      latestObservation
+        ? formatValue(latestObservation.soil)
+        : plotId && account.username === 'student'
+          ? 'Moist'
+          : 'None'
+    );
+    setDetail(
+      '[data-student-plot-status]',
+      plotId ? (assignedPlot ? 'Active' : student?.[4] || 'Active') : 'None'
+    );
 
     const cropElement = document.querySelector('[data-student-plot-crop]');
     if (cropElement) {
