@@ -1072,24 +1072,64 @@ function setupTeacherNotesDisplay() {
   if (!section || !textElement || !authorElement || !dateElement) return;
 
   try {
-    let plotId = section.dataset.plotId;
     const username = localStorage.getItem('gardenTrackerCurrentUser');
     const account = getAccounts().find((entry) => entry.username === username);
-    const studentName = account?.fullName;
-    const savedStudents = localStorage.getItem('gardenTrackerAdminRows:students');
-    if (studentName && savedStudents) {
-      const students = JSON.parse(savedStudents);
-      if (!Array.isArray(students)) {
-        throw new Error('Stored student records are not in a valid format.');
-      }
-      const student = students.find((entry) => entry[1] === studentName);
-      if (student && typeof student[3] === 'string' && student[3] !== '—') {
-        plotId = student[3];
-        section.dataset.plotId = plotId;
-        const plotIdElement = document.querySelector('[data-student-plot-id]');
-        if (plotIdElement) plotIdElement.textContent = plotId;
-      }
+    if (!account || account.role !== 'Student') {
+      section.dataset.plotId = '';
+      [
+        '[data-student-plot-id]',
+        '[data-student-assigned-name]',
+        '[data-student-plot-location]',
+        '[data-student-plot-crop]',
+        '[data-student-plant-condition]',
+        '[data-student-soil-condition]',
+        '[data-student-plot-status]',
+      ].forEach((selector) => {
+        const element = document.querySelector(selector);
+        if (element) element.textContent = 'None';
+      });
+      textElement.textContent = 'No plot is assigned to your account yet.';
+      authorElement.textContent = '—';
+      dateElement.textContent = '—';
+      dateElement.removeAttribute('datetime');
+      return;
     }
+
+    const plotId = getAssignedPlotForStudent(account, '');
+    section.dataset.plotId = plotId;
+    const readRecords = (key, recordLength) => {
+      const stored = localStorage.getItem(key);
+      if (stored === null) return [];
+      const records = JSON.parse(stored);
+      if (!Array.isArray(records) || records.some((record) => (
+        !Array.isArray(record)
+        || record.length !== recordLength
+        || record.some((value) => typeof value !== 'string')
+      ))) {
+        throw new Error(`Saved ${key} records have an invalid format.`);
+      }
+      return records;
+    };
+    const students = readRecords('gardenTrackerAdminRows:students', 5);
+    const plots = readRecords('gardenTrackerAdminRows:plots', 4);
+    const student = students.find((record) =>
+      normalizeStudentName(record[1]) === normalizeStudentName(account.fullName)
+    );
+    const assignedPlot = plotId
+      ? plots.find((record) => record[0] === plotId
+        && normalizeStudentName(record[2]) === normalizeStudentName(account.fullName)
+        && record[3].toLowerCase() === 'assigned')
+      : null;
+    const setDetail = (selector, value) => {
+      const element = document.querySelector(selector);
+      if (element) element.textContent = value;
+    };
+    setDetail('[data-student-plot-id]', plotId || 'None');
+    setDetail('[data-student-assigned-name]', plotId ? account.fullName : 'None');
+    setDetail('[data-student-plot-location]', plotId ? assignedPlot?.[1] || 'None' : 'None');
+    setDetail('[data-student-plant-condition]', plotId ? 'Healthy' : 'None');
+    setDetail('[data-student-soil-condition]', plotId ? 'Moist' : 'None');
+    setDetail('[data-student-plot-status]', plotId ? student?.[4] || 'Active' : 'None');
 
     const cropElement = document.querySelector('[data-student-plot-crop]');
     if (cropElement) {
@@ -1104,8 +1144,10 @@ function setupTeacherNotesDisplay() {
           throw new Error('Saved plot crops have an invalid format.');
         }
         const validCrops = ['Tomato', 'Radish', 'Carrot'];
-        const assignedCrop = savedCrops[plotId];
-        if (assignedCrop) {
+        const assignedCrop = plotId ? savedCrops[plotId] : null;
+        if (!plotId) {
+          cropElement.textContent = 'None';
+        } else if (assignedCrop) {
           cropElement.textContent = validCrops.includes(assignedCrop)
             ? assignedCrop
             : 'No crop assigned';
@@ -1118,6 +1160,7 @@ function setupTeacherNotesDisplay() {
         }
       } catch (error) {
         console.error('Could not load the assigned crop for the student plot.', error);
+        cropElement.textContent = 'Unable to load';
       }
     }
 
@@ -1126,8 +1169,16 @@ function setupTeacherNotesDisplay() {
       throw new Error('Stored teacher notes are not in a valid format.');
     }
 
-    const note = notes.find((entry) => entry.plotId === plotId);
-    if (!note) return;
+    const note = plotId ? notes.find((entry) => entry.plotId === plotId) : null;
+    if (!note) {
+      textElement.textContent = plotId
+        ? 'No teacher notes have been added for this plot yet.'
+        : 'No plot is assigned to your account yet.';
+      authorElement.textContent = '—';
+      dateElement.textContent = '—';
+      dateElement.removeAttribute('datetime');
+      return;
+    }
     if (
       typeof note.text !== 'string'
       || typeof note.author !== 'string'
