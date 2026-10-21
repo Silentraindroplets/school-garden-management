@@ -869,6 +869,47 @@ body.modal-open {
   vertical-align: middle;
 }
 
+.selectable-table .row-select-cell {
+  width: 42px;
+  text-align: center;
+}
+
+.selectable-table .row-select-cell input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.bulk-selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--primary-light);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.bulk-selection-bar[hidden] {
+  display: none;
+}
+
+.bulk-selection-bar span {
+  margin-right: auto;
+  font-weight: 600;
+}
+
+.bulk-selection-bar .btn {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
 .table-entry-controls {
   display: flex;
   align-items: center;

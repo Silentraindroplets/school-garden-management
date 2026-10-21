@@ -538,8 +538,38 @@ function setupAdminTableActions() {
   };
   const config = configs[page];
   if (!config) return;
+  const pluralEntity = config.entity === 'observation'
+    ? 'observations'
+    : `${config.entity}s`;
 
+  table.classList.add('selectable-table');
+  let selectAllCheckbox = table.querySelector('[data-select-all-rows]');
+  if (!selectAllCheckbox) {
+    const selectionHeader = document.createElement('th');
+    selectionHeader.className = 'row-select-cell';
+    selectAllCheckbox = document.createElement('input');
+    selectAllCheckbox.type = 'checkbox';
+    selectAllCheckbox.setAttribute('aria-label', `Select all ${pluralEntity} on this page`);
+    selectAllCheckbox.dataset.selectAllRows = '';
+    selectionHeader.append(selectAllCheckbox);
+    table.tHead.rows[0].prepend(selectionHeader);
+  }
+  Array.from(tbody.querySelectorAll(`tr.${config.rowClass}`)).forEach((row) => {
+    if (row.querySelector('[data-row-selection]')) return;
+    const selectionCell = document.createElement('td');
+    selectionCell.className = 'row-select-cell';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    const label = row.cells[config.labelIndex + 1]?.textContent.trim();
+    checkbox.setAttribute('aria-label', `Select ${config.entity} ${label}`);
+    checkbox.dataset.rowSelection = '';
+    selectionCell.append(checkbox);
+    row.prepend(selectionCell);
+  });
+
+  const dataCellOffset = 1;
   const headings = Array.from(table.tHead.rows[0].cells)
+    .slice(dataCellOffset)
     .slice(0, -1)
     .map((cell) => cell.textContent.trim());
   const storageKey = `gardenTrackerAdminRows:${config.key}`;
@@ -554,7 +584,9 @@ function setupAdminTableActions() {
   };
   const initialRows = Array.from(tbody.querySelectorAll(`tr.${config.rowClass}`));
   let records = initialRows.map((row) =>
-    Array.from(row.cells).slice(0, -1).map((cell) => cell.textContent.trim())
+    Array.from(row.cells)
+      .slice(dataCellOffset, -1)
+      .map((cell) => cell.textContent.trim())
   );
 
   try {
@@ -590,6 +622,44 @@ function setupAdminTableActions() {
     }
   };
 
+  const selectedIndices = new Set();
+  let selectionBar;
+  let selectionCount;
+  let bulkDeleteButton;
+  selectionBar = document.createElement('div');
+  selectionBar.className = 'bulk-selection-bar';
+  selectionBar.hidden = true;
+  selectionBar.setAttribute('aria-live', 'polite');
+  selectionCount = document.createElement('span');
+  bulkDeleteButton = document.createElement('button');
+  bulkDeleteButton.type = 'button';
+  bulkDeleteButton.className = 'btn btn-danger';
+  bulkDeleteButton.textContent = 'Delete';
+  bulkDeleteButton.dataset.bulkDeleteRows = '';
+  const cancelSelectionButton = document.createElement('button');
+  cancelSelectionButton.type = 'button';
+  cancelSelectionButton.className = 'btn btn-secondary';
+  cancelSelectionButton.textContent = 'Cancel';
+  cancelSelectionButton.dataset.cancelRowSelection = '';
+  selectionBar.append(selectionCount, bulkDeleteButton, cancelSelectionButton);
+  table.parentElement.insertBefore(selectionBar, table);
+
+  const updateSelectionControls = () => {
+    const selectedCount = selectedIndices.size;
+    selectionBar.hidden = selectedCount < 2;
+    selectionCount.textContent = `${selectedCount} ${selectedCount === 1 ? config.entity : pluralEntity} selected`;
+
+    const visibleRows = Array.from(tbody.querySelectorAll(`tr.${config.rowClass}`))
+      .filter((row) => !row.hidden);
+    const visibleSelectedCount = visibleRows.filter((row) =>
+      selectedIndices.has(Number(row.dataset.recordIndex))
+    ).length;
+    selectAllCheckbox.checked = visibleRows.length > 0
+      && visibleSelectedCount === visibleRows.length;
+    selectAllCheckbox.indeterminate = visibleSelectedCount > 0
+      && visibleSelectedCount < visibleRows.length;
+  };
+
   const makeActionButton = (action, label, icon, record, danger = false) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -614,6 +684,15 @@ function setupAdminTableActions() {
       const row = document.createElement('tr');
       row.className = config.rowClass;
       row.dataset.recordIndex = String(index);
+      const selectionCell = document.createElement('td');
+      selectionCell.className = 'row-select-cell';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selectedIndices.has(index);
+      checkbox.setAttribute('aria-label', `Select ${config.entity} ${record[config.labelIndex]}`);
+      checkbox.dataset.rowSelection = '';
+      selectionCell.append(checkbox);
+      row.append(selectionCell);
       record.forEach((value) => {
         const cell = document.createElement('td');
         cell.textContent = value;
@@ -639,6 +718,7 @@ function setupAdminTableActions() {
     const search = document.getElementById(config.searchId);
     if (search) search.dispatchEvent(new Event('input', { bubbles: true }));
     tbody.dispatchEvent(new Event('tabledatachange'));
+    updateSelectionControls();
   };
 
   const openRecordDialog = (action, index, trigger) => {
@@ -669,6 +749,7 @@ function setupAdminTableActions() {
 
           const updated = records.filter((_, recordIndex) => recordIndex !== index);
           if (saveRecords(updated)) {
+            selectedIndices.clear();
             render();
             const studentName = config.key === 'plots' ? record[2] : record[1];
             const notificationSent = config.key === 'plots' || config.key === 'students'
@@ -1280,6 +1361,138 @@ function setupAdminTableActions() {
     openRecordDialog(button.dataset.rowAction, Number(row.dataset.recordIndex), button);
   });
 
+  tbody.addEventListener('change', (event) => {
+    const checkbox = event.target.closest('[data-row-selection]');
+    const row = checkbox?.closest(`tr.${config.rowClass}`);
+    if (!checkbox || !row) return;
+    const index = Number(row.dataset.recordIndex);
+    if (checkbox.checked) selectedIndices.add(index);
+    else selectedIndices.delete(index);
+    updateSelectionControls();
+  });
+
+  selectAllCheckbox.addEventListener('change', () => {
+    const visibleRows = Array.from(tbody.querySelectorAll(`tr.${config.rowClass}`))
+      .filter((row) => !row.hidden);
+    visibleRows.forEach((row) => {
+      const index = Number(row.dataset.recordIndex);
+      if (selectAllCheckbox.checked) selectedIndices.add(index);
+      else selectedIndices.delete(index);
+      const checkbox = row.querySelector('[data-row-selection]');
+      if (checkbox) checkbox.checked = selectAllCheckbox.checked;
+    });
+    updateSelectionControls();
+  });
+
+  const selectionObserver = new MutationObserver(updateSelectionControls);
+  selectionObserver.observe(tbody, {
+    attributes: true,
+    attributeFilter: ['hidden'],
+    childList: true,
+    subtree: true,
+  });
+
+  table.parentElement.addEventListener('click', (event) => {
+    if (event.target.closest('[data-cancel-row-selection]')) {
+      selectedIndices.clear();
+      tbody.querySelectorAll('[data-row-selection]').forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      updateSelectionControls();
+      return;
+    }
+
+    if (!event.target.closest('[data-bulk-delete-rows]')) return;
+    const selectedRecords = [...selectedIndices]
+      .filter((index) => records[index])
+      .sort((first, second) => first - second)
+      .map((index) => ({ index, record: [...records[index]] }));
+    if (selectedRecords.length < 2) return;
+
+    showAdminConfirmation({
+      title: `Delete ${selectedRecords.length} ${pluralEntity}?`,
+      message: `These ${pluralEntity} will be moved to the archive, where you can undo this action.`,
+      confirmLabel: 'Move to archive',
+      trigger: bulkDeleteButton,
+      onConfirm: () => {
+        const historyEntries = selectedRecords.map(({ index, record }) => ({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          key: config.key,
+          entity: config.entity,
+          action: 'delete',
+          beforeRecord: record,
+          afterRecord: null,
+          index,
+          createdAt: new Date().toISOString(),
+        }));
+        const appendedEntries = [];
+        for (const entry of historyEntries) {
+          if (!appendAdminHistory(entry)) {
+            let rollbackFailed = false;
+            appendedEntries.forEach(({ id }) => {
+              try {
+                removeAdminHistoryEntry(id);
+              } catch (error) {
+                rollbackFailed = true;
+                console.error(`Could not roll back a failed bulk ${config.entity} delete.`, error);
+              }
+            });
+            showStatus(rollbackFailed
+              ? `Could not save the bulk delete to history, and some ${config.entity} history entries could not be rolled back.`
+              : `Could not save the bulk delete to history. No ${pluralEntity} were deleted.`);
+            return;
+          }
+          appendedEntries.push(entry);
+        }
+
+        const deletedIndices = new Set(selectedRecords.map(({ index }) => index));
+        const updated = records.filter((_, index) => !deletedIndices.has(index));
+        if (!saveRecords(updated)) {
+          let rollbackFailed = false;
+          appendedEntries.forEach(({ id }) => {
+            try {
+              removeAdminHistoryEntry(id);
+            } catch (error) {
+              rollbackFailed = true;
+              console.error(`Could not roll back the failed bulk ${config.entity} delete.`, error);
+            }
+          });
+          if (rollbackFailed) {
+            showStatus(`${config.entity[0].toUpperCase()}${config.entity.slice(1)} records were not deleted, but some history entries could not be rolled back.`);
+          }
+          return;
+        }
+
+        selectedIndices.clear();
+        render();
+        const notificationSent = selectedRecords.reduce((sent, { record }) => {
+          if (config.key === 'students') {
+            return notifyStudentAccounts(
+              [record[config.labelIndex]],
+              'Your student record was updated',
+              'Your teacher moved your student record to the archive.'
+            ) && sent;
+          }
+          if (config.key === 'plots') {
+            return notifyStudentAccounts(
+              [record[2]],
+              `Plot ${record[0]} updated`,
+              `Your teacher moved Plot ${record[0]} to the archive.`
+            ) && sent;
+          }
+          return notifyStudentAccounts(
+            [record[1]],
+            'Your observation was updated',
+            `Your teacher moved your observation for Plot ${record[2]} to the archive.`
+          ) && sent;
+        }, true);
+        showStatus(notificationSent
+          ? `${selectedRecords.length} ${pluralEntity} moved to the archive.`
+          : `${selectedRecords.length} ${pluralEntity} moved to the archive, but student notifications could not be sent.`);
+      },
+    });
+  });
+
   document.addEventListener('admin:assign-plot', (event) => {
     if (config.key !== 'plots') return;
     const { student, plot, crop } = event.detail;
@@ -1366,8 +1579,50 @@ function setupAdminArchivePage() {
   const tbody = document.querySelector('[data-archive-records]');
   if (!tbody) return;
 
+  const table = tbody.closest('table');
   const status = document.querySelector('[data-archive-status]');
   const emptyState = document.querySelector('[data-archive-empty]');
+  const selectedHistoryIds = new Set();
+  const selectionHeader = document.createElement('th');
+  selectionHeader.className = 'row-select-cell';
+  const selectAllCheckbox = document.createElement('input');
+  selectAllCheckbox.type = 'checkbox';
+  selectAllCheckbox.setAttribute('aria-label', 'Select all history entries on this page');
+  selectAllCheckbox.dataset.selectAllArchive = '';
+  selectionHeader.append(selectAllCheckbox);
+  table.tHead.rows[0].prepend(selectionHeader);
+
+  const selectionBar = document.createElement('div');
+  selectionBar.className = 'bulk-selection-bar';
+  selectionBar.hidden = true;
+  selectionBar.setAttribute('aria-live', 'polite');
+  const selectionCount = document.createElement('span');
+  const bulkDeleteButton = document.createElement('button');
+  bulkDeleteButton.type = 'button';
+  bulkDeleteButton.className = 'btn btn-danger';
+  bulkDeleteButton.textContent = 'Delete';
+  bulkDeleteButton.dataset.bulkDeleteArchive = '';
+  const cancelSelectionButton = document.createElement('button');
+  cancelSelectionButton.type = 'button';
+  cancelSelectionButton.className = 'btn btn-secondary';
+  cancelSelectionButton.textContent = 'Cancel';
+  cancelSelectionButton.dataset.cancelArchiveSelection = '';
+  selectionBar.append(selectionCount, bulkDeleteButton, cancelSelectionButton);
+  table.parentElement.insertBefore(selectionBar, table);
+
+  const updateSelectionControls = () => {
+    selectionBar.hidden = selectedHistoryIds.size < 2;
+    selectionCount.textContent = `${selectedHistoryIds.size} history entries selected`;
+    const visibleRows = Array.from(tbody.rows).filter((row) => !row.hidden);
+    const visibleSelectedCount = visibleRows.filter((row) =>
+      selectedHistoryIds.has(row.dataset.historyId)
+    ).length;
+    selectAllCheckbox.checked = visibleRows.length > 0
+      && visibleSelectedCount === visibleRows.length;
+    selectAllCheckbox.indeterminate = visibleSelectedCount > 0
+      && visibleSelectedCount < visibleRows.length;
+  };
+
   const recordFields = {
     student: ['ID', 'Name', 'Grade and section', 'Garden plot', 'Status'],
     plot: ['Plot', 'Location', 'Assigned student', 'Status'],
@@ -1548,6 +1803,16 @@ function setupAdminArchivePage() {
     [...history].reverse().forEach((rawEntry) => {
       const entry = normalizeAdminHistoryEntry(rawEntry);
       const row = document.createElement('tr');
+      row.dataset.historyId = entry.id;
+      const selectionCell = document.createElement('td');
+      selectionCell.className = 'row-select-cell';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selectedHistoryIds.has(entry.id);
+      checkbox.setAttribute('aria-label', 'Select history entry');
+      checkbox.dataset.archiveSelection = '';
+      selectionCell.append(checkbox);
+      row.append(selectionCell);
       const entityCell = document.createElement('td');
       entityCell.textContent = `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)}`;
       const recordCell = document.createElement('td');
@@ -1609,9 +1874,82 @@ function setupAdminArchivePage() {
     });
 
     emptyState.hidden = history.length > 0;
+    const availableIds = new Set(history.map((entry) => entry.id));
+    selectedHistoryIds.forEach((id) => {
+      if (!availableIds.has(id)) selectedHistoryIds.delete(id);
+    });
     showStatus('');
     tbody.dispatchEvent(new Event('tabledatachange'));
+    updateSelectionControls();
   };
+
+  tbody.addEventListener('change', (event) => {
+    const checkbox = event.target.closest('[data-archive-selection]');
+    const row = checkbox?.closest('tr');
+    if (!checkbox || !row) return;
+    if (checkbox.checked) selectedHistoryIds.add(row.dataset.historyId);
+    else selectedHistoryIds.delete(row.dataset.historyId);
+    updateSelectionControls();
+  });
+
+  selectAllCheckbox.addEventListener('change', () => {
+    Array.from(tbody.rows).filter((row) => !row.hidden).forEach((row) => {
+      const checkbox = row.querySelector('[data-archive-selection]');
+      if (selectAllCheckbox.checked) selectedHistoryIds.add(row.dataset.historyId);
+      else selectedHistoryIds.delete(row.dataset.historyId);
+      if (checkbox) checkbox.checked = selectAllCheckbox.checked;
+    });
+    updateSelectionControls();
+  });
+
+  const archiveSelectionObserver = new MutationObserver(updateSelectionControls);
+  archiveSelectionObserver.observe(tbody, {
+    attributes: true,
+    attributeFilter: ['hidden'],
+    childList: true,
+    subtree: true,
+  });
+
+  table.parentElement.addEventListener('click', (event) => {
+    if (event.target.closest('[data-cancel-archive-selection]')) {
+      selectedHistoryIds.clear();
+      tbody.querySelectorAll('[data-archive-selection]').forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      updateSelectionControls();
+      return;
+    }
+    if (!event.target.closest('[data-bulk-delete-archive]')) return;
+    const selectedIds = new Set(selectedHistoryIds);
+    if (selectedIds.size < 2) return;
+
+    showAdminConfirmation({
+      title: `Delete ${selectedIds.size} history entries?`,
+      message: 'These actions will be permanently removed. Deleted records may no longer be recoverable.',
+      confirmLabel: 'Delete permanently',
+      trigger: bulkDeleteButton,
+      onConfirm: () => {
+        let history;
+        try {
+          history = readAdminArchive();
+          const remaining = history.filter((entry) => !selectedIds.has(entry.id));
+          if (history.length - remaining.length !== selectedIds.size) {
+            showStatus('Some selected history entries are no longer available. Refresh and try again.');
+            render();
+            return;
+          }
+          localStorage.setItem(adminArchiveStorageKey, JSON.stringify(remaining));
+        } catch (error) {
+          console.error('Could not permanently delete the selected history entries.', error);
+          showStatus('Could not delete the selected history entries. Please try again.');
+          return;
+        }
+        selectedHistoryIds.clear();
+        render();
+        showStatus(`${selectedIds.size} history entries permanently deleted.`);
+      },
+    });
+  });
 
   tbody.addEventListener('click', (event) => {
     const viewButton = event.target.closest('[data-view-history-entry]');

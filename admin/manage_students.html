@@ -110,9 +110,12 @@
       </div>
 
       <div class="table-container">
-        <table>
+        <table class="selectable-table">
           <thead>
             <tr>
+              <th class="row-select-cell">
+                <input type="checkbox" data-select-all-rows aria-label="Select all students on this page" />
+              </th>
               <th>ID</th>
               <th>Name</th>
               <th>Grade &amp; Section</th>
@@ -124,6 +127,7 @@
 
           <tbody>
             <tr class="student-row">
+              <td class="row-select-cell"><input type="checkbox" data-row-selection aria-label="Select student Felix Cagampang" /></td>
               <td>STU-001</td>
               <td>Felix Cagampang</td>
               <td>Grade 9</td>
@@ -145,6 +149,7 @@
             </tr>
 
             <tr class="student-row">
+              <td class="row-select-cell"><input type="checkbox" data-row-selection aria-label="Select student Maria Santos" /></td>
               <td>STU-002</td>
               <td>Maria Santos</td>
               <td>Grade 9</td>
@@ -166,6 +171,7 @@
             </tr>
 
             <tr class="student-row">
+              <td class="row-select-cell"><input type="checkbox" data-row-selection aria-label="Select student Pedro Garcia" /></td>
               <td>STU-003</td>
               <td>Pedro Garcia</td>
               <td>Grade 9</td>
@@ -187,6 +193,7 @@
             </tr>
 
             <tr class="student-row">
+              <td class="row-select-cell"><input type="checkbox" data-row-selection aria-label="Select student Ana Reyes" /></td>
               <td>STU-004</td>
               <td>Ana Reyes</td>
               <td>Grade 9</td>
