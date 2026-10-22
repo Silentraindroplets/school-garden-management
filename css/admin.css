@@ -857,6 +857,28 @@ body.modal-open {
   white-space: nowrap;
 }
 
+.observation-photo-cell {
+  min-width: 112px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.observation-photo-cell img,
+.admin-observation-photo {
+  display: block;
+  width: 96px;
+  height: 72px;
+  margin: 0 auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.admin-observation-photo {
+  width: min(100%, 480px);
+  height: auto;
+  max-height: 320px;
+}
+
 .archive-table td:nth-child(2) {
   min-width: 240px;
   overflow-wrap: anywhere;

@@ -570,7 +570,7 @@ function setupAdminTableActions() {
   const dataCellOffset = 1;
   const headings = Array.from(table.tHead.rows[0].cells)
     .slice(dataCellOffset)
-    .slice(0, -1)
+    .slice(0, config.key === 'observations' ? -2 : -1)
     .map((cell) => cell.textContent.trim());
   const storageKey = `gardenTrackerAdminRows:${config.key}`;
   const status = document.createElement('p');
@@ -582,10 +582,50 @@ function setupAdminTableActions() {
   const showStatus = (message) => {
     status.textContent = message;
   };
+  const observationPhotos = new Map();
+  let photoLoadError = false;
+  if (config.key === 'observations') {
+    try {
+      const storedAccounts = localStorage.getItem('gardenTrackerAccounts');
+      const accounts = storedAccounts === null ? [] : JSON.parse(storedAccounts);
+      if (!Array.isArray(accounts) || accounts.some((account) => (
+        !account
+        || typeof account.username !== 'string'
+        || typeof account.fullName !== 'string'
+        || typeof account.role !== 'string'
+      ))) {
+        throw new Error('Saved student accounts have an invalid format.');
+      }
+
+      accounts.filter((account) => account.role === 'Student').forEach((account) => {
+        try {
+          const savedPhoto = localStorage.getItem(`gardenTrackerPlotPhoto:${account.username}`);
+          if (savedPhoto === null) return;
+
+          const photoData = JSON.parse(savedPhoto);
+          if (
+            typeof photoData.photo !== 'string'
+            || !photoData.photo.startsWith('data:image/')
+            || typeof photoData.observationDate !== 'string'
+            || Number.isNaN(new Date(`${photoData.observationDate}T00:00:00`).getTime())
+          ) {
+            throw new Error(`Saved plot photo for ${account.fullName} has an invalid format.`);
+          }
+          observationPhotos.set(account.fullName.trim().toLowerCase(), photoData.photo);
+        } catch (error) {
+          console.error(`Could not load the plot photo for ${account.fullName}.`, error);
+          photoLoadError = true;
+        }
+      });
+    } catch (error) {
+      console.error('Could not load student plot photos for admin observations.', error);
+      photoLoadError = true;
+    }
+  }
   const initialRows = Array.from(tbody.querySelectorAll(`tr.${config.rowClass}`));
   let records = initialRows.map((row) =>
     Array.from(row.cells)
-      .slice(dataCellOffset, -1)
+      .slice(dataCellOffset, config.key === 'observations' ? -2 : -1)
       .map((cell) => cell.textContent.trim())
   );
 
@@ -698,6 +738,22 @@ function setupAdminTableActions() {
         cell.textContent = value;
         row.append(cell);
       });
+
+      if (config.key === 'observations') {
+        const photoCell = document.createElement('td');
+        photoCell.className = 'observation-photo-cell';
+        const photo = observationPhotos.get(record[1].trim().toLowerCase());
+        if (photo) {
+          const image = document.createElement('img');
+          image.src = photo;
+          image.alt = `Plot photo of ${record[1]}`;
+          image.loading = 'lazy';
+          photoCell.append(image);
+        } else {
+          photoCell.textContent = 'No photo';
+        }
+        row.append(photoCell);
+      }
 
       const actionsCell = document.createElement('td');
       const actions = document.createElement('div');
@@ -832,6 +888,24 @@ function setupAdminTableActions() {
         entry.append(label, value);
         details.append(entry);
       });
+      if (config.key === 'observations') {
+        const photoEntry = document.createElement('div');
+        const photoLabel = document.createElement('dt');
+        photoLabel.textContent = 'Plot photo';
+        const photoValue = document.createElement('dd');
+        const photo = observationPhotos.get(record[1].trim().toLowerCase());
+        if (photo) {
+          const image = document.createElement('img');
+          image.className = 'admin-observation-photo';
+          image.src = photo;
+          image.alt = `Plot photo of ${record[1]}`;
+          photoValue.append(image);
+        } else {
+          photoValue.textContent = 'No plot photo available.';
+        }
+        photoEntry.append(photoLabel, photoValue);
+        details.append(photoEntry);
+      }
       if (config.key === 'plots' || config.key === 'students') {
         const cropEntry = document.createElement('div');
         const cropLabel = document.createElement('dt');
@@ -1573,6 +1647,9 @@ function setupAdminTableActions() {
   });
 
   render();
+  if (photoLoadError) {
+    showStatus('Student plot photos could not be loaded. Check the saved account and photo data.');
+  }
 }
 
 function setupAdminArchivePage() {
