@@ -79,7 +79,9 @@ function setupPlotAssignment() {
   const close = () => {
     if (!modal) return;
     modal.hidden = true;
-    document.body.classList.remove('modal-open');
+    if (!document.querySelector('.modal-overlay:not([hidden])')) {
+      document.body.classList.remove('modal-open');
+    }
   };
 
   document.querySelector('[data-open-assign-plot]')?.addEventListener('click', open);
@@ -473,7 +475,7 @@ function showAdminConfirmation({
 
   const close = () => {
     overlay.remove();
-    if (!document.querySelector('.modal-overlay')) {
+    if (!document.querySelector('.modal-overlay:not([hidden])')) {
       document.body.classList.remove('modal-open');
     }
     document.removeEventListener('keydown', onKeyDown);
@@ -505,6 +507,48 @@ function showAdminConfirmation({
   });
   document.addEventListener('keydown', onKeyDown);
   cancelButton.focus();
+}
+
+function showAdminSuccess({ message, trigger }) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <section class="modal-card admin-confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="admin-success-title" aria-describedby="admin-success-message">
+      <div class="modal-header">
+        <h2 id="admin-success-title">Changes applied successfully</h2>
+      </div>
+      <p id="admin-success-message"></p>
+      <div class="admin-confirmation-actions">
+        <button class="btn btn-primary" type="button" data-close-success>Done</button>
+      </div>
+    </section>
+  `;
+  overlay.querySelector('#admin-success-message').textContent = message;
+  const doneButton = overlay.querySelector('[data-close-success]');
+  document.body.append(overlay);
+  document.body.classList.add('modal-open');
+
+  const close = () => {
+    overlay.remove();
+    if (!document.querySelector('.modal-overlay:not([hidden])')) {
+      document.body.classList.remove('modal-open');
+    }
+    document.removeEventListener('keydown', onKeyDown);
+    if (trigger?.isConnected) trigger.focus();
+  };
+  const onKeyDown = (event) => {
+    if (event.key === 'Escape') close();
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      doneButton.focus();
+    }
+  };
+  doneButton.addEventListener('click', close);
+  overlay.addEventListener('click', (event) => {
+    if (event.target === overlay) close();
+  });
+  document.addEventListener('keydown', onKeyDown);
+  doneButton.focus();
 }
 
 function setupAdminTableActions() {
@@ -820,6 +864,7 @@ function setupAdminTableActions() {
             showStatus(notificationSent
               ? `${config.entity[0].toUpperCase()}${config.entity.slice(1)} moved to the archive.`
               : `${config.entity[0].toUpperCase()}${config.entity.slice(1)} moved to the archive, but the student notification could not be sent.`);
+            showAdminSuccess({ message: status.textContent });
             return;
           }
 
@@ -1389,6 +1434,7 @@ function setupAdminTableActions() {
                 ? `${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated.`
                 : `${config.entity[0].toUpperCase()}${config.entity.slice(1)} updated, but the student notification could not be sent.`);
               close();
+              showAdminSuccess({ message: status.textContent });
               return;
             }
 
@@ -1563,6 +1609,7 @@ function setupAdminTableActions() {
         showStatus(notificationSent
           ? `${selectedRecords.length} ${pluralEntity} moved to the archive.`
           : `${selectedRecords.length} ${pluralEntity} moved to the archive, but student notifications could not be sent.`);
+        showAdminSuccess({ message: status.textContent, trigger: bulkDeleteButton });
       },
     });
   });
@@ -1628,6 +1675,7 @@ function setupAdminTableActions() {
       showStatus(notificationSent
         ? `Plot ${plot} assigned to ${student} for ${crop}.`
         : `Plot ${plot} assigned to ${student}, but the student notification could not be sent.`);
+      showAdminSuccess({ message: status.textContent });
     } else {
       try {
         if (Object.keys(previousCrops).length) {
@@ -2024,6 +2072,7 @@ function setupAdminArchivePage() {
         selectedHistoryIds.clear();
         render();
         showStatus(`${selectedIds.size} history entries permanently deleted.`);
+        showAdminSuccess({ message: status.textContent, trigger: bulkDeleteButton });
       },
     });
   });
@@ -2075,6 +2124,7 @@ function setupAdminArchivePage() {
           }
           render();
           showStatus('History entry permanently deleted.');
+          showAdminSuccess({ message: status.textContent, trigger: deleteButton });
         },
       });
       return;
@@ -2257,6 +2307,7 @@ function setupAdminArchivePage() {
     showStatus(notificationSent
       ? `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone.`
       : `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone, but the student notification could not be sent.`);
+    showAdminSuccess({ message: status.textContent, trigger: undoButton });
       },
     });
   });

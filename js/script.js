@@ -1090,9 +1090,16 @@ function setupAdminAccountOverlays() {
         newPassword ? 'Username and password updated successfully.' : 'Username updated successfully.',
         true
       );
+      closeOverlay(settingsOverlay);
+      showAdminSuccess({
+        message: newPassword
+          ? 'Your admin username and password have been updated.'
+          : 'Your admin username has been updated.',
+        trigger: accountMenuTrigger,
+      });
     } catch (error) {
-      console.error('Could not update the admin account.', error);
-      setMessage(message, 'Unable to save your account changes. Please try again.');
+      console.error('Could not prepare the admin account update.', error);
+      setMessage(message, 'Unable to prepare your account changes. Please try again.');
     }
   });
 }
