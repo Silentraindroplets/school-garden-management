@@ -172,51 +172,224 @@ function readAdminRowsForAssignment(storageKey, fallbackRows, recordLength) {
 function setupPlotAssignment() {
   const modal = document.querySelector('[data-assign-plot-modal]');
   const form = document.querySelector('[data-assign-plot-form]');
+  if (!modal || !form) return;
 
-  // Initial population so the modal is never empty
-  populateAssignPlotOptions();
+  const populateOptions = () => {
+    const studentSelect = document.getElementById('student');
+    const plotSelect = document.getElementById('plot');
+    if (!studentSelect || !plotSelect) return;
+
+    const students = readAdminRowsForAssignment('gardenTrackerAdminRows:students', typeof demoStudentBaseRows !== 'undefined' ? demoStudentBaseRows : [], 5);
+    const plots = readAdminRowsForAssignment('gardenTrackerAdminRows:plots', typeof demoPlotBaseRows !== 'undefined' ? demoPlotBaseRows : [], 4);
+
+    // Populate Students (allow reassignment, but mark current plot)
+    studentSelect.replaceChildren();
+    const sPlaceholder = document.createElement('option');
+    sPlaceholder.value = ''; sPlaceholder.disabled = true; sPlaceholder.selected = true;
+    sPlaceholder.textContent = 'Select Student';
+    studentSelect.append(sPlaceholder);
+
+    students.sort((a, b) => a[1].localeCompare(b[1])).forEach(row => {
+      const opt = document.createElement('option');
+      opt.value = row[1];
+      opt.textContent = `${row[1]} ${row[3] !== '—' ? `(Current: ${row[3]})` : ''}`;
+      studentSelect.append(opt);
+    });
+
+    // Populate Available Plots
+    plotSelect.replaceChildren();
+    const pPlaceholder = document.createElement('option');
+    pPlaceholder.value = ''; pPlaceholder.disabled = true; pPlaceholder.selected = true;
+    pPlaceholder.textContent = 'Select Available Plot';
+    plotSelect.append(pPlaceholder);
+
+    plots.filter(row => row[3].toLowerCase() !== 'assigned').forEach(row => {
+      const opt = document.createElement('option');
+      opt.value = row[0]; opt.textContent = row[0];
+      plotSelect.append(opt);
+    });
+  };
 
   const open = () => {
-    if (!modal) return;
-    populateAssignPlotOptions(); // refresh every time it opens
+    populateOptions();
     modal.hidden = false;
     document.body.classList.add('modal-open');
     document.getElementById('student')?.focus();
   };
   const close = () => {
-    if (!modal) return;
     modal.hidden = true;
     if (!document.querySelector('.modal-overlay:not([hidden])')) {
       document.body.classList.remove('modal-open');
     }
+    form.reset();
   };
 
   document.querySelector('[data-open-assign-plot]')?.addEventListener('click', open);
   document.querySelector('[data-close-assign-plot]')?.addEventListener('click', close);
-  modal?.addEventListener('click', (event) => {
-    if (event.target === modal) close();
-  });
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') close();
-  });
-  form?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const student = document.getElementById('student')?.value.trim();
-    const plot = document.getElementById('plot')?.value.trim();
-    const crop = document.getElementById('crop')?.value.trim();
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const studentName = document.getElementById('student').value.trim();
+    const plotId = document.getElementById('plot').value.trim();
+    const crop = document.getElementById('crop').value.trim();
     const feedback = form.querySelector('[data-assign-plot-status]');
 
-    if (!student || !plot || !crop) {
+    if (!studentName || !plotId || !crop) {
       if (feedback) feedback.textContent = 'Select a student, available plot, and crop.';
       return;
     }
 
-    document.dispatchEvent(new CustomEvent('admin:assign-plot', {
-      detail: { student, plot, crop },
-    }));
-    if (feedback) feedback.textContent = '';
+    try {
+      const studentsKey = 'gardenTrackerAdminRows:students';
+      const plotsKey = 'gardenTrackerAdminRows:plots';
+      let students = JSON.parse(localStorage.getItem(studentsKey) || '[]');
+      let plots = JSON.parse(localStorage.getItem(plotsKey) || '[]');
+
+      if (!students.length && typeof demoStudentBaseRows !== 'undefined') students = [...demoStudentBaseRows];
+      if (!plots.length && typeof demoPlotBaseRows !== 'undefined') plots = [...demoPlotBaseRows];
+
+      // 1. Assign the new plot
+      let plotIndex = plots.findIndex(p => p[0] === plotId);
+      if (plotIndex !== -1) {
+        plots[plotIndex][2] = studentName;
+        plots[plotIndex][3] = 'Assigned';
+      }
+
+      // 2. Update Student Record
+      let studentIndex = students.findIndex(s => s[1] === studentName);
+      if (studentIndex !== -1) {
+        const oldPlotId = students[studentIndex][3];
+        students[studentIndex][3] = plotId;
+        students[studentIndex][4] = 'Active';
+
+        // 3. Free up old plot if reassigned
+        if (oldPlotId && oldPlotId !== '—' && oldPlotId !== plotId) {
+          const oldPlotIndex = plots.findIndex(p => p[0] === oldPlotId);
+          if (oldPlotIndex !== -1) {
+            plots[oldPlotIndex][2] = '—';
+            plots[oldPlotIndex][3] = 'Available';
+          }
+        }
+      }
+
+      // Save to localStorage
+      localStorage.setItem(plotsKey, JSON.stringify(plots));
+      localStorage.setItem(studentsKey, JSON.stringify(students));
+
+      // 4. Save Crop
+      const crops = JSON.parse(localStorage.getItem('gardenTrackerPlotCrops') || '{}');
+      crops[plotId] = crop;
+      localStorage.setItem('gardenTrackerPlotCrops', JSON.stringify(crops));
+
+      // Dispatch event so tables update instantly
+      document.dispatchEvent(new CustomEvent('admin:data-changed'));
+      close();
+
+      if (typeof showAdminSuccess === 'function') {
+        showAdminSuccess({ message: `Plot ${plotId} assigned to ${studentName}.` });
+      }
+    } catch (err) {
+      console.error(err);
+      if (feedback) feedback.textContent = 'Failed to assign plot. Please try again.';
+    }
+  });
+}
+
+function setupAddPlot() {
+  const modal = document.querySelector('[data-add-plot-modal]');
+  const form = document.querySelector('[data-add-plot-form]');
+  if (!modal || !form) return;
+
+  const open = () => {
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    document.getElementById('new-plot-id')?.focus();
+  };
+  
+  const close = () => {
+    modal.hidden = true;
+    if (!document.querySelector('.modal-overlay:not([hidden])')) {
+      document.body.classList.remove('modal-open');
+    }
     form.reset();
-    close();
+    const status = form.querySelector('[data-add-plot-status]');
+    if (status) status.textContent = '';
+  };
+
+  document.querySelector('[data-open-add-plot]')?.addEventListener('click', open);
+  // Both the 'X' icon and the new Cancel button will close the modal
+  document.querySelectorAll('[data-close-add-plot]').forEach(btn => {
+    btn.addEventListener('click', close);
+  });
+  
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', (e) => { 
+    if (e.key === 'Escape' && !modal.hidden) close(); 
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const plotId = document.getElementById('new-plot-id').value.trim();
+    const status = form.querySelector('[data-add-plot-status]');
+
+    if (!plotId) {
+      if (status) status.textContent = 'Plot ID is required.';
+      return;
+    }
+
+    try {
+      const storageKey = 'gardenTrackerAdminRows:plots';
+      const stored = localStorage.getItem(storageKey);
+      let plots = stored ? JSON.parse(stored) : (typeof demoPlotBaseRows !== 'undefined' ? [...demoPlotBaseRows] : []);
+
+      // Check for duplicates before asking for confirmation
+      if (plots.some(row => row[0].toLowerCase() === plotId.toLowerCase())) {
+        if (status) status.textContent = 'A plot with this ID already exists.';
+        return;
+      }
+
+      // Show Confirmation Modal
+      if (typeof showAdminConfirmation === 'function') {
+        showAdminConfirmation({
+          title: 'Add Garden Plot?',
+          message: `Are you sure you want to add Plot ${plotId} at the School Garden?`,
+          confirmLabel: 'Add Plot',
+          confirmClass: 'btn btn-primary',
+          trigger: form.querySelector('button[type="submit"]'),
+          onConfirm: () => {
+            // Actual saving logic executed after user clicks "Add Plot" in confirmation
+            plots.push([plotId, 'School Garden', '—', 'Available']);
+            localStorage.setItem(storageKey, JSON.stringify(plots));
+
+            // Add to archive
+            if (typeof appendAdminHistory === 'function') {
+              appendAdminHistory({
+                id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                key: 'plots',
+                entity: 'plot',
+                action: 'create',
+                beforeRecord: null,
+                afterRecord: [plotId, 'School Garden', '—', 'Available'],
+                index: plots.length - 1,
+                createdAt: new Date().toISOString(),
+              });
+            }
+
+            document.dispatchEvent(new CustomEvent('admin:data-changed'));
+            close();
+            
+            if (typeof showAdminSuccess === 'function') {
+              showAdminSuccess({ message: `Garden Plot ${plotId} added successfully.` });
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error adding plot:', error);
+      if (status) status.textContent = 'Failed to add plot. Please try again.';
+    }
   });
 }
 
@@ -662,7 +835,17 @@ function setupAdminTableActions() {
   const table = document.querySelector('main .table-container table');
   const tbody = table?.tBodies[0];
   if (!table || !tbody) return;
-
+  document.addEventListener('admin:data-changed', () => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved !== null) {
+        records = JSON.parse(saved);
+        render();
+      }
+    } catch (e) {
+      console.error('Could not refresh table data.', e);
+    }
+  });
   const page = location.pathname.split('/').pop();
   const configs = {
     'manage_students.html': {
@@ -1109,19 +1292,19 @@ function setupAdminTableActions() {
       form.className = 'admin-record-form';
       const plotStudentOptions = config.key === 'plots'
         ? (() => {
-            const fallbackNames = ['Felix Cagampang', 'Maria Santos', 'Ana Reyes', 'Pedro Garcia'];
-            try {
-              const savedStudents = JSON.parse(localStorage.getItem('gardenTrackerAdminRows:students') || '[]');
-              if (Array.isArray(savedStudents) && savedStudents.length > 0) {
-                return Array.from(new Set(savedStudents
-                  .map((student) => (Array.isArray(student) ? student[1] : ''))
-                  .filter((student) => typeof student === 'string' && student.trim())));
-              }
-            } catch (error) {
-              console.warn('Could not load saved student names for plot assignment.', error);
+          const fallbackNames = ['Felix Cagampang', 'Maria Santos', 'Ana Reyes', 'Pedro Garcia'];
+          try {
+            const savedStudents = JSON.parse(localStorage.getItem('gardenTrackerAdminRows:students') || '[]');
+            if (Array.isArray(savedStudents) && savedStudents.length > 0) {
+              return Array.from(new Set(savedStudents
+                .map((student) => (Array.isArray(student) ? student[1] : ''))
+                .filter((student) => typeof student === 'string' && student.trim())));
             }
-            return fallbackNames;
-          })()
+          } catch (error) {
+            console.warn('Could not load saved student names for plot assignment.', error);
+          }
+          return fallbackNames;
+        })()
         : [];
       let cropPlotField = null;
 
@@ -2244,177 +2427,177 @@ function setupAdminArchivePage() {
       confirmClass: 'btn btn-primary',
       trigger: undoButton,
       onConfirm: () => {
-    const config = adminArchiveRecordConfigs[entry.key];
-    const previousRecords = localStorage.getItem(config.storageKey);
-    let records;
-    try {
-      records = JSON.parse(previousRecords);
-      if (
-        previousRecords === null
-        || !Array.isArray(records)
-        || records.some((record) =>
-          !Array.isArray(record)
-          || record.length !== config.recordLength
-          || record.some((value) => typeof value !== 'string')
-        )
-      ) {
-        throw new Error(`Saved ${entry.entity} records have an invalid format.`);
-      }
-    } catch (error) {
-      console.error(`Could not load the active ${entry.entity} list for undo.`, error);
-      showStatus(`Could not undo this action. The active ${entry.entity} list could not be loaded.`);
-      return;
-    }
-
-    const expectedRecord = entry.action === 'delete' ? null : entry.afterRecord;
-    let recordIndex = -1;
-    if (entry.action !== 'delete') {
-      if (
-        records[entry.index]
-        && JSON.stringify(records[entry.index]) === JSON.stringify(expectedRecord)
-      ) {
-        recordIndex = entry.index;
-      } else {
-        const matches = records.reduce((indices, record, index) => {
-          if (JSON.stringify(record) === JSON.stringify(expectedRecord)) indices.push(index);
-          return indices;
-        }, []);
-        if (matches.length === 1) recordIndex = matches[0];
-      }
-      if (recordIndex === -1) {
-        showStatus(`This ${entry.entity} has changed since the action. Undo newer changes first.`);
-        return;
-      }
-    } else {
-      const identityField = config.identityField;
-      const alreadyExists = records.some((record) => (
-        identityField === null
-          ? JSON.stringify(record) === JSON.stringify(entry.beforeRecord)
-          : record[identityField] === entry.beforeRecord[identityField]
-      ));
-      if (alreadyExists) {
-        showStatus(`A matching ${entry.entity} already exists. The history entry was kept.`);
-        return;
-      }
-    }
-
-    let previousNotes = null;
-    let nextNotes = null;
-    if (entry.beforeTeacherNotes !== undefined) {
-      previousNotes = localStorage.getItem('gardenTrackerTeacherNotes');
-      try {
-        const currentNotes = previousNotes === null ? null : JSON.parse(previousNotes);
-        if (JSON.stringify(currentNotes) !== JSON.stringify(entry.afterTeacherNotes)) {
-          showStatus('The teacher note has changed since this edit. Undo newer note changes first.');
+        const config = adminArchiveRecordConfigs[entry.key];
+        const previousRecords = localStorage.getItem(config.storageKey);
+        let records;
+        try {
+          records = JSON.parse(previousRecords);
+          if (
+            previousRecords === null
+            || !Array.isArray(records)
+            || records.some((record) =>
+              !Array.isArray(record)
+              || record.length !== config.recordLength
+              || record.some((value) => typeof value !== 'string')
+            )
+          ) {
+            throw new Error(`Saved ${entry.entity} records have an invalid format.`);
+          }
+        } catch (error) {
+          console.error(`Could not load the active ${entry.entity} list for undo.`, error);
+          showStatus(`Could not undo this action. The active ${entry.entity} list could not be loaded.`);
           return;
         }
-        nextNotes = entry.beforeTeacherNotes;
-      } catch (error) {
-        console.error('Could not load teacher notes for undo.', error);
-        showStatus('Could not undo this edit because the teacher notes could not be loaded.');
-        return;
-      }
-    }
 
-    let previousCropStorage = null;
-    let nextCrops = null;
-    if (entry.cropAssignment) {
-      previousCropStorage = localStorage.getItem(plotCropsStorageKey);
-      try {
-        const currentCrops = readAssignedPlotCrops();
-        const currentCrop = currentCrops[entry.cropAssignment.plotId] || null;
-        if (currentCrop !== entry.cropAssignment.afterCrop) {
-          showStatus('The crop assignment has changed since this edit. Undo newer changes first.');
-          return;
-        }
-        nextCrops = { ...currentCrops };
-        if (entry.cropAssignment.beforeCrop) {
-          nextCrops[entry.cropAssignment.plotId] = entry.cropAssignment.beforeCrop;
+        const expectedRecord = entry.action === 'delete' ? null : entry.afterRecord;
+        let recordIndex = -1;
+        if (entry.action !== 'delete') {
+          if (
+            records[entry.index]
+            && JSON.stringify(records[entry.index]) === JSON.stringify(expectedRecord)
+          ) {
+            recordIndex = entry.index;
+          } else {
+            const matches = records.reduce((indices, record, index) => {
+              if (JSON.stringify(record) === JSON.stringify(expectedRecord)) indices.push(index);
+              return indices;
+            }, []);
+            if (matches.length === 1) recordIndex = matches[0];
+          }
+          if (recordIndex === -1) {
+            showStatus(`This ${entry.entity} has changed since the action. Undo newer changes first.`);
+            return;
+          }
         } else {
-          delete nextCrops[entry.cropAssignment.plotId];
+          const identityField = config.identityField;
+          const alreadyExists = records.some((record) => (
+            identityField === null
+              ? JSON.stringify(record) === JSON.stringify(entry.beforeRecord)
+              : record[identityField] === entry.beforeRecord[identityField]
+          ));
+          if (alreadyExists) {
+            showStatus(`A matching ${entry.entity} already exists. The history entry was kept.`);
+            return;
+          }
         }
-      } catch (error) {
-        console.error('Could not load crop assignments for undo.', error);
-        showStatus('Could not undo this edit because crop assignments could not be loaded.');
-        return;
-      }
-    }
 
-    const updatedRecords = [...records];
-    if (entry.action === 'delete') {
-      updatedRecords.splice(Math.min(entry.index, updatedRecords.length), 0, entry.beforeRecord);
-    } else if (entry.action === 'create') {
-      updatedRecords.splice(recordIndex, 1);
-    } else {
-      updatedRecords[recordIndex] = entry.beforeRecord;
-    }
-    const updatedHistory = history.filter((_, index) => index !== historyIndex);
-    const previousHistory = localStorage.getItem(adminArchiveStorageKey);
-    try {
-      localStorage.setItem(config.storageKey, JSON.stringify(updatedRecords));
-      if (entry.beforeTeacherNotes !== undefined) {
-        if (nextNotes === null) {
-          localStorage.removeItem('gardenTrackerTeacherNotes');
-        } else {
-          localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(nextNotes));
-        }
-      }
-      if (entry.cropAssignment) {
-        if (Object.keys(nextCrops).length) {
-          localStorage.setItem(plotCropsStorageKey, JSON.stringify(nextCrops));
-        } else {
-          localStorage.removeItem(plotCropsStorageKey);
-        }
-      }
-      localStorage.setItem(adminArchiveStorageKey, JSON.stringify(updatedHistory));
-    } catch (error) {
-      console.error(`Could not undo the ${entry.entity} action.`, error);
-      try {
-        if (previousRecords === null) localStorage.removeItem(config.storageKey);
-        else localStorage.setItem(config.storageKey, previousRecords);
+        let previousNotes = null;
+        let nextNotes = null;
         if (entry.beforeTeacherNotes !== undefined) {
-          if (previousNotes === null) localStorage.removeItem('gardenTrackerTeacherNotes');
-          else localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+          previousNotes = localStorage.getItem('gardenTrackerTeacherNotes');
+          try {
+            const currentNotes = previousNotes === null ? null : JSON.parse(previousNotes);
+            if (JSON.stringify(currentNotes) !== JSON.stringify(entry.afterTeacherNotes)) {
+              showStatus('The teacher note has changed since this edit. Undo newer note changes first.');
+              return;
+            }
+            nextNotes = entry.beforeTeacherNotes;
+          } catch (error) {
+            console.error('Could not load teacher notes for undo.', error);
+            showStatus('Could not undo this edit because the teacher notes could not be loaded.');
+            return;
+          }
         }
-        if (entry.cropAssignment) {
-          if (previousCropStorage === null) localStorage.removeItem(plotCropsStorageKey);
-          else localStorage.setItem(plotCropsStorageKey, previousCropStorage);
-        }
-        if (previousHistory === null) localStorage.removeItem(adminArchiveStorageKey);
-        else localStorage.setItem(adminArchiveStorageKey, previousHistory);
-      } catch (rollbackError) {
-        console.error(`Could not roll back the ${entry.entity} action after undo failed.`, rollbackError);
-      }
-      showStatus('Could not undo this action. Please try again.');
-      return;
-    }
 
-    render();
-    const changedRecord = entry.action === 'create'
-      ? entry.afterRecord
-      : entry.beforeRecord || entry.afterRecord;
-    const studentNames = entry.key === 'plots'
-      ? [entry.beforeRecord?.[2], entry.afterRecord?.[2]]
-      : entry.key === 'students'
-        ? [entry.beforeRecord?.[1], entry.afterRecord?.[1]]
-        : entry.key === 'observations'
-          ? [entry.beforeRecord?.[1], entry.afterRecord?.[1]]
-          : [];
-    const notificationSent = studentNames.length
-      ? notifyStudentAccounts(
-        studentNames.filter((name) => name && name !== '—'),
-        entry.key === 'plots'
-          ? `Plot ${changedRecord?.[0] || ''} changed`
-          : 'A teacher update was reversed',
-        entry.key === 'plots'
-          ? `Your teacher reversed a change to Plot ${changedRecord?.[0] || ''}.`
-          : `Your teacher reversed a change to your ${entry.entity} record.`
-      )
-      : true;
-    showStatus(notificationSent
-      ? `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone.`
-      : `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone, but the student notification could not be sent.`);
-    showAdminSuccess({ message: status.textContent, trigger: undoButton });
+        let previousCropStorage = null;
+        let nextCrops = null;
+        if (entry.cropAssignment) {
+          previousCropStorage = localStorage.getItem(plotCropsStorageKey);
+          try {
+            const currentCrops = readAssignedPlotCrops();
+            const currentCrop = currentCrops[entry.cropAssignment.plotId] || null;
+            if (currentCrop !== entry.cropAssignment.afterCrop) {
+              showStatus('The crop assignment has changed since this edit. Undo newer changes first.');
+              return;
+            }
+            nextCrops = { ...currentCrops };
+            if (entry.cropAssignment.beforeCrop) {
+              nextCrops[entry.cropAssignment.plotId] = entry.cropAssignment.beforeCrop;
+            } else {
+              delete nextCrops[entry.cropAssignment.plotId];
+            }
+          } catch (error) {
+            console.error('Could not load crop assignments for undo.', error);
+            showStatus('Could not undo this edit because crop assignments could not be loaded.');
+            return;
+          }
+        }
+
+        const updatedRecords = [...records];
+        if (entry.action === 'delete') {
+          updatedRecords.splice(Math.min(entry.index, updatedRecords.length), 0, entry.beforeRecord);
+        } else if (entry.action === 'create') {
+          updatedRecords.splice(recordIndex, 1);
+        } else {
+          updatedRecords[recordIndex] = entry.beforeRecord;
+        }
+        const updatedHistory = history.filter((_, index) => index !== historyIndex);
+        const previousHistory = localStorage.getItem(adminArchiveStorageKey);
+        try {
+          localStorage.setItem(config.storageKey, JSON.stringify(updatedRecords));
+          if (entry.beforeTeacherNotes !== undefined) {
+            if (nextNotes === null) {
+              localStorage.removeItem('gardenTrackerTeacherNotes');
+            } else {
+              localStorage.setItem('gardenTrackerTeacherNotes', JSON.stringify(nextNotes));
+            }
+          }
+          if (entry.cropAssignment) {
+            if (Object.keys(nextCrops).length) {
+              localStorage.setItem(plotCropsStorageKey, JSON.stringify(nextCrops));
+            } else {
+              localStorage.removeItem(plotCropsStorageKey);
+            }
+          }
+          localStorage.setItem(adminArchiveStorageKey, JSON.stringify(updatedHistory));
+        } catch (error) {
+          console.error(`Could not undo the ${entry.entity} action.`, error);
+          try {
+            if (previousRecords === null) localStorage.removeItem(config.storageKey);
+            else localStorage.setItem(config.storageKey, previousRecords);
+            if (entry.beforeTeacherNotes !== undefined) {
+              if (previousNotes === null) localStorage.removeItem('gardenTrackerTeacherNotes');
+              else localStorage.setItem('gardenTrackerTeacherNotes', previousNotes);
+            }
+            if (entry.cropAssignment) {
+              if (previousCropStorage === null) localStorage.removeItem(plotCropsStorageKey);
+              else localStorage.setItem(plotCropsStorageKey, previousCropStorage);
+            }
+            if (previousHistory === null) localStorage.removeItem(adminArchiveStorageKey);
+            else localStorage.setItem(adminArchiveStorageKey, previousHistory);
+          } catch (rollbackError) {
+            console.error(`Could not roll back the ${entry.entity} action after undo failed.`, rollbackError);
+          }
+          showStatus('Could not undo this action. Please try again.');
+          return;
+        }
+
+        render();
+        const changedRecord = entry.action === 'create'
+          ? entry.afterRecord
+          : entry.beforeRecord || entry.afterRecord;
+        const studentNames = entry.key === 'plots'
+          ? [entry.beforeRecord?.[2], entry.afterRecord?.[2]]
+          : entry.key === 'students'
+            ? [entry.beforeRecord?.[1], entry.afterRecord?.[1]]
+            : entry.key === 'observations'
+              ? [entry.beforeRecord?.[1], entry.afterRecord?.[1]]
+              : [];
+        const notificationSent = studentNames.length
+          ? notifyStudentAccounts(
+            studentNames.filter((name) => name && name !== '—'),
+            entry.key === 'plots'
+              ? `Plot ${changedRecord?.[0] || ''} changed`
+              : 'A teacher update was reversed',
+            entry.key === 'plots'
+              ? `Your teacher reversed a change to Plot ${changedRecord?.[0] || ''}.`
+              : `Your teacher reversed a change to your ${entry.entity} record.`
+          )
+          : true;
+        showStatus(notificationSent
+          ? `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone.`
+          : `${entry.entity[0].toUpperCase()}${entry.entity.slice(1)} action undone, but the student notification could not be sent.`);
+        showAdminSuccess({ message: status.textContent, trigger: undoButton });
       },
     });
   });
@@ -2802,13 +2985,12 @@ function setupAdminGrowthTracker() {
       date.dateTime = observation.date;
       date.textContent = formatDate(observation.date);
       const condition = document.createElement('span');
-      condition.className = `badge ${
-        observation.condition === 'healthy'
+      condition.className = `badge ${observation.condition === 'healthy'
           ? 'badge-success'
           : observation.condition === 'needs-attention'
             ? 'badge-warning'
             : 'badge-danger'
-      }`;
+        }`;
       condition.textContent = observation.condition.replace(/-/g, ' ');
       header.append(date, condition);
       if (observation.isSample) {
@@ -2866,3 +3048,7 @@ function markActiveSidebarLink() {
     if (href && href === current) link.classList.add('active');
   });
 }
+
+
+if (typeof setupPlotAssignment === 'function') setupPlotAssignment();
+if (typeof setupAddPlot === 'function') setupAddPlot();

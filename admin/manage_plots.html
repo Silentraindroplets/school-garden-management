@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-      <title>Manage Plots | GardenTrack</title>
+    <title>Manage Plots | GardenTrack</title>
 
     <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
     <link rel="stylesheet" href="../css/style.css" />
@@ -16,73 +16,78 @@
 
   <body class="admin">
     <header class="admin-topbar">
-  <button class="admin-sidebar-toggle" type="button" aria-label="Toggle sidebar">☰</button>
+      <button
+        class="admin-sidebar-toggle"
+        type="button"
+        aria-label="Toggle sidebar"
+      >
+        ☰
+      </button>
 
-  <a href="admin_dashboard.html" class="logo">
-    <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
-    GardenTrack
-  </a>
+      <a href="admin_dashboard.html" class="logo">
+        <img src="../images/logo.svg" alt="GardenTrack Logo" class="logo-img" />
+        GardenTrack
+      </a>
 
-  <nav class="admin-breadcrumb" aria-label="Breadcrumb">
-    <a href="admin_dashboard.html">Admin</a>
-    <span class="sep">/</span>
-    <span class="current">Manage Plots</span>   
-  </nav>
-
-
-  <div class="user-menu">
-    <details>
-      <summary class="user-avatar" aria-label="Open user menu">
-        <img src="../images/admin.svg" alt="" />
-      </summary>
-      <nav class="user-dropdown" aria-label="User menu">
-        <a href="#profile" data-open-admin-profile>Profile</a>
-        <a href="#account-settings" data-open-admin-settings>Account Settings</a>
-        <a href="../index.html">Logout</a>
+      <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+        <a href="admin_dashboard.html">Admin</a>
+        <span class="sep">/</span>
+        <span class="current">Manage Plots</span>
       </nav>
-    </details>
-    <div class="user-info">
-      <strong data-username>Administrator</strong>
-      <span>Admin</span>
-    </div>
-  </div>
-</header>
 
-<aside class="admin-sidebar">
-  <div class="admin-sidebar-section">Main</div>
-  <a href="admin_dashboard.html">      
-    <img src="../images/dashboard.svg" alt="" />
-    Dashboard
-  </a>
+      <div class="user-menu">
+        <details>
+          <summary class="user-avatar" aria-label="Open user menu">
+            <img src="../images/admin.svg" alt="" />
+          </summary>
+          <nav class="user-dropdown" aria-label="User menu">
+            <a href="#profile" data-open-admin-profile>Profile</a>
+            <a href="#account-settings" data-open-admin-settings
+              >Account Settings</a
+            >
+            <a href="../index.html">Logout</a>
+          </nav>
+        </details>
+        <div class="user-info">
+          <strong data-username>Administrator</strong>
+          <span>Admin</span>
+        </div>
+      </div>
+    </header>
 
-  <div class="admin-sidebar-section">Management</div>
-  <a href="manage_plots.html" class="active">
-    <img src="../images/garden-plot.svg" alt="" />
-    Manage Plots
-  </a>
-  <a href="manage_students.html">
-    <img src="../images/students.svg" alt="" />
-    Students
-  </a>
-  <a href="student_observations.html">
-    <img src="../images/observations.svg" alt="" />
-    Observations
-  </a>
-  <a href="growth_tracker.html">
-    <img src="../images/growth.svg" alt="" />
-    Growth Tracker
-  </a>
-  <a href="reports.html">
-    <img src="../images/report.svg" alt="" />
-    Reports
-  </a>
-  <a href="archive.html">
-    <img src="../images/archive.svg" alt="" />
-    Archive
-  </a>
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-section">Main</div>
+      <a href="admin_dashboard.html">
+        <img src="../images/dashboard.svg" alt="" />
+        Dashboard
+      </a>
 
- 
-</aside>
+      <div class="admin-sidebar-section">Management</div>
+      <a href="manage_plots.html" class="active">
+        <img src="../images/garden-plot.svg" alt="" />
+        Manage Plots
+      </a>
+      <a href="manage_students.html">
+        <img src="../images/students.svg" alt="" />
+        Students
+      </a>
+      <a href="student_observations.html">
+        <img src="../images/observations.svg" alt="" />
+        Observations
+      </a>
+      <a href="growth_tracker.html">
+        <img src="../images/growth.svg" alt="" />
+        Growth Tracker
+      </a>
+      <a href="reports.html">
+        <img src="../images/report.svg" alt="" />
+        Reports
+      </a>
+      <a href="archive.html">
+        <img src="../images/archive.svg" alt="" />
+        Archive
+      </a>
+    </aside>
 
     <main class="admin-main">
       <div class="container">
@@ -111,8 +116,8 @@
           <div class="admin-card-header">
             <h2>Garden Plot List</h2>
 
-            <button class="btn btn-primary" type="button" data-open-assign-plot>
-              + Assign Garden Plot
+            <button class="btn btn-primary" type="button" data-open-add-plot>
+              + Add Garden Plot
             </button>
           </div>
 
@@ -144,13 +149,28 @@
 
                   <td>
                     <div class="table-actions">
-                      <button class="icon-action" type="button" aria-label="View plot A-01" title="View">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="View plot A-01"
+                        title="View"
+                      >
                         <img src="../images/view.svg" alt="" />
                       </button>
-                      <button class="icon-action" type="button" aria-label="Edit plot A-01" title="Edit">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="Edit plot A-01"
+                        title="Edit"
+                      >
                         <img src="../images/edit.svg" alt="" />
                       </button>
-                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-01" title="Delete">
+                      <button
+                        class="icon-action icon-action-danger"
+                        type="button"
+                        aria-label="Delete plot A-01"
+                        title="Delete"
+                      >
                         <img src="../images/delete.svg" alt="" />
                       </button>
                     </div>
@@ -168,13 +188,28 @@
 
                   <td>
                     <div class="table-actions">
-                      <button class="icon-action" type="button" aria-label="View plot A-02" title="View">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="View plot A-02"
+                        title="View"
+                      >
                         <img src="../images/view.svg" alt="" />
                       </button>
-                      <button class="icon-action" type="button" aria-label="Edit plot A-02" title="Edit">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="Edit plot A-02"
+                        title="Edit"
+                      >
                         <img src="../images/edit.svg" alt="" />
                       </button>
-                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-02" title="Delete">
+                      <button
+                        class="icon-action icon-action-danger"
+                        type="button"
+                        aria-label="Delete plot A-02"
+                        title="Delete"
+                      >
                         <img src="../images/delete.svg" alt="" />
                       </button>
                     </div>
@@ -192,13 +227,28 @@
 
                   <td>
                     <div class="table-actions">
-                      <button class="icon-action" type="button" aria-label="View plot A-03" title="View">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="View plot A-03"
+                        title="View"
+                      >
                         <img src="../images/view.svg" alt="" />
                       </button>
-                      <button class="icon-action" type="button" aria-label="Edit plot A-03" title="Edit">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="Edit plot A-03"
+                        title="Edit"
+                      >
                         <img src="../images/edit.svg" alt="" />
                       </button>
-                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-03" title="Delete">
+                      <button
+                        class="icon-action icon-action-danger"
+                        type="button"
+                        aria-label="Delete plot A-03"
+                        title="Delete"
+                      >
                         <img src="../images/delete.svg" alt="" />
                       </button>
                     </div>
@@ -216,13 +266,28 @@
 
                   <td>
                     <div class="table-actions">
-                      <button class="icon-action" type="button" aria-label="View plot A-04" title="View">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="View plot A-04"
+                        title="View"
+                      >
                         <img src="../images/view.svg" alt="" />
                       </button>
-                      <button class="icon-action" type="button" aria-label="Edit plot A-04" title="Edit">
+                      <button
+                        class="icon-action"
+                        type="button"
+                        aria-label="Edit plot A-04"
+                        title="Edit"
+                      >
                         <img src="../images/edit.svg" alt="" />
                       </button>
-                      <button class="icon-action icon-action-danger" type="button" aria-label="Delete plot A-04" title="Delete">
+                      <button
+                        class="icon-action icon-action-danger"
+                        type="button"
+                        aria-label="Delete plot A-04"
+                        title="Delete"
+                      >
                         <img src="../images/delete.svg" alt="" />
                       </button>
                     </div>
@@ -237,61 +302,45 @@
             </div>
           </div>
         </section>
-
       </div>
     </main>
-
-
-    <div class="modal-overlay" data-assign-plot-modal hidden>
+    <div class="modal-overlay" data-add-plot-modal hidden>
       <section
         class="modal-card"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="assign-plot-title"
+        aria-labelledby="add-plot-title"
       >
         <div class="modal-header">
-          <h2 id="assign-plot-title">Assign Garden Plot</h2>
-
-          <button class="modal-close" type="button" aria-label="Close dialog" data-close-assign-plot>
+          <h2 id="add-plot-title">Add Garden Plot</h2>
+          <button
+            class="modal-close"
+            type="button"
+            aria-label="Close dialog"
+            data-close-add-plot
+          >
             &times;
           </button>
         </div>
 
-        <form data-assign-plot-form>
+        <form data-add-plot-form>
           <div class="form-group">
-            <label for="student">Student</label>
-
-            <select id="student" required>
-              <option value="" selected disabled>Select Student</option>
-            </select>
+            <label for="new-plot-id">Plot ID</label>
+            <input
+              type="text"
+              id="new-plot-id"
+              placeholder="e.g. A-05"
+              required
+            />
           </div>
+          <p data-add-plot-status role="status" aria-live="polite"></p>
 
-          <div class="form-group">
-            <label for="plot">Garden Plot</label>
-
-            <select id="plot" required>
-              <option value="" selected disabled>Select Available Plot</option>
-
-              <option>A-13</option>
-              <option>A-14</option>
-              <option>B-06</option>
-              <option>B-07</option>
-            </select>
+          <div style="display: flex; gap: 10px; margin-top: 10px">
+            <button class="btn btn-primary" type="submit">Add Plot</button>
+            <button class="btn btn-secondary" type="button" data-close-add-plot>
+              Cancel
+            </button>
           </div>
-
-          <div class="form-group">
-            <label for="crop">Crop</label>
-
-            <select id="crop" required>
-              <option value="" selected disabled>Select Crop</option>
-              <option value="Tomato">Tomato</option>
-              <option value="Radish">Radish</option>
-              <option value="Carrot">Carrot</option>
-            </select>
-          </div>
-
-          <p data-assign-plot-status role="status" aria-live="polite"></p>
-          <button class="btn btn-primary" type="submit">Assign Plot</button>
         </form>
       </section>
     </div>
