@@ -2826,11 +2826,32 @@ function setupAdminGrowthTracker() {
     console.error('Could not load plot assignments for the growth tracker labels.', error);
   }
 
+    // Create a map to hold plotId -> studentName
+  const plotStudentMap = {};
+
+  // 1. Get student names from saved admin records
+  savedPlots.forEach((plot) => {
+    if (plot[0] && plot[2] && plot[2] !== '—') {
+      plotStudentMap[plot[0]] = plot[2];
+    }
+  });
+
+  // 2. Fallback to sample data if they don't have a saved student yet
+  Object.keys(samplePlots).forEach((plotId) => {
+    if (!plotStudentMap[plotId] && samplePlots[plotId].student) {
+      plotStudentMap[plotId] = samplePlots[plotId].student;
+    }
+  });
+
   const plots = [...trackedPlots].sort((first, second) => first.localeCompare(second));
   plots.forEach((plotId) => {
     const option = document.createElement('option');
     option.value = plotId;
-    option.textContent = plotId;
+    
+    // Append the student name if one is found
+    const studentName = plotStudentMap[plotId];
+    option.textContent = studentName ? `${plotId} (${studentName})` : plotId;
+    
     plotSelect.append(option);
   });
 
