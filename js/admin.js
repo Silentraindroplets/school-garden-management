@@ -307,7 +307,7 @@ function setupAddPlot() {
     document.body.classList.add('modal-open');
     document.getElementById('new-plot-id')?.focus();
   };
-  
+
   const close = () => {
     modal.hidden = true;
     if (!document.querySelector('.modal-overlay:not([hidden])')) {
@@ -323,10 +323,10 @@ function setupAddPlot() {
   document.querySelectorAll('[data-close-add-plot]').forEach(btn => {
     btn.addEventListener('click', close);
   });
-  
+
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-  document.addEventListener('keydown', (e) => { 
-    if (e.key === 'Escape' && !modal.hidden) close(); 
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) close();
   });
 
   form.addEventListener('submit', (e) => {
@@ -379,7 +379,7 @@ function setupAddPlot() {
 
             document.dispatchEvent(new CustomEvent('admin:data-changed'));
             close();
-            
+
             if (typeof showAdminSuccess === 'function') {
               showAdminSuccess({ message: `Garden Plot ${plotId} added successfully.` });
             }
@@ -831,22 +831,73 @@ function showAdminSuccess({ message, trigger }) {
   doneButton.focus();
 }
 
+function syncStudentObservationsToAdmin() {
+  try {
+    // 1. Get all real observations submitted by students
+    const growthObsStr = localStorage.getItem('gardenTrackerGrowthObservations');
+    if (!growthObsStr) return;
+    const growthObs = JSON.parse(growthObsStr);
+    if (!Array.isArray(growthObs) || growthObs.length === 0) return;
+
+    // 2. Get the current admin table data
+    const adminKey = 'gardenTrackerAdminRows:observations';
+    let adminRecords = JSON.parse(localStorage.getItem(adminKey) || '[]');
+
+    // 3. Get the list of deleted observations (so they don't come back)
+    let deletedSignatures = JSON.parse(localStorage.getItem('gardenTrackerDeletedObservations') || '[]');
+
+    // If the admin table is brand new, start with the demo rows
+    if (adminRecords.length === 0 && !localStorage.getItem(adminKey)) {
+      adminRecords = [
+        ['Aug. 28, 2026', 'Juan Dela Cruz', 'A-12', 'Healthy', 'Tomato plants are growing well.'],
+        ['Aug. 27, 2026', 'Maria Santos', 'A-14', 'Needs Attention', 'Several leaves are turning yellow.'],
+        ['Aug. 26, 2026', 'Ana Reyes', 'B-02', 'Healthy', 'Plants have developed new leaves.'],
+        ['Aug. 25, 2026', 'Pedro Garcia', 'B-06', 'Damaged', 'Some plants were damaged after heavy rain.']
+      ];
+    }
+
+    let changed = false;
+
+    // 4. Loop through student observations and inject them if they don't exist
+    growthObs.forEach(obs => {
+      // Format the date to match the admin table style (e.g., "Aug. 28, 2026")
+      const dateStr = new Date(`${obs.date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).replace(/([a-zA-Z]{3})/, '$1.');
+      const cond = obs.condition.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const notes = obs.notes || 'No notes provided';
+
+      // Create a unique signature to check for duplicates
+      const signature = `${dateStr}|${obs.student}|${obs.plot}`;
+
+      const exists = adminRecords.some(row => row[0] === dateStr && row[1] === obs.student && row[2] === obs.plot);
+      const isDeleted = deletedSignatures.includes(signature);
+
+      // If the admin hasn't seen it yet and hasn't deleted it, add it to the table!
+      if (!exists && !isDeleted) {
+        adminRecords.push([dateStr, obs.student, obs.plot, cond, notes]);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      localStorage.setItem(adminKey, JSON.stringify(adminRecords));
+    }
+  } catch (e) {
+    console.error('Error syncing student observations to admin table', e);
+  }
+}
+
 function setupAdminTableActions() {
   const table = document.querySelector('main .table-container table');
   const tbody = table?.tBodies[0];
   if (!table || !tbody) return;
-  document.addEventListener('admin:data-changed', () => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved !== null) {
-        records = JSON.parse(saved);
-        render();
-      }
-    } catch (e) {
-      console.error('Could not refresh table data.', e);
-    }
-  });
+
+  // 1. Declare page and run sync FIRST
   const page = location.pathname.split('/').pop();
+  
+  if (page === 'student_observations.html') {
+    syncStudentObservationsToAdmin();
+  }
+
   const configs = {
     'manage_students.html': {
       rowClass: 'student-row',
@@ -916,6 +967,7 @@ function setupAdminTableActions() {
   const showStatus = (message) => {
     status.textContent = message;
   };
+  
   const observationPhotos = new Map();
   let photoLoadError = false;
   if (config.key === 'observations') {
@@ -1136,7 +1188,14 @@ function setupAdminTableActions() {
             showStatus('Could not save the delete action to history. No changes were made.');
             return;
           }
-
+          if (config.key === 'observations') {
+            let deletedSignatures = JSON.parse(localStorage.getItem('gardenTrackerDeletedObservations') || '[]');
+            const sig = `${record[0]}|${record[1]}|${record[2]}`;
+            if (!deletedSignatures.includes(sig)) {
+              deletedSignatures.push(sig);
+              localStorage.setItem('gardenTrackerDeletedObservations', JSON.stringify(deletedSignatures));
+            }
+          }
           const updated = records.filter((_, recordIndex) => recordIndex !== index);
           if (saveRecords(updated)) {
             selectedIndices.clear();
@@ -1855,6 +1914,17 @@ function setupAdminTableActions() {
           appendedEntries.push(entry);
         }
 
+        if (config.key === 'observations') {
+          let deletedSignatures = JSON.parse(localStorage.getItem('gardenTrackerDeletedObservations') || '[]');
+          selectedRecords.forEach(({ record }) => {
+            const sig = `${record[0]}|${record[1]}|${record[2]}`;
+            if (!deletedSignatures.includes(sig)) {
+              deletedSignatures.push(sig);
+            }
+          });
+          localStorage.setItem('gardenTrackerDeletedObservations', JSON.stringify(deletedSignatures));
+        }
+
         const deletedIndices = new Set(selectedRecords.map(({ index }) => index));
         const updated = records.filter((_, index) => !deletedIndices.has(index));
         if (!saveRecords(updated)) {
@@ -1981,6 +2051,19 @@ function setupAdminTableActions() {
       } catch (error) {
         console.error('Could not remove the failed plot assignment from action history.', error);
       }
+    }
+  });
+
+  // 2. Add the data-changed listener HERE, so storageKey, records, and render are defined.
+  document.addEventListener('admin:data-changed', () => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved !== null) {
+        records = JSON.parse(saved);
+        render();
+      }
+    } catch (e) {
+      console.error('Could not refresh table data.', e);
     }
   });
 
@@ -2826,7 +2909,7 @@ function setupAdminGrowthTracker() {
     console.error('Could not load plot assignments for the growth tracker labels.', error);
   }
 
-    // Create a map to hold plotId -> studentName
+  // Create a map to hold plotId -> studentName
   const plotStudentMap = {};
 
   // 1. Get student names from saved admin records
@@ -2847,11 +2930,11 @@ function setupAdminGrowthTracker() {
   plots.forEach((plotId) => {
     const option = document.createElement('option');
     option.value = plotId;
-    
+
     // Append the student name if one is found
     const studentName = plotStudentMap[plotId];
     option.textContent = studentName ? `${plotId} (${studentName})` : plotId;
-    
+
     plotSelect.append(option);
   });
 
@@ -3007,10 +3090,10 @@ function setupAdminGrowthTracker() {
       date.textContent = formatDate(observation.date);
       const condition = document.createElement('span');
       condition.className = `badge ${observation.condition === 'healthy'
-          ? 'badge-success'
-          : observation.condition === 'needs-attention'
-            ? 'badge-warning'
-            : 'badge-danger'
+        ? 'badge-success'
+        : observation.condition === 'needs-attention'
+          ? 'badge-warning'
+          : 'badge-danger'
         }`;
       condition.textContent = observation.condition.replace(/-/g, ' ');
       header.append(date, condition);
