@@ -1119,11 +1119,30 @@ function setupAdminTableActions() {
       checkbox.dataset.rowSelection = '';
       selectionCell.append(checkbox);
       row.append(selectionCell);
-      record.forEach((value) => {
-        const cell = document.createElement('td');
-        cell.textContent = value;
-        row.append(cell);
-      });
+
+      // Swap columns dynamically for students (Display: ID, Name, Plot, Crop, Status)
+      if (config.key === 'students') {
+        const plot = record[3];
+        let crop = '—';
+        if (plot && plot !== '—') {
+          try {
+            const crops = readAssignedPlotCrops();
+            crop = crops[plot] || 'No crop assigned';
+          } catch (e) {}
+        }
+        const displayData = [record[0], record[1], plot, crop, record[4]];
+        displayData.forEach((value) => {
+          const cell = document.createElement('td');
+          cell.textContent = value;
+          row.append(cell);
+        });
+      } else {
+        record.forEach((value) => {
+          const cell = document.createElement('td');
+          cell.textContent = value;
+          row.append(cell);
+        });
+      }
 
       if (config.key === 'observations') {
         const photoCell = document.createElement('td');
@@ -1273,12 +1292,23 @@ function setupAdminTableActions() {
     if (action === 'view') {
       const details = document.createElement('dl');
       details.className = 'admin-profile-details';
+      
+      let displayRecord = record;
+      if (config.key === 'students') {
+        const plot = record[3];
+        let crop = '—';
+        if (plot && plot !== '—') {
+          try { crop = readAssignedPlotCrops()[plot] || 'No crop assigned'; } catch (e) {}
+        }
+        displayRecord = [record[0], record[1], plot, crop, record[4]];
+      }
+
       headings.forEach((heading, fieldIndex) => {
         const entry = document.createElement('div');
         const label = document.createElement('dt');
         label.textContent = heading;
         const value = document.createElement('dd');
-        value.textContent = record[fieldIndex];
+        value.textContent = displayRecord[fieldIndex];
         entry.append(label, value);
         details.append(entry);
       });
@@ -1300,46 +1330,17 @@ function setupAdminTableActions() {
         photoEntry.append(photoLabel, photoValue);
         details.append(photoEntry);
       }
-      if (config.key === 'plots' || config.key === 'students') {
+      if (config.key === 'plots') {
         const cropEntry = document.createElement('div');
         const cropLabel = document.createElement('dt');
         cropLabel.textContent = 'Primary crop';
         const cropValue = document.createElement('dd');
         try {
-          let plotId = config.key === 'plots' ? record[0] : null;
-          if (config.key === 'students') {
-            const storedPlots = localStorage.getItem('gardenTrackerAdminRows:plots');
-            const savedPlots = storedPlots === null ? null : JSON.parse(storedPlots);
-            if (
-              savedPlots !== null
-              && (
-                !Array.isArray(savedPlots)
-                || savedPlots.some((entry) => (
-                  !Array.isArray(entry)
-                  || entry.length !== 4
-                  || entry.some((value) => typeof value !== 'string')
-                ))
-              )
-            ) {
-              throw new Error('Saved plot records have an invalid format.');
-            }
-            const plot = savedPlots?.find((entry) => (
-              entry[3].toLowerCase() === 'assigned'
-              && entry[2].trim().toLowerCase() === record[1].trim().toLowerCase()
-            ));
-            plotId = plot?.[0] || (
-              !savedPlots?.length && record[3] !== '—' ? record[3] : null
-            );
-          }
+          const plotId = record[0];
           const crops = readAssignedPlotCrops();
-          const crop = plotId
-            ? crops[plotId] || adminSampleCropByPlot[plotId]
-            : null;
-          cropValue.textContent = adminCropOptions.includes(crop)
-            ? crop
-            : 'No crop assigned';
+          const crop = crops[plotId] || adminSampleCropByPlot[plotId];
+          cropValue.textContent = adminCropOptions.includes(crop) ? crop : 'No crop assigned';
         } catch (error) {
-          console.error('Could not load the crop for this admin record.', error);
           cropValue.textContent = 'Crop unavailable';
         }
         cropEntry.append(cropLabel, cropValue);
@@ -1380,7 +1381,8 @@ function setupAdminTableActions() {
         const isAssignedStudentField = config.key === 'plots' && headingText === 'assigned student';
         const isStatusField = (config.key === 'plots' && headingText === 'status')
           || (config.key === 'students' && headingText === 'status');
-        const isGardenPlotField = config.key === 'students' && headingText === 'garden plot';
+        const isStudentPlotField = config.key === 'students' && headingText === 'garden plot';
+        const isStudentCropField = config.key === 'students' && headingText === 'garden crop';
 
         if (isAssignedStudentField) {
           field = document.createElement('select');
@@ -1409,18 +1411,14 @@ function setupAdminTableActions() {
             currentOption.selected = true;
             field.append(currentOption);
           }
-        } else if (isGardenPlotField) {
+        } else if (isStudentPlotField) {
           const plotOptions = (() => {
             try {
               const savedPlots = JSON.parse(localStorage.getItem('gardenTrackerAdminRows:plots') || '[]');
               if (Array.isArray(savedPlots) && savedPlots.length > 0) {
-                return Array.from(new Set(savedPlots
-                  .map((plot) => (Array.isArray(plot) ? plot[0] : ''))
-                  .filter((plotId) => typeof plotId === 'string' && plotId.trim())));
+                return Array.from(new Set(savedPlots.map(p => Array.isArray(p) ? p[0] : '').filter(Boolean)));
               }
-            } catch (error) {
-              console.warn('Could not load plot IDs for student assignment.', error);
-            }
+            } catch(e) {}
             return ['A-01', 'A-02', 'A-03', 'A-04', 'A-05'];
           })();
 
@@ -1428,29 +1426,42 @@ function setupAdminTableActions() {
           field.id = id;
           field.name = `field-${fieldIndex}`;
           field.required = true;
-          cropPlotField = field;
 
           const emptyOption = document.createElement('option');
           emptyOption.value = '—';
           emptyOption.textContent = '—';
-          emptyOption.selected = record[fieldIndex] === '—';
+          emptyOption.selected = record[3] === '—';
           field.append(emptyOption);
 
           plotOptions.forEach((plotId) => {
             const option = document.createElement('option');
             option.value = plotId;
             option.textContent = plotId;
-            option.selected = record[fieldIndex] === plotId;
+            option.selected = record[3] === plotId;
             field.append(option);
           });
+        } else if (isStudentCropField) {
+          field = document.createElement('select');
+          field.id = id;
+          field.name = `field-${fieldIndex}`;
+          field.required = true;
 
-          if (record[fieldIndex] && record[fieldIndex] !== '—' && !plotOptions.includes(record[fieldIndex])) {
-            const currentOption = document.createElement('option');
-            currentOption.value = record[fieldIndex];
-            currentOption.textContent = record[fieldIndex];
-            currentOption.selected = true;
-            field.append(currentOption);
-          }
+          const crops = readAssignedPlotCrops();
+          const currentCrop = record[3] !== '—' ? (crops[record[3]] || '—') : '—';
+
+          const emptyOption = document.createElement('option');
+          emptyOption.value = '—';
+          emptyOption.textContent = '—';
+          emptyOption.selected = currentCrop === '—';
+          field.append(emptyOption);
+
+          adminCropOptions.forEach((crop) => {
+            const option = document.createElement('option');
+            option.value = crop;
+            option.textContent = crop;
+            option.selected = currentCrop === crop;
+            field.append(option);
+          });
         } else if (isStatusField) {
           field = document.createElement('select');
           field.id = id;
@@ -1473,7 +1484,8 @@ function setupAdminTableActions() {
           );
           field.id = id;
           field.name = `field-${fieldIndex}`;
-          field.value = record[fieldIndex];
+          // For students, only ID and Name fall here, which map to record[0] and record[1].
+          field.value = record[fieldIndex] || '';
           field.required = true;
         }
 
@@ -1485,8 +1497,9 @@ function setupAdminTableActions() {
       dialogStatus.className = 'admin-action-status';
       dialogStatus.setAttribute('role', 'status');
       dialogStatus.setAttribute('aria-live', 'polite');
+      
       let cropField = null;
-      if (config.key === 'plots' || config.key === 'students') {
+      if (config.key === 'plots') {
         const cropGroup = document.createElement('div');
         cropGroup.className = 'form-group';
         const cropLabel = document.createElement('label');
@@ -1509,9 +1522,7 @@ function setupAdminTableActions() {
         form.append(cropGroup);
 
         const updateCropField = () => {
-          const plotId = config.key === 'plots'
-            ? record[0]
-            : cropPlotField?.value;
+          const plotId = record[0];
           cropField.disabled = !plotId || plotId === '—';
           cropField.value = '';
           if (cropField.disabled) return;
@@ -1528,7 +1539,6 @@ function setupAdminTableActions() {
           }
         };
         updateCropField();
-        cropPlotField?.addEventListener('change', updateCropField);
       }
 
       const teacherNoteInput = config.key === 'plots'
@@ -1583,12 +1593,58 @@ function setupAdminTableActions() {
           confirmClass: 'btn btn-primary',
           trigger: saveButton,
           onConfirm: () => {
-            const updatedRecord = headings.map((_, fieldIndex) =>
-              String(new FormData(form).get(`field-${fieldIndex}`) || '').trim()
-            );
+            const formData = new FormData(form);
+            let updatedRecord = [];
+
+            if (config.key === 'students') {
+              const id = String(formData.get('field-0') || '').trim();
+              const name = String(formData.get('field-1') || '').trim();
+              const plot = String(formData.get('field-2') || '').trim();
+              const crop = String(formData.get('field-3') || '').trim();
+              const status = String(formData.get('field-4') || '').trim();
+
+              // Update global crop storage
+              if (plot && plot !== '—' && crop && crop !== '—') {
+                try {
+                  const crops = readAssignedPlotCrops();
+                  crops[plot] = crop;
+                  localStorage.setItem(plotCropsStorageKey, JSON.stringify(crops));
+                } catch (e) { console.error('Could not save crop', e); }
+              }
+
+              // Sync with plots array
+              try {
+                let plots = JSON.parse(localStorage.getItem('gardenTrackerAdminRows:plots') || '[]');
+                const oldPlot = record[3];
+                if (oldPlot && oldPlot !== '—' && oldPlot !== plot) {
+                  const idx = plots.findIndex(p => p[0] === oldPlot);
+                  if (idx !== -1) {
+                    plots[idx][2] = '—';
+                    plots[idx][3] = 'Available';
+                  }
+                }
+                if (plot && plot !== '—') {
+                  const idx = plots.findIndex(p => p[0] === plot);
+                  if (idx !== -1) {
+                    plots[idx][2] = name;
+                    plots[idx][3] = 'Assigned';
+                  }
+                }
+                localStorage.setItem('gardenTrackerAdminRows:plots', JSON.stringify(plots));
+              } catch (e) { console.error('Could not sync plots', e); }
+
+              // Map back to the 5-element array format expected by the system
+              updatedRecord = [id, name, 'Grade 9', plot, status];
+            } else {
+              updatedRecord = headings.map((_, fieldIndex) =>
+                String(formData.get(`field-${fieldIndex}`) || '').trim()
+              );
+            }
+
             const updated = records.map((item, recordIndex) =>
               recordIndex === index ? updatedRecord : item
             );
+            
             let previousCropStorage = null;
             let updatedCrops = null;
             let cropAssignment = null;
@@ -2054,7 +2110,7 @@ function setupAdminTableActions() {
     }
   });
 
-  // 2. Add the data-changed listener HERE, so storageKey, records, and render are defined.
+  // Refresh table if data changes
   document.addEventListener('admin:data-changed', () => {
     try {
       const saved = localStorage.getItem(storageKey);
