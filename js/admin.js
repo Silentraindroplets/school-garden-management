@@ -67,11 +67,118 @@ function readAssignedPlotCrops() {
   return crops;
 }
 
+function populateAssignPlotOptions() {
+  const studentSelect = document.getElementById('student');
+  const plotSelect = document.getElementById('plot');
+  if (!studentSelect || !plotSelect) return;
+
+  const originalPlotCandidates = ['A-13', 'A-14', 'B-06', 'B-07'];
+  const students = readAdminRowsForAssignment(
+    'gardenTrackerAdminRows:students',
+    typeof demoStudentBaseRows !== 'undefined' ? demoStudentBaseRows : [],
+    5
+  );
+  const plots = readAdminRowsForAssignment(
+    'gardenTrackerAdminRows:plots',
+    typeof demoPlotBaseRows !== 'undefined' ? demoPlotBaseRows : [],
+    4
+  );
+
+  // ---- Students: any registered student not currently tied to an assigned plot
+  const assignedPlotNames = new Set(
+    plots
+      .filter((row) => row[3].toLowerCase() === 'assigned' && row[2] !== '—')
+      .map((row) => row[2].trim().toLowerCase())
+  );
+  const availableStudents = students
+    .filter((row) => row[1] && row[1].trim() && row[1] !== '—')
+    .filter((row) => !assignedPlotNames.has(row[1].trim().toLowerCase()))
+    .sort((a, b) => a[1].localeCompare(b[1]));
+
+  studentSelect.replaceChildren();
+  const studentPlaceholder = document.createElement('option');
+  studentPlaceholder.value = '';
+  studentPlaceholder.disabled = true;
+  studentPlaceholder.selected = true;
+  studentPlaceholder.textContent = availableStudents.length
+    ? 'Select Student'
+    : 'No unassigned students';
+  studentSelect.append(studentPlaceholder);
+
+  availableStudents.forEach((row) => {
+    const option = document.createElement('option');
+    option.value = row[1];
+    option.textContent = row[1];
+    studentSelect.append(option);
+  });
+  studentSelect.disabled = availableStudents.length === 0;
+
+  // ---- Plots: available plots from records + legacy new-plot candidates
+  const recordPlotIds = new Set(plots.map((row) => row[0]));
+  const availableFromRecords = plots
+    .filter((row) => row[3].toLowerCase() !== 'assigned')
+    .map((row) => row[0]);
+  const newCandidates = originalPlotCandidates.filter(
+    (plotId) => !recordPlotIds.has(plotId)
+  );
+  const availablePlots = Array.from(
+    new Set([...availableFromRecords, ...newCandidates])
+  ).sort((a, b) => a.localeCompare(b));
+
+  plotSelect.replaceChildren();
+  const plotPlaceholder = document.createElement('option');
+  plotPlaceholder.value = '';
+  plotPlaceholder.disabled = true;
+  plotPlaceholder.selected = true;
+  plotPlaceholder.textContent = availablePlots.length
+    ? 'Select Available Plot'
+    : 'No available plots';
+  plotSelect.append(plotPlaceholder);
+
+  availablePlots.forEach((plotId) => {
+    const option = document.createElement('option');
+    option.value = plotId;
+    option.textContent = plotId;
+    plotSelect.append(option);
+  });
+  plotSelect.disabled = availablePlots.length === 0;
+}
+
+function readAdminRowsForAssignment(storageKey, fallbackRows, recordLength) {
+  try {
+    const stored = localStorage.getItem(storageKey);
+    if (stored !== null) {
+      const rows = JSON.parse(stored);
+      if (
+        !Array.isArray(rows)
+        || rows.some((row) =>
+          !Array.isArray(row)
+          || row.length !== recordLength
+          || row.some((value) => typeof value !== 'string')
+        )
+      ) {
+        throw new Error(`Saved ${storageKey} data has an invalid format.`);
+      }
+      return rows;
+    }
+  } catch (error) {
+    console.error(`Could not read ${storageKey} for plot assignment.`, error);
+  }
+  return Array.isArray(fallbackRows)
+    ? fallbackRows.map((row) => [...row])
+    : [];
+}
+
 function setupPlotAssignment() {
   const modal = document.querySelector('[data-assign-plot-modal]');
   const form = document.querySelector('[data-assign-plot-form]');
+
+  // Initial population so the modal is never empty
+  populateAssignPlotOptions();
+
   const open = () => {
     if (!modal) return;
+    populateAssignPlotOptions(); // refresh every time it opens
     modal.hidden = false;
     document.body.classList.add('modal-open');
     document.getElementById('student')?.focus();
